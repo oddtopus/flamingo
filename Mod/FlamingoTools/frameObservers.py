@@ -1,5 +1,6 @@
 # FreeCAD Frame Tools module  
 # (c) 2016 Riccardo Treu LGPL
+
 class frameItObserver: 
     def __init__(self):
         import FreeCAD,FreeCADGui

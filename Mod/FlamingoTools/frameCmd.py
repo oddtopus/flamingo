@@ -60,7 +60,7 @@ def orientTheBeam(beam, edge):
   vect=edge.valueAt(edge.LastParameter)-edge.valueAt(edge.FirstParameter)
   beam.Placement.Rotation=FreeCAD.Rotation(0,0,0,1)
   rot=FreeCAD.Rotation(beam.Placement.Rotation.Axis,vect)
-  beam.Placement.Rotation=rot.multiply(beam.Placement.Rotation)  # problema generale: nella conversione da rad a deg si perde accuratezza e quindi la faccia non viene mai posizionata esattamente. Questo impedisce alcune verifiche di perpendicolarit con il metodo cross
+  beam.Placement.Rotation=rot.multiply(beam.Placement.Rotation)    # this method is not fully accurate, probably for the deg/rot conversion: this don't allow verification of perpendicularity or parallelism with the .cross() method!
   beam.Placement.Base=edge.valueAt(0)
   beam.Height=edge.Length
   FreeCAD.activeDocument().recompute()

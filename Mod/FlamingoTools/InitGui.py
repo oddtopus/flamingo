@@ -1,4 +1,4 @@
-# TemplatePyMod gui init module
+# from TemplatePyMod gui init module
 # (c) 2007 Juergen Riegel LGPL
 
 #****************************************************************************

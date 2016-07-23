@@ -1,3 +1,6 @@
+# FreeCAD Frame Tools module  
+# (c) 2016 Riccardo Treu LGPL
+
 import math
 
 def cerchio(R=1, nseg=8):

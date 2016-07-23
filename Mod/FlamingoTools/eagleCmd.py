@@ -1,3 +1,6 @@
+# FreeCAD Frame Tools module  
+# (c) 2016 Riccardo Treu LGPL
+
 import xml.etree.ElementTree as et
 import FreeCAD as App
 from PySide import QtGui as qg
@@ -13,7 +16,6 @@ except:
 
 
 def brdIn():
-#  fileName=qg.QInputDialog.getText(None,"import positions from .brd",".brd file?")
   fileName=qg.QFileDialog().getOpenFileName()
   board=fileName[0]
   try:
@@ -26,7 +28,6 @@ def brdIn():
 			x=float(e.attrib['x'])
 			y=float(e.attrib['y'])
 			if ('rot' in e.attrib) and (e.attrib['rot'].lstrip('R').isdigit()):
-				#print e.attrib['rot'].lstrip('R')
 				rot=float(e.attrib['rot'].lstrip('R'))
 			else:
 				rot=0.0

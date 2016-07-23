@@ -5,6 +5,8 @@
 import FreeCAD, FreeCADGui,inspect
 
 # helper -------------------------------------------------------------------
+# FreeCAD TemplatePyMod module  
+# (c) 2007 Juergen Riegel LGPL
 
 def addCommand(name,cmdObject):
 	(list,num) = inspect.getsourcelines(cmdObject.Activated)
@@ -22,7 +24,6 @@ def addCommand(name,cmdObject):
 #---------------------------------------------------------------------------
 
 # Eagle import tool
-# Riccardo Treu - LGPL
 
 class bareImport:
   def Activated (self):
