@@ -51,9 +51,11 @@ class findFirst:
 class queryModel:
 
   def Activated(self):
-    import qCmd
-    o=qCmd.infos()
-    o.enter()
+    import FreeCAD, FreeCADGui, qForms
+    form = qForms.QueryForm(FreeCADGui.Selection)
+    #import qCmd
+    #o=qCmd.infos()
+    #o.enter()
 
   def GetResources(self):
     return{'Pixmap':str(FreeCAD.getResourceDir() + "Mod/FlamingoTools/query.svg"),'MenuText':'query the model','ToolTip':'Click objects to print infos'}
