@@ -1,3 +1,6 @@
+# FreeCAD Spreadsheet Tools module  
+# (c) 2016 Riccardo Treu LGPL
+
 from PySide import QtGui, QtCore
  
 # UI Class definitions
@@ -5,64 +8,80 @@ from PySide import QtGui, QtCore
 class QueryForm(QtGui.QWidget):
   "form for qCmd.py"
   def __init__(self,Selection):
-    QtGui.QWidget.__init__(self)
+    super(QueryForm,self).__init__()
     self.initUI()
     self.Selection=Selection
   def initUI(self):
-    # define window    xLoc,yLoc,xDim,yDim
-    self.setGeometry(  250, 250, 400, 200)
     self.setWindowTitle("QueryTool")
     self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
     self.setMouseTracking(True)
-    # widgets 1st row
+    #1st row
     self.labName = QtGui.QLabel("(seleziona un oggetto)", self)
-    # widgets 2nd row
-    labBase = QtGui.QLabel("Base:", self)
+    #2nd row
     self.labBaseVal = QtGui.QLabel("(base)", self)
-    subHLayout1=QtGui.QHBoxLayout()
-    subHLayout1.addWidget(labBase)
-    subHLayout1.addWidget(self.labBaseVal)
-    # widgets 3rd row
-    labRot = QtGui.QLabel("Rotation:", self)
-    self.labRotVal = QtGui.QLabel("(rotation)", self)
-    subHLayout2=QtGui.QHBoxLayout()
-    subHLayout2.addWidget(labRot)
-    subHLayout2.addWidget(self.labRotVal)
-    # widgets 4th row
-    pushButton1 = QtGui.QPushButton('QueryObject', self)
-    pushButton1.clicked.connect(self.onPushButton1)
-    pushButton1.setMinimumWidth(90)
-    cancelButton = QtGui.QPushButton('Exit', self)
-    cancelButton.clicked.connect(self.onCancel)
-    cancelButton.setAutoDefault(True)
-    self.labMousePos = QtGui.QLabel("            ", self)
-    subHLayout3=QtGui.QHBoxLayout()
-    subHLayout3.addWidget(pushButton1)
-    subHLayout3.addWidget(cancelButton)
-    subHLayout3.addWidget(self.labMousePos)
+    self.subFLayout1=QtGui.QFormLayout()
+    self.subFLayout1.addRow('Base: ',self.labBaseVal)
+    #3rd row
+    self.labRotAng = QtGui.QLabel("(angle)", self)
+    self.subFLayout2=QtGui.QFormLayout()
+    self.subFLayout2.addRow('Rotation angle: ',self.labRotAng)
+    # 4th row
+    self.labRotAx = QtGui.QLabel("v = (x,y,z)", self)
+    self.subFLayout3=QtGui.QFormLayout()
+    self.subFLayout3.addRow('Rotation axis: ',self.labRotAx)
+    # 5th row
+    self.labSubObj = QtGui.QLabel("(Sub object property)", self)
+    # 6th row
+    self.pushButton1 = QtGui.QPushButton('QueryObject')
+    self.pushButton1.setDefault(True)
+    self.pushButton1.clicked.connect(self.onPushButton1)
+    self.pushButton1.setMinimumWidth(90)
+    self.cancelButton = QtGui.QPushButton('Exit')
+    self.cancelButton.clicked.connect(self.onCancel)
+    self.cancelButton.setAutoDefault(True)
+    self.subHLayout1=QtGui.QHBoxLayout()
+    self.subHLayout1.addWidget(self.pushButton1)
+    self.subHLayout1.addWidget(self.cancelButton)
     # arrange the layout
-    mainVLayout=QtGui.QVBoxLayout()
-    mainVLayout.addWidget(self.labName)
-    mainVLayout.addLayout(subHLayout1)
-    mainVLayout.addLayout(subHLayout2)
-    mainVLayout.addLayout(subHLayout3)
-    QtGui.QWidget.setLayout(self,mainVLayout)
+    self.mainVLayout=QtGui.QVBoxLayout()
+    self.mainVLayout.addWidget(self.labName)
+    self.mainVLayout.addLayout(self.subFLayout1)
+    self.mainVLayout.addLayout(self.subFLayout2)
+    self.mainVLayout.addLayout(self.subFLayout3)
+    self.mainVLayout.addWidget(self.labSubObj)
+    self.mainVLayout.addLayout(self.subHLayout1)
+    QtGui.QWidget.setLayout(self,self.mainVLayout)
     # now make the window visible
     self.show()
     
   def onPushButton1(self):
-    import FreeCADGui
+    from math import pi
     try:
       obj=self.Selection.getSelection()[0]
       self.labName.setText(obj.Label)
       self.labBaseVal.setText(str(obj.Placement.Base))
-      self.labRotVal.setText(str(obj.Placement.Rotation))
+      self.labRotAng.setText(str("%.2f deg" %(obj.Placement.Rotation.Angle/pi*180)))
+      ax=obj.Placement.Rotation.Axis
+      self.labRotAx.setText(str("v = (%(x).2f,%(y).2f,%(z).2f)" %{'x':ax.x,'y':ax.y,'z':ax.z}))
+      shapes=[y for x in self.Selection.getSelectionEx() for y in x.SubObjects if hasattr(y,'ShapeType')]
+      if len(shapes)==1:
+        sub=shapes[0]
+        if sub.ShapeType=='Edge':
+          self.labSubObj.setText(sub.ShapeType+': L = %.1f mm' %sub.Length)
+        elif sub.ShapeType=='Face':
+          self.labSubObj.setText(sub.ShapeType+': A = %.1f mm2' %sub.Area)
+        elif sub.ShapeType=='Vertex':
+          self.labSubObj.setText(sub.ShapeType+': pos = (%(x).1f,%(y).1f,%(z).1f)' %{'x':sub.X,'y':sub.Y,'z':sub.Z})
+      elif len(shapes)>1:
+        self.labSubObj.setText(shapes[0].ShapeType+' to '+shapes[1].ShapeType+': distance = %.1f mm' %(shapes[0].distToShape(shapes[1])[0]))
+      else:
+        self.labSubObj.setText(' ')
     except:
       pass
     
   def onCancel(self):
     self.close()
 
-  def mouseMoveEvent(self,event):
-    self.labMousePos.setText("X: "+str(event.x()) + " Y: "+str(event.y()))
+  #def mouseMoveEvent(self,event):
+  #  self.labMousePos.setText("X: "+str(event.x()) + " Y: "+str(event.y()))
 
