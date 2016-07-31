@@ -25,8 +25,7 @@ def addCommand(name,cmdObject):
 
 class frameIt:
   def Activated(self):
-    import frameCmd
-    import FreeCAD, FreeCADGui, frameObservers
+    import FreeCAD, FreeCADGui, frameObservers, frameCmd
     s=frameObservers.frameItObserver()
     FreeCADGui.Selection.addObserver(s)
     
@@ -35,8 +34,7 @@ class frameIt:
 
 class spinSect:
   def Activated(self):
-    import frameCmd
-    import FreeCAD, FreeCADGui
+    import FreeCAD, FreeCADGui, frameCmd
     from math import pi
     if FreeCADGui.Selection.countObjectsOfType("Part::FeaturePython")==1:
       for o in FreeCADGui.Selection.getSelection():
@@ -51,8 +49,7 @@ class spinSect:
 
 class fillFrame:
   def Activated(self):
-    import frameCmd, frameObservers
-    import FreeCAD, FreeCADGui
+    import FreeCAD, FreeCADGui, frameCmd, frameObservers
     selex=FreeCADGui.Selection.getSelectionEx()
     if len(selex)>0:
       beam=[i for i in FreeCADGui.Selection.getSelection() if i.TypeId=="Part::FeaturePython" and hasattr(i,"Height")][0]
@@ -62,6 +59,7 @@ class fillFrame:
       for edge in edges:
         struct=FreeCAD.activeDocument().copyObject(beam,True)
         frameCmd.orientTheBeam(struct,edge)
+        FreeCAD.activeDocument().recompute()
     else:
       FreeCADGui.Selection.clearSelection()
       s=frameObservers.fillFrameObserver()
@@ -76,8 +74,7 @@ class fillFrame:
 
 class alignFlange:
   def Activated(self):
-    import frameCmd, frameObservers
-    import FreeCAD, FreeCADGui
+    import FreeCAD, FreeCADGui, frameCmd, frameObservers
     faces=frameCmd.faces()
     beams=frameCmd.beams()
     if len(faces)==len(beams)>0:
@@ -103,8 +100,7 @@ class alignFlange:
 class shiftBeam:
   
   def Activated(self):
-    import frameCmd
-    import FreeCAD, FreeCADGui
+    import FreeCAD, FreeCADGui, frameCmd
     selex=FreeCADGui.Selection.getSelectionEx()
     edge=frameCmd.edges(selex)[0]
     beam=selex[0].Object
@@ -117,8 +113,7 @@ class shiftBeam:
 
 class levelBeam:
   def Activated(self):
-    import frameCmd, frameObservers
-    import FreeCAD, FreeCADGui
+    import FreeCAD, FreeCADGui, frameCmd, frameObservers
     selex=Gui.Selection.getSelectionEx()
     faces=frameCmd.faces(selex)
     beams=[sx.Object for sx in selex]
@@ -139,8 +134,7 @@ class levelBeam:
 
 class alignEdge:
   def Activated(self):
-    import FreeCAD, FreeCADGui
-    import frameCmd, frameObservers
+    import FreeCAD, FreeCADGui, frameCmd, frameObservers
     edges=frameCmd.edges()
     if len(edges)>=2 and len(FreeCADGui.Selection.getSelection())>=2:
       e1=edges.pop(0)
@@ -164,11 +158,13 @@ class alignEdge:
 
 class pivotBeam:
   def Activated(self):
-    import FreeCAD, FreeCADGui
-    import frameCmd
+    import FreeCAD, FreeCADGui, frameCmd, frameForms
     edges=frameCmd.edges()
-    if len(edges)>=1:
+    if len(edges)==1:
       frameCmd.pivotTheBeam()
+    else:
+      FreeCADGui.Selection.clearSelection()
+      form=frameForms.pivotForm()
       
     
   def GetResources(self):
@@ -176,8 +172,7 @@ class pivotBeam:
 
 class stretchBeam:
   def Activated(self):
-    import FreeCAD, FreeCADGui
-    import frameCmd, frameObservers
+    import FreeCAD, FreeCADGui, frameCmd, frameObservers
     edges=frameCmd.edges(except1st=True)
     beams=frameCmd.beams()
     if len(edges)==1:
@@ -204,8 +199,7 @@ class stretchBeam:
 
 class extend2edge:
   def Activated(self):
-    import FreeCAD, FreeCADGui
-    import frameCmd, frameObservers
+    import FreeCAD, FreeCADGui, frameCmd, frameObservers
     target=None
     if len(frameCmd.edges())>0:
       target= frameCmd.edges()[0]
@@ -226,8 +220,7 @@ class extend2edge:
 
 class adjustFrameAngle:
   def Activated(self):
-    import FreeCAD, FreeCADGui
-    import frameCmd, frameObservers
+    import FreeCAD, FreeCADGui, frameCmd, frameObservers
     edges=frameCmd.edges()
     beams=frameCmd.beams()
     if len(edges)==len(beams)==2:
@@ -248,8 +241,7 @@ class adjustFrameAngle:
 
 class rotJoin:
   def Activated(self):
-    import frameCmd, frameObservers
-    import FreeCAD, FreeCADGui
+    import FreeCAD, FreeCADGui, frameCmd, frameObservers
     try:
       if FreeCADGui.Selection.getSelectionEx()[0].SubObjects[0].ShapeType==FreeCADGui.Selection.getSelectionEx()[1].SubObjects[0].ShapeType=='Edge':
         frameCmd.rotjoinTheBeam()

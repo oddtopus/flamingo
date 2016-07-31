@@ -1,5 +1,6 @@
 # FreeCAD Frame Tools module  
 # (c) 2016 Riccardo Treu LGPL
+import FreeCAD, FreeCADGui, frameCmd
 
 class frameItObserver: 
     def __init__(self):
@@ -293,9 +294,6 @@ class extend2edgeObserver:
         subLastSel=lastSel.Shape.getElement(sub)
         if lastSel.TypeId=='Part::FeaturePython' and hasattr(lastSel,"Height") and self.target!=None:
           frameCmd.extendTheBeam(lastSel,self.target)
-          self.av.removeEventCallback("SoKeyboardEvent",self.stop)
-          FreeCADGui.Selection.removeObserver(self)
-          print "I quit."
         if self.target==None and subLastSel.ShapeType=="Edge":
           self.target=subLastSel
           FreeCAD.Console.PrintMessage('Target selected.\n')

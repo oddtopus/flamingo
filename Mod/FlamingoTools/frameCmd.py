@@ -22,12 +22,6 @@ def beams(sel=[]):
     sel=FreeCADGui.Selection.getSelection()
   return [i for i in sel if i.TypeId=="Part::FeaturePython" and hasattr(i,"Height")]
 
-def vEdge(edge):
-  '''returns the normalized direction of an edge'''
-  if edge.ShapeType=='Edge':
-    v=edge.valueAt(edge.LastParameter)-edge.valueAt(edge.FirstParameter)
-    return v.normalize()
-
 def faces(selex=[]):
   '''returns the list of faces in the selection set'''
   if len(selex)==0:
@@ -47,6 +41,7 @@ def placeTheBeam(beam, beamAx):
     beam.Placement.Base=beamAx.valueAt(0)
     beam.Placement.Rotation=FreeCAD.Rotation(newdir,90)
     beam.Height=beamAx.Length
+    FreeCAD.activeDocument().recompute()
   else:
     FreeCAD.Console.PrintMessage("Wrong selection\n") 
 
@@ -57,10 +52,10 @@ def spinTheBeam(beam, angle):
 
 def orientTheBeam(beam, edge):
   '''arg1= beam, arg2= edge: copy, move and resize the selected beam on the selected edge'''
-  vect=edge.valueAt(edge.LastParameter)-edge.valueAt(edge.FirstParameter)
+  vect=edge.tangentAt(0)
   beam.Placement.Rotation=FreeCAD.Rotation(0,0,0,1)
   rot=FreeCAD.Rotation(beam.Placement.Rotation.Axis,vect)
-  beam.Placement.Rotation=rot.multiply(beam.Placement.Rotation)    # this method is not fully accurate, probably for the deg/rot conversion: this don't allow verification of perpendicularity or parallelism with the .cross() method!
+  beam.Placement.Rotation=rot.multiply(beam.Placement.Rotation)  # this method is not fully accurate, probably for the deg/rot conversion: this don't allow verification of perpendicularity or parallelism with the .cross() method!
   beam.Placement.Base=edge.valueAt(0)
   beam.Height=edge.Length
   FreeCAD.activeDocument().recompute()
@@ -93,31 +88,39 @@ def joinTheBeamsEdges(beam,e1,e2):
     '''arg1=beam, arg2=edge target, arg3=edge start: aligns the edges'''
     beam.Placement.move(e1.distToShape(e2)[1][0][0]-e1.distToShape(e2)[1][0][1])
 
-def pivotTheBeam():
+def pivotTheBeam(ang=None, ask4revert=True):
+  if len(edges())!=1:
+    FreeCAD.Console.PrintError('Wrong selection\n')
+    return None
+  edge=edges()[0] #FreeCADGui.Selection.getSelectionEx()[0].SubObjects[0]
   beam=FreeCADGui.Selection.getSelection()[0]
-  edge=FreeCADGui.Selection.getSelectionEx()[0].SubObjects[0]
   from PySide.QtGui import QInputDialog as qid
-  ang=float(qid.getText(None,"pivot a beam","angle?")[0])
+  if ang==None:
+    ang=float(qid.getText(None,"pivot a beam","angle?")[0])
   rot=FreeCAD.Rotation(edge.tangentAt(0),ang)
   beam.Placement.Rotation=rot.multiply(beam.Placement.Rotation)
-  edgePost=FreeCADGui.Selection.getSelectionEx()[0].SubObjects[0]
+  edgePost=edges()[0] #FreeCADGui.Selection.getSelectionEx()[0].SubObjects[0]
   dist=edge.CenterOfMass-edgePost.CenterOfMass
   beam.Placement.move(dist)
-  from PySide.QtGui import QMessageBox as MBox
-  dirOK=MBox.question(None, "", "Direction is correct?", MBox.Yes | MBox.No, MBox.Yes)
-  if dirOK==MBox.No:
-    edge=FreeCADGui.Selection.getSelectionEx()[0].SubObjects[0]
-    rot=FreeCAD.Rotation(edge.tangentAt(0),ang*-2)
-    beam.Placement.Rotation=rot.multiply(beam.Placement.Rotation)
-    edgePost=FreeCADGui.Selection.getSelectionEx()[0].SubObjects[0]
-    dist=edge.CenterOfMass-edgePost.CenterOfMass
-    beam.Placement.move(dist)
+  if ask4revert:
+    from PySide.QtGui import QMessageBox as MBox
+    dirOK=MBox.question(None, "", "Direction is correct?", MBox.Yes | MBox.No, MBox.Yes)
+    if dirOK==MBox.No:
+      edge=edges()[0] #FreeCADGui.Selection.getSelectionEx()[0].SubObjects[0]
+      rot=FreeCAD.Rotation(edge.tangentAt(0),ang*-2)
+      beam.Placement.Rotation=rot.multiply(beam.Placement.Rotation)
+      edgePost=edges()[0] #FreeCADGui.Selection.getSelectionEx()[0].SubObjects[0]
+      dist=edge.CenterOfMass-edgePost.CenterOfMass
+      beam.Placement.move(dist)
 
 def stretchTheBeam(beam,L):
   if beam!=None and beam.TypeId=="Part::FeaturePython" and hasattr(beam,"Height"):
     beam.Height=L
       
 def extendTheBeam(beam,target):
+  '''arg1=beam, arg2=target: extend the beam to a plane defined by target.
+  If target is a Vertex the plane is the one normal to the axis of beam and includes target.
+  If target is an Edge or a Face, the plane is the one normal to the axis of beam that includes the CenterOfMass'''
   vBase=beam.Placement.Base
   vBeam=beam.Placement.Rotation.multVec(FreeCAD.Vector(0.0,0.0,1.0))
   h=beam.Height
