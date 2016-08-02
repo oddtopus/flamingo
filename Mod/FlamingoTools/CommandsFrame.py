@@ -100,13 +100,17 @@ class alignFlange:
 class shiftBeam:
   
   def Activated(self):
-    import FreeCAD, FreeCADGui, frameCmd
+    import FreeCAD, FreeCADGui, frameCmd, frameForms
     selex=FreeCADGui.Selection.getSelectionEx()
-    edge=frameCmd.edges(selex)[0]
-    beam=selex[0].Object
-    from PySide import QtGui as qg
-    dist=float(qg.QInputDialog.getText(None,"shift a beam","distance?")[0])
-    frameCmd.shiftTheBeam(beam,edge,dist)
+    if len(selex)>0:
+      edge=frameCmd.edges(selex)[0]
+      beam=selex[0].Object
+      from PySide import QtGui as qg
+      dist=float(qg.QInputDialog.getText(None,"shift a beam","distance?")[0])
+      frameCmd.shiftTheBeam(beam,edge,dist)
+    else:
+      FreeCADGui.Selection.clearSelection()
+      form=frameForms.shiftForm()
 
   def GetResources(self):
     return{'Pixmap':str(FreeCAD.getResourceDir() + "Mod/FlamingoTools/beamShift.svg"),'MenuText':'shiftTheBeam','ToolTip':'Move one beam along one edge'}

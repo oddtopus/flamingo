@@ -67,15 +67,16 @@ def rotTheBeam(beam,faceBase,faceAlign):
   rot=FreeCAD.Rotation(n2,n1)
   beam.Placement.Rotation=rot.multiply(beam.Placement.Rotation)
 
-def shiftTheBeam(beam,edge,dist=100):
+def shiftTheBeam(beam,edge,dist=100, ask4revert=True):
   '''arg1=beam, arg2=edge, arg3=dist=100: shifts the beam along the edge by dist (default 100)'''
   vect=edge.valueAt(edge.LastParameter)-edge.valueAt(edge.FirstParameter)
   vect.normalize()
   beam.Placement.Base=beam.Placement.Base.add(vect*dist)
-  from PySide.QtGui import QMessageBox as MBox
-  dirOK=MBox.question(None, "", "Direction is correct?", MBox.Yes | MBox.No, MBox.Yes)
-  if dirOK==MBox.No:
-    beam.Placement.Base=beam.Placement.Base.add(vect*dist*-2)
+  if ask4revert:
+    from PySide.QtGui import QMessageBox as MBox
+    dirOK=MBox.question(None, "", "Direction is correct?", MBox.Yes | MBox.No, MBox.Yes)
+    if dirOK==MBox.No:
+      beam.Placement.Base=beam.Placement.Base.add(vect*dist*-2)
 
 def levelTheBeam(beam,faces):
   '''arg1=beams2move, arg2=[faces]: Shifts the second selection to make its flange coplanar to that of the first selection'''
