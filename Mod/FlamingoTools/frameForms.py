@@ -4,16 +4,20 @@ from PySide.QtCore import *
 from PySide.QtGui import *
 
 class prototypeForm(QWidget):
-  def __init__(self,winTitle,btn1Text,btn2Text,initVal):
+  def __init__(self,winTitle,btn1Text,btn2Text,initVal,units):
     super(prototypeForm,self).__init__()
     self.setWindowFlags(Qt.WindowStaysOnTopHint)
     self.setWindowTitle(winTitle)
     self.mainVL=QVBoxLayout()
     self.setLayout(self.mainVL)
+    inputs=QWidget()
+    inputs.setLayout(QFormLayout())
     self.edit1=QLineEdit(initVal)
     self.edit1.setMinimumWidth(150)
     self.edit1.setAlignment(Qt.AlignHCenter)
-    self.mainVL.addWidget(self.edit1)
+    self.edit1.setMaximumWidth(60)
+    inputs.layout().addRow(units,self.edit1)
+    self.mainVL.addWidget(inputs)
     self.radio1=QRadioButton()
     self.radio1.setChecked(True)
     self.radio2=QRadioButton()
@@ -35,29 +39,26 @@ class prototypeForm(QWidget):
 
 class pivotForm(prototypeForm):
   def __init__(self):
-    super(pivotForm,self).__init__('pivotForm','Rotate','Reverse','90')
+    super(pivotForm,self).__init__('pivotForm','Rotate','Reverse','90','Angle - deg:')
     self.btn1.clicked.connect(self.rotate)
     self.btn2.clicked.connect(self.reverse)
     self.show()
-    
   def rotate(self):
     if self.radio2.isChecked():
       FreeCAD.activeDocument().copyObject(FreeCADGui.Selection.getSelection()[0],True)
       frameCmd.pivotTheBeam(float(self.edit1.text()),ask4revert=False)
     else:
       frameCmd.pivotTheBeam(float(self.edit1.text()),ask4revert=False)
-      
   def reverse(self):
     frameCmd.pivotTheBeam(-2*float(self.edit1.text()),ask4revert=False)
-    self.close()
+    self.edit1.setText(str(-1*float(self.edit1.text())))
 
 class shiftForm(prototypeForm):
   def __init__(self):
-    super(shiftForm,self).__init__('shiftForm','Shift','Reverse','500')
+    super(shiftForm,self).__init__('shiftForm','Shift','Reverse','500','Distance  - mm:')
     self.btn1.clicked.connect(self.shift)
     self.btn2.clicked.connect(self.reverse)
     self.show()
-    
   def shift(self):
     edge=frameCmd.edges()[0]
     beam=frameCmd.beams()[0]
@@ -66,10 +67,32 @@ class shiftForm(prototypeForm):
       frameCmd.shiftTheBeam(beam,edge,float(self.edit1.text()),ask4revert=False)
     else:
       frameCmd.shiftTheBeam(beam,edge,float(self.edit1.text()),ask4revert=False)
-      
   def reverse(self):
     edge=frameCmd.edges()[0]
     beam=frameCmd.beams()[0]
     frameCmd.shiftTheBeam(beam,edge,-2*float(self.edit1.text()),ask4revert=False)
-    self.close()
+    self.edit1.setText(str(-1*float(self.edit1.text())))
 
+class fillForm(prototypeForm):
+  def __init__(self):
+    super(fillForm,self).__init__('fillForm','Select','Fill','<select a beam>','')
+    self.beam=None
+    self.btn1.clicked.connect(self.select)
+    self.btn2.clicked.connect(self.fill)
+    self.radio2.setChecked(True)
+    self.btn1.setFocus()
+    self.show()
+  def fill(self):
+    if self.beam!=None and len(frameCmd.edges())>0:
+      if self.radio1.isChecked():
+        frameCmd.placeTheBeam(self.beam,frameCmd.edges()[0])
+      else:
+        for edge in frameCmd.edges():
+          struct=FreeCAD.activeDocument().copyObject(self.beam,True)
+          frameCmd.placeTheBeam(struct,edge)
+        FreeCAD.activeDocument().recompute()
+  def select(self):
+    if frameCmd.beams()>0:
+      self.beam=frameCmd.beams()[0]
+      self.edit1.setText(self.beam.Label+':'+self.beam.Profile)
+      self.btn2.setFocus()    

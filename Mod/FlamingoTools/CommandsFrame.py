@@ -49,25 +49,8 @@ class spinSect:
 
 class fillFrame:
   def Activated(self):
-    import FreeCAD, FreeCADGui, frameCmd, frameObservers
-    selex=FreeCADGui.Selection.getSelectionEx()
-    if len(selex)>0:
-      beam=[i for i in FreeCADGui.Selection.getSelection() if i.TypeId=="Part::FeaturePython" and hasattr(i,"Height")][0]
-    edges=frameCmd.edges(selex,except1st=True)
-    print "Found ",len(edges)," valid edges."
-    if len(edges)>0:
-      for edge in edges:
-        struct=FreeCAD.activeDocument().copyObject(beam,True)
-        frameCmd.orientTheBeam(struct,edge)
-        FreeCAD.activeDocument().recompute()
-    else:
-      FreeCADGui.Selection.clearSelection()
-      s=frameObservers.fillFrameObserver()
-      FreeCADGui.Selection.addObserver(s)
-
-    def Deactivated():
-      FreeCADGui.Selection.removeObserver(s)
-      FreeCAD.Console.PrintMessage('fillFrame stopped\n')
+    import frameForms #frameCmd, frameObservers
+    form=frameForms.fillForm()
       
   def GetResources(self):
     return{'Pixmap':str(FreeCAD.getResourceDir() + "Mod/FlamingoTools/fillFrame.svg"),'MenuText':'fillTheFrame','ToolTip':'Fill the sketch of the frame with the selected beam'}
@@ -90,27 +73,14 @@ class alignFlange:
       s=frameObservers.alignFlangeObserver()
       FreeCADGui.Selection.addObserver(s)
 
-    def Deactivated():
-      FreeCADGui.Selection.removeObserver(s)
-      FreeCAD.Console.PrintMessage('alignFlange stopped\n')
-    
   def GetResources(self):
     return{'Pixmap':str(FreeCAD.getResourceDir() + "Mod/FlamingoTools/flangeAlign.svg"),'MenuText':'alignFlange','ToolTip':'Rotates the section of the beam to make the faces parallel to the first selection'}
 
 class shiftBeam:
   
   def Activated(self):
-    import FreeCAD, FreeCADGui, frameCmd, frameForms
-    selex=FreeCADGui.Selection.getSelectionEx()
-    if len(selex)>0:
-      edge=frameCmd.edges(selex)[0]
-      beam=selex[0].Object
-      from PySide import QtGui as qg
-      dist=float(qg.QInputDialog.getText(None,"shift a beam","distance?")[0])
-      frameCmd.shiftTheBeam(beam,edge,dist)
-    else:
-      FreeCADGui.Selection.clearSelection()
-      form=frameForms.shiftForm()
+    import frameForms
+    form=frameForms.shiftForm()
 
   def GetResources(self):
     return{'Pixmap':str(FreeCAD.getResourceDir() + "Mod/FlamingoTools/beamShift.svg"),'MenuText':'shiftTheBeam','ToolTip':'Move one beam along one edge'}
@@ -152,23 +122,14 @@ class alignEdge:
       s=frameObservers.alignEdgeObserver()
       FreeCADGui.Selection.addObserver(s)
     
-    def Deactivated():
-      FreeCADGui.Selection.removeObserver(s)
-      FreeCAD.Console.PrintMessage('alignEdge stopped\n')
-      
-    
   def GetResources(self):
     return{'Pixmap':str(FreeCAD.getResourceDir() + "Mod/FlamingoTools/edgeAlign.svg"),'MenuText':'alignEdge','ToolTip':'Align two edges: select two or pre-select several'}
 
 class pivotBeam:
   def Activated(self):
-    import FreeCAD, FreeCADGui, frameCmd, frameForms
-    edges=frameCmd.edges()
-    if len(edges)==1:
-      frameCmd.pivotTheBeam()
-    else:
-      FreeCADGui.Selection.clearSelection()
-      form=frameForms.pivotForm()
+    import frameForms
+    FreeCADGui.Selection.clearSelection()
+    form=frameForms.pivotForm()
       
     
   def GetResources(self):
