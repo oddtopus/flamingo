@@ -4,7 +4,7 @@ from PySide.QtCore import *
 from PySide.QtGui import *
 
 class prototypeForm(QWidget):
-  def __init__(self,winTitle,btn1Text,btn2Text,initVal,units):
+  def __init__(self,winTitle='Title',btn1Text='Button1',btn2Text='Button2',initVal='someVal',units='someUnit'):
     super(prototypeForm,self).__init__()
     self.setWindowFlags(Qt.WindowStaysOnTopHint)
     self.setWindowTitle(winTitle)
@@ -21,12 +21,12 @@ class prototypeForm(QWidget):
     self.radio1=QRadioButton()
     self.radio1.setChecked(True)
     self.radio2=QRadioButton()
-    radios=QWidget()
-    radios.setLayout(QFormLayout())
-    radios.layout().setAlignment(Qt.AlignJustify)
-    radios.layout().addRow('move',self.radio1)
-    radios.layout().addRow('copy',self.radio2)
-    self.mainVL.addWidget(radios)
+    self.radios=QWidget()
+    self.radios.setLayout(QFormLayout())
+    self.radios.layout().setAlignment(Qt.AlignJustify)
+    self.radios.layout().addRow('move',self.radio1)
+    self.radios.layout().addRow('copy',self.radio2)
+    self.mainVL.addWidget(self.radios)
     self.btn1=QPushButton(btn1Text)
     self.btn1.setDefault(True)
     self.btn2=QPushButton(btn2Text)
@@ -96,3 +96,23 @@ class fillForm(prototypeForm):
       self.beam=frameCmd.beams()[0]
       self.edit1.setText(self.beam.Label+':'+self.beam.Profile)
       self.btn2.setFocus()    
+
+class extendForm(prototypeForm):
+  'dialog for frameCmd.extendTheBeam()'
+  def __init__(self):
+    super(extendForm,self).__init__('extendForm','Target','Extend','<select a target shape>','')
+    self.target=None
+    self.btn1.clicked.connect(self.getTarget)
+    self.btn1.setFocus()
+    self.btn2.clicked.connect(self.extend)
+    self.radios.hide()
+    self.show()
+  def getTarget(self):
+    selex = FreeCADGui.Selection.getSelectionEx()
+    if len(selex[0].SubObjects)>0 and hasattr(selex[0].SubObjects[0],'ShapeType'):
+      self.target=selex[0].SubObjects[0]
+      self.edit1.setText(selex[0].Object.Label+':'+self.target.ShapeType)
+  def extend(self):
+    if self.target!=None and len(frameCmd.beams())>0:
+      for beam in frameCmd.beams():
+        frameCmd.extendTheBeam(beam,self.target)  

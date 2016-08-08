@@ -114,16 +114,16 @@ class stretchBeamObserver(frameObserverPrototype):
         FreeCADGui.Selection.removeObserver(self)
         FreeCAD.Console.PrintMessage("I quit.")
 
-class extend2edgeObserver(frameObserverPrototype): 
+class extendObserver(frameObserverPrototype): 
     def __init__(self):
-      super(extend2edgeObserver,self).__init__('First Select the target edge, then the beams to extend.')
+      super(extendObserver,self).__init__('First Select the target shape, then the beams to extend.')
       self.target=None
     def addSelection(self,doc,obj,sub,pnt):
       lastSel=FreeCAD.getDocument(doc).getObject(obj)
       subLastSel=lastSel.Shape.getElement(sub)
       if lastSel.TypeId=='Part::FeaturePython' and hasattr(lastSel,"Height") and self.target!=None:
         frameCmd.extendTheBeam(lastSel,self.target)
-      if self.target==None and subLastSel.ShapeType=="Edge":
+      if self.target==None and subLastSel.ShapeType in ["Edge","Face","Vertex"]:
         self.target=subLastSel
         FreeCAD.Console.PrintMessage('Target selected.\n')
 

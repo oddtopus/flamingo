@@ -1,4 +1,4 @@
-# from TemplatePyMod gui init module
+# TemplatePyMod gui init module
 # (c) 2007 Juergen Riegel LGPL
 
 #****************************************************************************
@@ -44,7 +44,7 @@ class flamingoToolsWorkbench ( Workbench ):
     self.appendToolbar("polarTools",list3)
     Log ('Loading Polar tools: done\n')
     import CommandsFrame
-    list4=["frameIt","fillFrame","alignFlange","levelBeam","pivotBeam","alignEdge","rotJoin","shiftBeam","spinSect","stretchBeam","extend2edge","adjustFrameAngle"]
+    list4=["frameIt","fillFrame","alignFlange","levelBeam","pivotBeam","alignEdge","rotJoin","shiftBeam","spinSect","stretchBeam","extend","adjustFrameAngle"]
     self.appendToolbar("frameTools",list4)
     Log ('Loading Frame tools: done\n')
     menu = ["Flamingo tools"]

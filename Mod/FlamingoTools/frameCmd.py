@@ -33,6 +33,34 @@ def faces(selex=[]):
     FreeCAD.Console.PrintError('\nNo valid selection.\n')
   return fcs
 
+def intersection(beam=None,face=None):   # funziona esattamente solo se d!=0, ovvero se l'origine non appartiene al piano della faccia, altrimenti approssima con coeff. "a,b,c" molto alti
+  from numpy import matrix
+  # only for quick testing:
+  if face==None:
+    face = faces()[0]
+  if beam==None:
+    beam=beams()[0]
+  
+  # definition of plane
+  range=face.ParameterRange
+  points=[face.valueAt(x,y) for x in range[:2] for y in range[2:]]
+  m=[[p.x,p.y,p.z] for p in points[:3]]
+  M=matrix(m)
+  abc=M.getI()*matrix('-1;-1;-1')      
+  a,b,c=[float(abc[i,0]) for i in [0,1,2]]
+  d=1
+  FreeCAD.Console.PrintMessage('a=%f b=%f c=%f d=%f\n' %(a,b,c,d))
+  # definition of line
+  base=beam.Placement.Base
+  FreeCAD.Console.PrintMessage('base=(%.2f,%.2f,%.2f)\n' %(base.x,base.y,base.z))
+  v=beam.Placement.Rotation.multVec(FreeCAD.Vector(0,0,1)).normalize()
+  FreeCAD.Console.PrintMessage('v=(%.2f,%.2f,%.2f)\n' %(v.x,v.y,v.z))
+  #intersection
+  k=-1*(a*base.x+b*base.y+c*base.z+d)/(a*v.x+b*v.y+c*v.z)
+  FreeCAD.Console.PrintMessage('k=%f\n' %float(k))
+  P=base+v.scale(k,k,k)
+  return P
+
 def isOrtho(e1=None,e2=None):
   if (e1==None or e2==None) and len(edges())>1:
     e1,e2=edges()[:2]
@@ -129,19 +157,25 @@ def stretchTheBeam(beam,L):
     beam.Height=L
       
 def extendTheBeam(beam,target):
-  '''arg1=beam, arg2=target: extend the beam to a plane defined by target.
-  If target is a Vertex the plane is the one normal to the axis of beam and includes target.
-  If target is an Edge or a Face, the plane is the one normal to the axis of beam that includes the CenterOfMass'''
+  '''arg1=beam, arg2=target: extend the beam to a plane, normal to its axis, defined by target.
+  If target is a Vertex the plane is the one that includes target.
+  If target is a Face, the plane is the one that includes the intersection between the axis of beam and the plane of the face.
+  Else, the plane is the one normal to the axis of beam that includes the CenterOfMass'''
   vBase=beam.Placement.Base
   vBeam=beam.Placement.Rotation.multVec(FreeCAD.Vector(0.0,0.0,1.0))
   h=beam.Height
   vTop=vBase+vBeam.scale(h,h,h)
-  if hasattr(target,"CenterOfMass"):
-    distBase=vBase.distanceToPlane(target.CenterOfMass,vBeam)
-    distTop=vTop.distanceToPlane(target.CenterOfMass,vBeam)
-  elif target.ShapeType=="Vertex":
+  if target.ShapeType=="Vertex":
     distBase=vBase.distanceToPlane(target.Point,vBeam)
     distTop=vTop.distanceToPlane(target.Point,vBeam)
+  elif target.ShapeType=="Face":
+    from Part import Point
+    Pint=Point(intersection(beam,target)).toShape()
+    distBase=vBase.distanceToPlane(Pint.Point,vBeam)
+    distTop=vTop.distanceToPlane(Pint.Point,vBeam)
+  elif hasattr(target,"CenterOfMass"):
+    distBase=vBase.distanceToPlane(target.CenterOfMass,vBeam)
+    distTop=vTop.distanceToPlane(target.CenterOfMass,vBeam)
   if distBase*distTop>0:
     if abs(distBase)>abs(distTop):
       beam.Height+=FreeCAD.Units.Quantity(str(abs(distTop))+"mm")

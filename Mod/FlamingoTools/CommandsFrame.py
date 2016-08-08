@@ -66,8 +66,8 @@ class alignFlange:
       for i in range(len(beams)):
         frameCmd.rotTheBeam(beams[i],faceBase,faces[i])
       FreeCAD.activeDocument().recompute()
-    elif len(faces)!=len(beams):
-      FreeCAD.Console.PrintError('Please select only 1 face per beam!\n')
+    #elif len(faces)!=len(beams):
+    #  FreeCAD.Console.PrintError('Please select only 1 face per beam!\n')
     else:
       FreeCADGui.Selection.clearSelection()
       s=frameObservers.alignFlangeObserver()
@@ -162,26 +162,37 @@ class stretchBeam:
   def GetResources(self):
     return{'Pixmap':str(FreeCAD.getResourceDir() + "Mod/FlamingoTools/beamStretch.svg"),'MenuText':'stretchTheBeam','ToolTip':'Changes the length of the beam, either according a preselected edge or a direct input'}
 
-class extend2edge:
+class extend:
   def Activated(self):
-    import FreeCAD, FreeCADGui, frameCmd, frameObservers
-    target=None
-    if len(frameCmd.edges())>0:
-      target= frameCmd.edges()[0]
-      beams=frameCmd.beams()
-      for beam in beams[1:]:
-        frameCmd.extendTheBeam(beam,target)
-    else:
-      FreeCADGui.Selection.clearSelection()
-      s=frameObservers.extend2edgeObserver()
-      FreeCADGui.Selection.addObserver(s)
+    import frameForms #FreeCAD, FreeCADGui, frameCmd, frameObservers
+    #target=None
+    #if len(frameCmd.faces())>0:
+    #  target= frameCmd.faces()[0]
+    #  beams=frameCmd.beams()
+    #  for beam in beams[1:]:
+    #    frameCmd.extendTheBeam(beam,target)
+    #elif len(frameCmd.edges())>0:
+    #  target= frameCmd.edges()[0]
+    #  beams=frameCmd.beams()
+    #  for beam in beams[1:]:
+    #    frameCmd.extendTheBeam(beam,target)
+    #elif len([vx for sx in FreeCADGui.Selection.getSelectionEx() for so in sx.SubObjects for vx in so.Vertexes])==1:
+    #  target=[vx for sx in FreeCADGui.Selection.getSelectionEx() for so in sx.SubObjects for vx in so.Vertexes][0]
+    #  beams=frameCmd.beams()
+    #  for beam in beams[1:]:
+    #    frameCmd.extendTheBeam(beam,target)
+    #else:
+    #  FreeCADGui.Selection.clearSelection()
+    #  s=frameObservers.extendObserver()
+    #  FreeCADGui.Selection.addObserver(s)
+    form=frameForms.extendForm()
     
     def Deactivated():
       FreeCADGui.Selection.removeObserver(s)
-      FreeCAD.Console.PrintMessage('extend2edge stopped\n')
+      FreeCAD.Console.PrintMessage('extend stopped\n')
     
   def GetResources(self):
-    return{'Pixmap':str(FreeCAD.getResourceDir() + "Mod/FlamingoTools/extend.svg"),'MenuText':'extend2edge','ToolTip':'Extend the beam to the c.o.m. of the target edge'}
+    return{'Pixmap':str(FreeCAD.getResourceDir() + "Mod/FlamingoTools/extend.svg"),'MenuText':'extend2edge','ToolTip':'Extend the beam either to a face, a vertex or the c.o.m. of the selected object'}
 
 class adjustFrameAngle:
   def Activated(self):
@@ -236,6 +247,6 @@ addCommand('levelBeam',levelBeam())
 addCommand('alignEdge',alignEdge())
 addCommand('pivotBeam',pivotBeam())
 addCommand('stretchBeam',stretchBeam())
-addCommand('extend2edge',extend2edge())
+addCommand('extend',extend())
 addCommand('adjustFrameAngle',adjustFrameAngle())
 addCommand('rotJoin',rotJoin())
