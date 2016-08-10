@@ -44,14 +44,18 @@ class pivotForm(prototypeForm):
     self.btn2.clicked.connect(self.reverse)
     self.show()
   def rotate(self):
+    FreeCAD.activeDocument().openTransaction()
     if self.radio2.isChecked():
       FreeCAD.activeDocument().copyObject(FreeCADGui.Selection.getSelection()[0],True)
       frameCmd.pivotTheBeam(float(self.edit1.text()),ask4revert=False)
     else:
       frameCmd.pivotTheBeam(float(self.edit1.text()),ask4revert=False)
+    FreeCAD.activeDocument().commitTransaction()
   def reverse(self):
+    FreeCAD.activeDocument().openTransaction()
     frameCmd.pivotTheBeam(-2*float(self.edit1.text()),ask4revert=False)
     self.edit1.setText(str(-1*float(self.edit1.text())))
+    FreeCAD.activeDocument().commitTransaction()
 
 class shiftForm(prototypeForm):
   def __init__(self):
@@ -62,16 +66,20 @@ class shiftForm(prototypeForm):
   def shift(self):
     edge=frameCmd.edges()[0]
     beam=frameCmd.beams()[0]
+    FreeCAD.activeDocument().openTransaction()
     if self.radio2.isChecked():
       FreeCAD.activeDocument().copyObject(FreeCADGui.Selection.getSelection()[0],True)
       frameCmd.shiftTheBeam(beam,edge,float(self.edit1.text()),ask4revert=False)
     else:
       frameCmd.shiftTheBeam(beam,edge,float(self.edit1.text()),ask4revert=False)
+    FreeCAD.activeDocument().commitTransaction()
   def reverse(self):
+    FreeCAD.activeDocument().openTransaction()
     edge=frameCmd.edges()[0]
     beam=frameCmd.beams()[0]
     frameCmd.shiftTheBeam(beam,edge,-2*float(self.edit1.text()),ask4revert=False)
     self.edit1.setText(str(-1*float(self.edit1.text())))
+    FreeCAD.activeDocument().commitTransaction()
 
 class fillForm(prototypeForm):
   def __init__(self):
@@ -84,6 +92,7 @@ class fillForm(prototypeForm):
     self.show()
   def fill(self):
     if self.beam!=None and len(frameCmd.edges())>0:
+      FreeCAD.activeDocument().openTransaction()
       if self.radio1.isChecked():
         frameCmd.placeTheBeam(self.beam,frameCmd.edges()[0])
       else:
@@ -91,6 +100,7 @@ class fillForm(prototypeForm):
           struct=FreeCAD.activeDocument().copyObject(self.beam,True)
           frameCmd.placeTheBeam(struct,edge)
         FreeCAD.activeDocument().recompute()
+      FreeCAD.activeDocument().commitTransaction()
   def select(self):
     if frameCmd.beams()>0:
       self.beam=frameCmd.beams()[0]
@@ -114,5 +124,7 @@ class extendForm(prototypeForm):
       self.edit1.setText(selex[0].Object.Label+':'+self.target.ShapeType)
   def extend(self):
     if self.target!=None and len(frameCmd.beams())>0:
+      FreeCAD.activeDocument().openTransaction()
       for beam in frameCmd.beams():
-        frameCmd.extendTheBeam(beam,self.target)  
+        frameCmd.extendTheBeam(beam,self.target)
+      FreeCAD.activeDocument().commitTransaction()  
