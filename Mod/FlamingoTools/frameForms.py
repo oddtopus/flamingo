@@ -154,6 +154,8 @@ class stretchForm(prototypeForm):
     if L!=None:
       self.edit1.setText(str(L))
   def stretch(self):
+    FreeCAD.activeDocument().openTransaction()
     for beam in frameCmd.beams():
       frameCmd.stretchTheBeam(beam,float(self.edit1.text()))
     FreeCAD.activeDocument().recompute()
+    FreeCAD.activeDocument().commitTransaction()
