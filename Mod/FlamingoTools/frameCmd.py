@@ -108,6 +108,16 @@ def spinTheBeam(beam, angle):
   if beam.TypeId=="Part::FeaturePython" and "Base" in beam.PropertiesList:
     beam.Base.Placement=FreeCAD.Placement(FreeCAD.Vector(0.0,0.0,0.0),FreeCAD.Rotation(FreeCAD.Vector(0.0,0.0,1.0),angle))
 
+def getDistance():
+  'measure the lenght of an edge or the distance of two shapes'
+  shapes=[y for x in FreeCADGui.Selection.getSelectionEx() for y in x.SubObjects if hasattr(y,'ShapeType')]
+  if len(shapes)==1 and shapes[0].ShapeType=='Edge':
+      return shapes[0].Length
+  elif len(shapes)>1:
+    return shapes[0].distToShape(shapes[1])[0]
+  else:
+    return None
+
 ############ COMMANDS #############
 
 def placeTheBeam(beam, edge):

@@ -52,7 +52,7 @@ class spinSect:
 class fillFrame:
   def Activated(self):
     import frameForms #frameCmd, frameObservers
-    form=frameForms.fillForm()
+    frameFormObj=frameForms.fillForm()
       
   def GetResources(self):
     return{'Pixmap':str(FreeCAD.getResourceDir() + "Mod/FlamingoTools/fillFrame.svg"),'MenuText':'fillTheFrame','ToolTip':'Fill the sketch of the frame with the selected beam'}
@@ -82,7 +82,7 @@ class shiftBeam:
   
   def Activated(self):
     import frameForms
-    form=frameForms.shiftForm()
+    frameFormObj=frameForms.shiftForm()
 
   def GetResources(self):
     return{'Pixmap':str(FreeCAD.getResourceDir() + "Mod/FlamingoTools/beamShift.svg"),'MenuText':'shiftTheBeam','ToolTip':'Move one beam along one edge'}
@@ -131,7 +131,7 @@ class pivotBeam:
   def Activated(self):
     import frameForms
     FreeCADGui.Selection.clearSelection()
-    form=frameForms.pivotForm()
+    frameFormObj=frameForms.pivotForm()
       
     
   def GetResources(self):
@@ -139,27 +139,8 @@ class pivotBeam:
 
 class stretchBeam:
   def Activated(self):
-    import FreeCAD, FreeCADGui, frameCmd, frameObservers
-    edges=frameCmd.edges(except1st=True)
-    beams=frameCmd.beams()
-    if len(edges)==1:
-      for beam in beams:
-        frameCmd.stretchTheBeam(beam,edges[0].Length)
-      FreeCAD.activeDocument().recompute()
-    elif len(beams)>1 and len(edges)==0:
-      from PySide.QtGui import QInputDialog as qid
-      dist=float(qid.getText(None,"stretch all beams","new length?")[0])
-      for beam in beams:
-        frameCmd.stretchTheBeam(beam,dist)
-      FreeCAD.activeDocument().recompute()
-    else:
-      FreeCADGui.Selection.clearSelection()
-      s=frameObservers.stretchBeamObserver()
-      FreeCADGui.Selection.addObserver(s)
-    
-    def Deactivated():
-      FreeCADGui.Selection.removeObserver(s)
-      FreeCAD.Console.PrintMessage('stretchBeam stopped\n')
+    import frameForms #FreeCAD, FreeCADGui, frameCmd, frameObservers
+    frameFormObj=frameForms.stretchForm()
     
   def GetResources(self):
     return{'Pixmap':str(FreeCAD.getResourceDir() + "Mod/FlamingoTools/beamStretch.svg"),'MenuText':'stretchTheBeam','ToolTip':'Changes the length of the beam, either according a preselected edge or a direct input'}
@@ -167,31 +148,7 @@ class stretchBeam:
 class extend:
   def Activated(self):
     import frameForms #FreeCAD, FreeCADGui, frameCmd, frameObservers
-    #target=None
-    #if len(frameCmd.faces())>0:
-    #  target= frameCmd.faces()[0]
-    #  beams=frameCmd.beams()
-    #  for beam in beams[1:]:
-    #    frameCmd.extendTheBeam(beam,target)
-    #elif len(frameCmd.edges())>0:
-    #  target= frameCmd.edges()[0]
-    #  beams=frameCmd.beams()
-    #  for beam in beams[1:]:
-    #    frameCmd.extendTheBeam(beam,target)
-    #elif len([vx for sx in FreeCADGui.Selection.getSelectionEx() for so in sx.SubObjects for vx in so.Vertexes])==1:
-    #  target=[vx for sx in FreeCADGui.Selection.getSelectionEx() for so in sx.SubObjects for vx in so.Vertexes][0]
-    #  beams=frameCmd.beams()
-    #  for beam in beams[1:]:
-    #    frameCmd.extendTheBeam(beam,target)
-    #else:
-    #  FreeCADGui.Selection.clearSelection()
-    #  s=frameObservers.extendObserver()
-    #  FreeCADGui.Selection.addObserver(s)
-    form=frameForms.extendForm()
-    
-    def Deactivated():
-      FreeCADGui.Selection.removeObserver(s)
-      FreeCAD.Console.PrintMessage('extend stopped\n')
+    frameFormObj=frameForms.extendForm()
     
   def GetResources(self):
     return{'Pixmap':str(FreeCAD.getResourceDir() + "Mod/FlamingoTools/extend.svg"),'MenuText':'extend2edge','ToolTip':'Extend the beam either to a face, a vertex or the c.o.m. of the selected object'}

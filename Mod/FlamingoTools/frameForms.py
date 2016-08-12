@@ -4,6 +4,7 @@ from PySide.QtCore import *
 from PySide.QtGui import *
 
 class prototypeForm(QWidget):
+  'prototype dialog for frame tools workbench'
   def __init__(self,winTitle='Title',btn1Text='Button1',btn2Text='Button2',initVal='someVal',units='someUnit'):
     super(prototypeForm,self).__init__()
     self.setWindowFlags(Qt.WindowStaysOnTopHint)
@@ -37,6 +38,7 @@ class prototypeForm(QWidget):
     self.mainVL.addWidget(self.buttons)
 
 class pivotForm(prototypeForm):
+  'dialog for pivotTheBeam()'
   def __init__(self):
     super(pivotForm,self).__init__('pivotForm','Rotate','Reverse','90','Angle - deg:')
     self.btn1.clicked.connect(self.rotate)
@@ -57,6 +59,7 @@ class pivotForm(prototypeForm):
     FreeCAD.activeDocument().commitTransaction()
 
 class shiftForm(prototypeForm):
+  'dialog for shiftTheBeam()' 
   def __init__(self):
     super(shiftForm,self).__init__('shiftForm','Shift','Reverse','500','Distance  - mm:')
     self.btn1.clicked.connect(self.shift)
@@ -64,6 +67,7 @@ class shiftForm(prototypeForm):
     self.btn3=QPushButton('Get Distance')
     self.btn3.clicked.connect(self.getDist)
     self.buttons.layout().addWidget(self.btn3)
+    self.btn1.setFocus()
     self.show()
   def shift(self):
     edge=frameCmd.edges()[0]
@@ -83,14 +87,12 @@ class shiftForm(prototypeForm):
     self.edit1.setText(str(-1*float(self.edit1.text())))
     FreeCAD.activeDocument().commitTransaction()
   def getDist(self):
-    shapes=[y for x in FreeCADGui.Selection.getSelectionEx() for y in x.SubObjects if hasattr(y,'ShapeType')]
-    if len(shapes)==1 and shapes[0].ShapeType=='Edge':
-        self.edit1.setText(str(shapes[0].Length))
-    elif len(shapes)>1:
-      self.edit1.setText(str(shapes[0].distToShape(shapes[1])[0]))
+    L=frameCmd.getDistance()
+    if L!=None:
+      self.edit1.setText(str(L))
     
-
 class fillForm(prototypeForm):
+  'dialog for fillFrame()'
   def __init__(self):
     super(fillForm,self).__init__('fillForm','Select','Fill','<select a beam>','')
     self.beam=None
@@ -136,4 +138,22 @@ class extendForm(prototypeForm):
       FreeCAD.activeDocument().openTransaction()
       for beam in frameCmd.beams():
         frameCmd.extendTheBeam(beam,self.target)
-      FreeCAD.activeDocument().commitTransaction()  
+      FreeCAD.activeDocument().commitTransaction()
+      
+class stretchForm(prototypeForm):
+  'dialog for stretchTheBeam()'
+  def __init__(self):
+    super(stretchForm,self).__init__('stretchForm','Get Length','Stretch','1000','mm')
+    self.btn1.clicked.connect(self.getL)
+    self.btn2.clicked.connect(self.stretch)
+    self.btn1.setFocus()
+    self.radios.hide()
+    self.show()
+  def getL(self):
+    L=frameCmd.getDistance()
+    if L!=None:
+      self.edit1.setText(str(L))
+  def stretch(self):
+    for beam in frameCmd.beams():
+      frameCmd.stretchTheBeam(beam,float(self.edit1.text()))
+    FreeCAD.activeDocument().recompute()
