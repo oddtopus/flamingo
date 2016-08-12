@@ -10,14 +10,14 @@ class prototypeForm(QWidget):
     self.setWindowTitle(winTitle)
     self.mainVL=QVBoxLayout()
     self.setLayout(self.mainVL)
-    inputs=QWidget()
-    inputs.setLayout(QFormLayout())
+    self.inputs=QWidget()
+    self.inputs.setLayout(QFormLayout())
     self.edit1=QLineEdit(initVal)
     self.edit1.setMinimumWidth(150)
     self.edit1.setAlignment(Qt.AlignHCenter)
     self.edit1.setMaximumWidth(60)
-    inputs.layout().addRow(units,self.edit1)
-    self.mainVL.addWidget(inputs)
+    self.inputs.layout().addRow(units,self.edit1)
+    self.mainVL.addWidget(self.inputs)
     self.radio1=QRadioButton()
     self.radio1.setChecked(True)
     self.radio2=QRadioButton()
@@ -30,12 +30,11 @@ class prototypeForm(QWidget):
     self.btn1=QPushButton(btn1Text)
     self.btn1.setDefault(True)
     self.btn2=QPushButton(btn2Text)
-    buttons=QWidget()
-    buttons.setLayout(QHBoxLayout())
-    buttons.layout().addWidget(self.btn1)
-    buttons.layout().addWidget(self.btn2)
-    self.mainVL.addWidget(buttons)
-
+    self.buttons=QWidget()
+    self.buttons.setLayout(QHBoxLayout())
+    self.buttons.layout().addWidget(self.btn1)
+    self.buttons.layout().addWidget(self.btn2)
+    self.mainVL.addWidget(self.buttons)
 
 class pivotForm(prototypeForm):
   def __init__(self):
@@ -62,6 +61,9 @@ class shiftForm(prototypeForm):
     super(shiftForm,self).__init__('shiftForm','Shift','Reverse','500','Distance  - mm:')
     self.btn1.clicked.connect(self.shift)
     self.btn2.clicked.connect(self.reverse)
+    self.btn3=QPushButton('Get Distance')
+    self.btn3.clicked.connect(self.getDist)
+    self.buttons.layout().addWidget(self.btn3)
     self.show()
   def shift(self):
     edge=frameCmd.edges()[0]
@@ -80,6 +82,13 @@ class shiftForm(prototypeForm):
     frameCmd.shiftTheBeam(beam,edge,-2*float(self.edit1.text()),ask4revert=False)
     self.edit1.setText(str(-1*float(self.edit1.text())))
     FreeCAD.activeDocument().commitTransaction()
+  def getDist(self):
+    shapes=[y for x in FreeCADGui.Selection.getSelectionEx() for y in x.SubObjects if hasattr(y,'ShapeType')]
+    if len(shapes)==1 and shapes[0].ShapeType=='Edge':
+        self.edit1.setText(str(shapes[0].Length))
+    elif len(shapes)>1:
+      self.edit1.setText(str(shapes[0].distToShape(shapes[1])[0]))
+    
 
 class fillForm(prototypeForm):
   def __init__(self):

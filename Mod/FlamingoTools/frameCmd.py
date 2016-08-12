@@ -3,6 +3,8 @@
 
 import FreeCAD,FreeCADGui
 
+############## AUXILIARY FUNCTIONS ###############
+
 def edges(selex=[], except1st=False):
   '''returns the list of edges in the selection set'''
   if len(selex)==0:
@@ -62,31 +64,51 @@ def intersection(beam=None,face=None):   # funziona esattamente solo se d!=0, ov
   return P
 
 def isOrtho(e1=None,e2=None):
-  if (e1==None or e2==None) and len(edges())>1:
-    e1,e2=edges()[:2]
-  return round(e1.tangentAt(0).dot(e2.tangentAt(0)),2)==0
+  '"True" if two Edges or Vectors or the normal of Faces are orthogonal (with a margin)'
+  v=[]
+  if (e1==None or e2==None):
+    if len(faces())>1:
+      e1,e2=faces()[:2]
+    elif len(edges())>1:
+      e1,e2=edges()[:2]
+  for e in [e1,e2]:
+    if hasattr(e,'ShapeType'):
+      if e.ShapeType=='Edge':
+        v.append(e.tangentAt(0))
+      elif e.ShapeType=='Face':
+        v.append(e.normalAt(0,0))
+    else:
+      v.append(e)
+  return round(v[0].dot(v[1]),2)==0
 
 def isParallel(e1=None,e2=None):
-  if (e1==None or e2==None) and len(edges())>1:
-    e1,e2=edges()[:2]
-  return round(e1.tangentAt(0).cross(e2.tangentAt(0)).Length,2)==0
+  '"True" if two Edges or Vectors or the normal of Faces are parallel (with a margin)'
+  v=[]
+  if (e1==None or e2==None):
+    if len(faces())>1:
+      e1,e2=faces()[:2]
+    elif len(edges())>1:
+      e1,e2=edges()[:2]
+  for e in [e1,e2]:
+    if hasattr(e,'ShapeType'):
+      if e.ShapeType=='Edge':
+        v.append(e.tangentAt(0))
+      elif e.ShapeType=='Face':
+        v.append(e.normalAt(0,0))
+    else:
+      v.append(e)
+  return round(v[0].cross(v[1]).Length,2)==0
 
-#def placeTheBeam(beam, beamAx):
-#  '''arg1=beam, arg2=axis: moves and resizes the selected beam on the selected edge'''
-#  beam.Placement.Rotation=FreeCAD.Rotation(FreeCAD.Vector(0,0,1),0)
-#  if beam.TypeId=="Part::FeaturePython" and beamAx.TypeId=="Part::TopoShape":
-#    newdir=beam.Placement.Rotation.Axis.cross(beamAx.tangentAt(0))
-#    beam.Placement.Base=beamAx.valueAt(0)
-#    beam.Placement.Rotation=FreeCAD.Rotation(newdir,90)
-#    beam.Height=beamAx.Length
-#    FreeCAD.activeDocument().recompute()
-#  else:
-#    FreeCAD.Console.PrintMessage("Wrong selection\n") 
+def beamAx(beam):
+  "returns the vector parallel to the beam's axis"
+  return beam.Placement.Rotation.multVec(FreeCAD.Vector(0.0,0.0,1.0)).normalize()
 
 def spinTheBeam(beam, angle):
   '''arg1=beam, arg2=angle: rotate the section of the beam'''
   if beam.TypeId=="Part::FeaturePython" and "Base" in beam.PropertiesList:
     beam.Base.Placement=FreeCAD.Placement(FreeCAD.Vector(0.0,0.0,0.0),FreeCAD.Rotation(FreeCAD.Vector(0.0,0.0,1.0),angle))
+
+############ COMMANDS #############
 
 def placeTheBeam(beam, edge):
   '''arg1= beam, arg2= edge: lay down the selected beam on the selected edge'''
@@ -161,18 +183,21 @@ def extendTheBeam(beam,target):
   If target is a Vertex the plane is the one that includes target.
   If target is a Face, the plane is the one that includes the intersection between the axis of beam and the plane of the face.
   Else, the plane is the one normal to the axis of beam that includes the CenterOfMass'''
+  distBase=distTop=0
   vBase=beam.Placement.Base
-  vBeam=beam.Placement.Rotation.multVec(FreeCAD.Vector(0.0,0.0,1.0))
+  #vBeam=beam.Placement.Rotation.multVec(FreeCAD.Vector(0.0,0.0,1.0))
+  vBeam=beamAx(beam)
   h=beam.Height
   vTop=vBase+vBeam.scale(h,h,h)
   if target.ShapeType=="Vertex":
     distBase=vBase.distanceToPlane(target.Point,vBeam)
     distTop=vTop.distanceToPlane(target.Point,vBeam)
   elif target.ShapeType=="Face":
-    from Part import Point
-    Pint=Point(intersection(beam,target)).toShape()
-    distBase=vBase.distanceToPlane(Pint.Point,vBeam)
-    distTop=vTop.distanceToPlane(Pint.Point,vBeam)
+    if not isOrtho(target,vBeam):
+      from Part import Point
+      Pint=Point(intersection(beam,target)).toShape()
+      distBase=vBase.distanceToPlane(Pint.Point,vBeam)
+      distTop=vTop.distanceToPlane(Pint.Point,vBeam)
   elif hasattr(target,"CenterOfMass"):
     distBase=vBase.distanceToPlane(target.CenterOfMass,vBeam)
     distTop=vTop.distanceToPlane(target.CenterOfMass,vBeam)

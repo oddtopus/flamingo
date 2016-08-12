@@ -36,13 +36,15 @@ class spinSect:
   def Activated(self):
     import FreeCAD, FreeCADGui, frameCmd
     from math import pi
-    if FreeCADGui.Selection.countObjectsOfType("Part::FeaturePython")==1:
-      for o in FreeCADGui.Selection.getSelection():
-        if o.TypeId=="Part::FeaturePython":
-          beam=o
-          break
-      frameCmd.spinTheBeam(beam,FreeCADGui.Selection.getSelection()[0].Base.Placement.Rotation.Angle/pi*180+45)
-      FreeCAD.activeDocument().recompute()
+    #if FreeCADGui.Selection.countObjectsOfType("Part::FeaturePython")==1:
+    #  for o in FreeCADGui.Selection.getSelection():
+    #    if o.TypeId=="Part::FeaturePython":
+    #      beam=o
+    #      break
+    for beam in frameCmd.beams():
+      frameCmd.spinTheBeam(beam,beam.Base.Placement.Rotation.Angle/pi*180+45)
+    #  frameCmd.spinTheBeam(beam,FreeCADGui.Selection.getSelection()[0].Base.Placement.Rotation.Angle/pi*180+45)
+    FreeCAD.activeDocument().recompute()
         
   def GetResources(self):
     return{'Pixmap':str(FreeCAD.getResourceDir() + "Mod/FlamingoTools/beamRot.svg"),'MenuText':'Beam-fit','ToolTip':'Rotates the section of the beam by 45 degrees'}
