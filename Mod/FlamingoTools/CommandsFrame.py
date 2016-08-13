@@ -82,7 +82,7 @@ class shiftBeam:
   
   def Activated(self):
     import frameForms
-    frameFormObj=frameForms.shiftForm()
+    frameFormObj=frameForms.translateForm()
 
   def GetResources(self):
     return{'Pixmap':str(FreeCAD.getResourceDir() + "Mod/FlamingoTools/beamShift.svg"),'MenuText':'shiftTheBeam','ToolTip':'Move one beam along one edge'}
@@ -155,21 +155,10 @@ class extend:
 
 class adjustFrameAngle:
   def Activated(self):
-    import FreeCAD, FreeCADGui, frameCmd, frameObservers
-    edges=frameCmd.edges()
-    beams=frameCmd.beams()
-    if len(edges)==len(beams)==2:
-      beams.reverse()
-      for i in range(len(edges)):
-      	frameCmd.extendTheBeam(beams[i],edges[i])
-    else:
-      FreeCADGui.Selection.clearSelection()
-      s=frameObservers.adjustAngleObserver()
-      FreeCADGui.Selection.addObserver(s)
-    
-    def Deactivated():
-      FreeCADGui.Selection.removeObserver(s)
-      FreeCAD.Console.PrintMessage('extend2edge stopped\n')
+    import FreeCADGui, frameObservers
+    FreeCADGui.Selection.clearSelection()
+    s=frameObservers.adjustAngleObserver()
+    FreeCADGui.Selection.addObserver(s)
     
   def GetResources(self):
     return{'Pixmap':str(FreeCAD.getResourceDir() + "Mod/FlamingoTools/adjustAngle.svg"),'MenuText':'adjustFrameAngle','ToolTip':'Adjust the angle of frame by two edges'}

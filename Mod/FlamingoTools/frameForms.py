@@ -45,7 +45,7 @@ class pivotForm(prototypeForm):
     self.btn2.clicked.connect(self.reverse)
     self.show()
   def rotate(self):
-    FreeCAD.activeDocument().openTransaction()
+    FreeCAD.activeDocument().openTransaction('Rotate')
     if self.radio2.isChecked():
       FreeCAD.activeDocument().copyObject(FreeCADGui.Selection.getSelection()[0],True)
       frameCmd.pivotTheBeam(float(self.edit1.text()),ask4revert=False)
@@ -53,12 +53,12 @@ class pivotForm(prototypeForm):
       frameCmd.pivotTheBeam(float(self.edit1.text()),ask4revert=False)
     FreeCAD.activeDocument().commitTransaction()
   def reverse(self):
-    FreeCAD.activeDocument().openTransaction()
+    FreeCAD.activeDocument().openTransaction('Reverse rotate')
     frameCmd.pivotTheBeam(-2*float(self.edit1.text()),ask4revert=False)
     self.edit1.setText(str(-1*float(self.edit1.text())))
     FreeCAD.activeDocument().commitTransaction()
 
-class shiftForm(prototypeForm):
+class shiftForm(prototypeForm):  # OBSOLETE: replaced by translateForm
   'dialog for shiftTheBeam()' 
   def __init__(self):
     super(shiftForm,self).__init__('shiftForm','Shift','Reverse','500','Distance  - mm:')
@@ -69,10 +69,10 @@ class shiftForm(prototypeForm):
     self.buttons.layout().addWidget(self.btn3)
     self.btn1.setFocus()
     self.show()
-  def shift(self):
+  def shift(self):    
     edge=frameCmd.edges()[0]
     beam=frameCmd.beams()[0]
-    FreeCAD.activeDocument().openTransaction()
+    FreeCAD.activeDocument().openTransaction('Shift')
     if self.radio2.isChecked():
       FreeCAD.activeDocument().copyObject(FreeCADGui.Selection.getSelection()[0],True)
       frameCmd.shiftTheBeam(beam,edge,float(self.edit1.text()),ask4revert=False)
@@ -80,7 +80,7 @@ class shiftForm(prototypeForm):
       frameCmd.shiftTheBeam(beam,edge,float(self.edit1.text()),ask4revert=False)
     FreeCAD.activeDocument().commitTransaction()
   def reverse(self):
-    FreeCAD.activeDocument().openTransaction()
+    FreeCAD.activeDocument().openTransaction('Reverse shift')
     edge=frameCmd.edges()[0]
     beam=frameCmd.beams()[0]
     frameCmd.shiftTheBeam(beam,edge,-2*float(self.edit1.text()),ask4revert=False)
@@ -103,7 +103,7 @@ class fillForm(prototypeForm):
     self.show()
   def fill(self):
     if self.beam!=None and len(frameCmd.edges())>0:
-      FreeCAD.activeDocument().openTransaction()
+      FreeCAD.activeDocument().openTransaction('Fill frame')
       if self.radio1.isChecked():
         frameCmd.placeTheBeam(self.beam,frameCmd.edges()[0])
       else:
@@ -135,7 +135,7 @@ class extendForm(prototypeForm):
       self.edit1.setText(selex[0].Object.Label+':'+self.target.ShapeType)
   def extend(self):
     if self.target!=None and len(frameCmd.beams())>0:
-      FreeCAD.activeDocument().openTransaction()
+      FreeCAD.activeDocument().openTransaction('Extend beam')
       for beam in frameCmd.beams():
         frameCmd.extendTheBeam(beam,self.target)
       FreeCAD.activeDocument().commitTransaction()
@@ -154,8 +154,52 @@ class stretchForm(prototypeForm):
     if L!=None:
       self.edit1.setText(str(L))
   def stretch(self):
-    FreeCAD.activeDocument().openTransaction()
+    FreeCAD.activeDocument().openTransaction('Stretch beam')
     for beam in frameCmd.beams():
       frameCmd.stretchTheBeam(beam,float(self.edit1.text()))
     FreeCAD.activeDocument().recompute()
     FreeCAD.activeDocument().commitTransaction()
+    
+class translateForm(prototypeForm):
+  'dialog for moving blocks'
+  def __init__(self):
+    super(translateForm,self).__init__('translateForm','Get Displacement','Translate','0','x - mm')
+    self.btn1.clicked.connect(self.getDisp)
+    self.btn2.clicked.connect(self.translateTheBeams)
+    self.edit2=QLineEdit('0')
+    self.edit2.setMinimumWidth(150)
+    self.edit2.setAlignment(Qt.AlignHCenter)
+    self.edit2.setMaximumWidth(60)
+    self.inputs.layout().addRow('y - mm',self.edit2)
+    self.edit3=QLineEdit('0')
+    self.edit3.setMinimumWidth(150)
+    self.edit3.setAlignment(Qt.AlignHCenter)
+    self.edit3.setMaximumWidth(60)
+    self.inputs.layout().addRow('z - mm',self.edit3)
+    self.btn1.setFocus()
+    self.show()
+  def getDisp(self):
+    shapes=[y for x in FreeCADGui.Selection.getSelectionEx() for y in x.SubObjects if hasattr(y,'ShapeType')][:2]
+    if len(shapes)>1:
+      base,target=shapes[:2]
+      disp=None
+      if base.ShapeType==target.ShapeType=='Vertex':
+        disp=target.Point-base.Point
+      if base.ShapeType==target.ShapeType=='Edge':
+        disp=target.CenterOfMass-base.CenterOfMass
+      if disp!=None:
+        dx,dy,dz=list(disp)
+        self.edit1.setText(str(dx))
+        self.edit2.setText(str(dy))
+        self.edit3.setText(str(dz))
+  def translateTheBeams(self):
+    disp=FreeCAD.Vector(float(self.edit1.text()),float(self.edit2.text()),float(self.edit3.text()))
+    FreeCAD.activeDocument().openTransaction('Translate')    
+    if self.radio2.isChecked():
+      for o in set(FreeCADGui.Selection.getSelection()):
+        FreeCAD.activeDocument().copyObject(o,True)
+    for o in set(FreeCADGui.Selection.getSelection()):
+      o.Placement.move(disp)
+    FreeCAD.activeDocument().recompute()
+    FreeCAD.activeDocument().commitTransaction()    
+

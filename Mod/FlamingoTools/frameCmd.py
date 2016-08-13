@@ -35,33 +35,44 @@ def faces(selex=[]):
     FreeCAD.Console.PrintError('\nNo valid selection.\n')
   return fcs
 
-def intersection(beam=None,face=None):   # funziona esattamente solo se d!=0, ovvero se l'origine non appartiene al piano della faccia, altrimenti approssima con coeff. "a,b,c" molto alti
-  from numpy import matrix
+def intersection(base=None,v=None,face=None):   
   # only for quick testing:
-  if face==None:
+  if base==v==face==None:
     face = faces()[0]
-  if beam==None:
     beam=beams()[0]
+    base=beam.Placement.Base
+    v=beamAx(beam)
   
+  # funziona esattamente solo se d!=0, ovvero se l'origine non appartiene al piano della faccia, altrimenti approssima con coeff. "a,b,c" molto alti :
+  #from numpy import matrix
   # definition of plane
-  range=face.ParameterRange
-  points=[face.valueAt(x,y) for x in range[:2] for y in range[2:]]
-  m=[[p.x,p.y,p.z] for p in points[:3]]
-  M=matrix(m)
-  abc=M.getI()*matrix('-1;-1;-1')      
-  a,b,c=[float(abc[i,0]) for i in [0,1,2]]
-  d=1
-  FreeCAD.Console.PrintMessage('a=%f b=%f c=%f d=%f\n' %(a,b,c,d))
-  # definition of line
-  base=beam.Placement.Base
-  FreeCAD.Console.PrintMessage('base=(%.2f,%.2f,%.2f)\n' %(base.x,base.y,base.z))
-  v=beam.Placement.Rotation.multVec(FreeCAD.Vector(0,0,1)).normalize()
-  FreeCAD.Console.PrintMessage('v=(%.2f,%.2f,%.2f)\n' %(v.x,v.y,v.z))
-  #intersection
-  k=-1*(a*base.x+b*base.y+c*base.z+d)/(a*v.x+b*v.y+c*v.z)
-  FreeCAD.Console.PrintMessage('k=%f\n' %float(k))
-  P=base+v.scale(k,k,k)
-  return P
+  #range=face.ParameterRange
+  #points=[face.valueAt(x,y) for x in range[:2] for y in range[2:]]
+  #m=[[p.x,p.y,p.z] for p in points[:3]]
+  #M=matrix(m)
+  #abc=M.getI()*matrix('-1;-1;-1')      
+  #a,b,c=[float(abc[i,0]) for i in [0,1,2]]
+  #d=1
+  # MATEMATICA + ROBUSTA:
+  if isOrtho(v,face):
+    FreeCAD.Console.PrintError('Direction of projection and Face are parallel.\n')
+    return None
+  else:
+    a,b,c=list(face.normalAt(0,0))
+    d=-face.CenterOfMass.dot(face.normalAt(0,0))
+    FreeCAD.Console.PrintMessage('a=%.2f b=%.2f c=%.2f d=%.2f\n' %(a,b,c,d))
+    
+    # definition of line
+    #if not beam==None:
+    #  base=beam.Placement.Base
+    #  v=beamAx(beam)
+    FreeCAD.Console.PrintMessage('base=(%.2f,%.2f,%.2f)\n' %(base.x,base.y,base.z))
+    FreeCAD.Console.PrintMessage('v=(%.2f,%.2f,%.2f)\n' %(v.x,v.y,v.z))
+    #intersection
+    k=-1*(a*base.x+b*base.y+c*base.z+d)/(a*v.x+b*v.y+c*v.z)
+    FreeCAD.Console.PrintMessage('k=%f\n' %float(k))
+    P=base+v.scale(k,k,k)
+    return P
 
 def isOrtho(e1=None,e2=None):
   '"True" if two Edges or Vectors or the normal of Faces are orthogonal (with a margin)'
@@ -103,11 +114,6 @@ def beamAx(beam):
   "returns the vector parallel to the beam's axis"
   return beam.Placement.Rotation.multVec(FreeCAD.Vector(0.0,0.0,1.0)).normalize()
 
-def spinTheBeam(beam, angle):
-  '''arg1=beam, arg2=angle: rotate the section of the beam'''
-  if beam.TypeId=="Part::FeaturePython" and "Base" in beam.PropertiesList:
-    beam.Base.Placement=FreeCAD.Placement(FreeCAD.Vector(0.0,0.0,0.0),FreeCAD.Rotation(FreeCAD.Vector(0.0,0.0,1.0),angle))
-
 def getDistance():
   'measure the lenght of an edge or the distance of two shapes'
   shapes=[y for x in FreeCADGui.Selection.getSelectionEx() for y in x.SubObjects if hasattr(y,'ShapeType')]
@@ -119,6 +125,11 @@ def getDistance():
     return None
 
 ############ COMMANDS #############
+
+def spinTheBeam(beam, angle):
+  '''arg1=beam, arg2=angle: rotate the section of the beam'''
+  if beam.TypeId=="Part::FeaturePython" and "Base" in beam.PropertiesList:
+    beam.Base.Placement=FreeCAD.Placement(FreeCAD.Vector(0.0,0.0,0.0),FreeCAD.Rotation(FreeCAD.Vector(0.0,0.0,1.0),angle))
 
 def placeTheBeam(beam, edge):
   '''arg1= beam, arg2= edge: lay down the selected beam on the selected edge'''
@@ -137,7 +148,7 @@ def rotTheBeam(beam,faceBase,faceAlign):
   rot=FreeCAD.Rotation(n2,n1)
   beam.Placement.Rotation=rot.multiply(beam.Placement.Rotation)
 
-def shiftTheBeam(beam,edge,dist=100, ask4revert=True):
+def shiftTheBeam(beam,edge,dist=100, ask4revert=True):   # OBSOLETE: replaced by translateForm
   '''arg1=beam, arg2=edge, arg3=dist=100: shifts the beam along the edge by dist (default 100)'''
   vect=edge.valueAt(edge.LastParameter)-edge.valueAt(edge.FirstParameter)
   vect.normalize()
@@ -205,7 +216,7 @@ def extendTheBeam(beam,target):
   elif target.ShapeType=="Face":
     if not isOrtho(target,vBeam):
       from Part import Point
-      Pint=Point(intersection(beam,target)).toShape()
+      Pint=Point(intersection(beam.Placement.Base,beamAx(beam),target)).toShape()
       distBase=vBase.distanceToPlane(Pint.Point,vBeam)
       distTop=vTop.distanceToPlane(Pint.Point,vBeam)
   elif hasattr(target,"CenterOfMass"):

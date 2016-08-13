@@ -63,6 +63,7 @@ class levelBeamObserver(frameObserverPrototype):
       if subObject.ShapeType=="Face":
         if self.targetFace==None:
           self.targetFace=subObject
+          FreeCAD.Console.PrintMessage('Target face selected.\n')
         else:
           beam=FreeCAD.getDocument(doc).getObject(obj)
           frameCmd.levelTheBeam(beam,[self.targetFace,subObject])
