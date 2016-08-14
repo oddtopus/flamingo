@@ -14,7 +14,7 @@ class prototypeForm(QWidget):
     self.inputs=QWidget()
     self.inputs.setLayout(QFormLayout())
     self.edit1=QLineEdit(initVal)
-    self.edit1.setMinimumWidth(150)
+    self.edit1.setMinimumWidth(40)
     self.edit1.setAlignment(Qt.AlignHCenter)
     self.edit1.setMaximumWidth(60)
     self.inputs.layout().addRow(units,self.edit1)
@@ -96,6 +96,7 @@ class fillForm(prototypeForm):
   def __init__(self):
     super(fillForm,self).__init__('fillForm','Select','Fill','<select a beam>','')
     self.beam=None
+    self.edit1.setMinimumWidth(150)
     self.btn1.clicked.connect(self.select)
     self.btn2.clicked.connect(self.fill)
     self.radio2.setChecked(True)
@@ -123,6 +124,7 @@ class extendForm(prototypeForm):
   def __init__(self):
     super(extendForm,self).__init__('extendForm','Target','Extend','<select a target shape>','')
     self.target=None
+    self.edit1.setMinimumWidth(150)
     self.btn1.clicked.connect(self.getTarget)
     self.btn1.setFocus()
     self.btn2.clicked.connect(self.extend)
@@ -160,23 +162,35 @@ class stretchForm(prototypeForm):
     FreeCAD.activeDocument().recompute()
     FreeCAD.activeDocument().commitTransaction()
     
-class translateForm(prototypeForm):
+class translateForm(prototypeForm):   #add selection options in getDisp()
   'dialog for moving blocks'
   def __init__(self):
-    super(translateForm,self).__init__('translateForm','Get Displacement','Translate','0','x - mm')
+    super(translateForm,self).__init__('translateForm','Displacement','Vector','0','x - mm')
     self.btn1.clicked.connect(self.getDisp)
-    self.btn2.clicked.connect(self.translateTheBeams)
+    self.btn1.setFocus()
+    self.btn2.clicked.connect(self.getVect)
+    self.edit1.setMaximumWidth(120)
     self.edit2=QLineEdit('0')
-    self.edit2.setMinimumWidth(150)
+    self.edit2.setMinimumWidth(40)
     self.edit2.setAlignment(Qt.AlignHCenter)
-    self.edit2.setMaximumWidth(60)
+    self.edit2.setMaximumWidth(120)
     self.inputs.layout().addRow('y - mm',self.edit2)
     self.edit3=QLineEdit('0')
-    self.edit3.setMinimumWidth(150)
+    self.edit3.setMinimumWidth(40)
     self.edit3.setAlignment(Qt.AlignHCenter)
-    self.edit3.setMaximumWidth(60)
+    self.edit3.setMaximumWidth(120)
     self.inputs.layout().addRow('z - mm',self.edit3)
-    self.btn1.setFocus()
+    self.edit4=QLineEdit('1')
+    self.edit4.setMinimumWidth(40)
+    self.edit4.setAlignment(Qt.AlignHCenter)
+    self.edit4.setMaximumWidth(120)
+    self.inputs.layout().addRow('Multiple',self.edit4)
+    self.btn3=QPushButton('Translate')
+    self.btn3.clicked.connect(self.translateTheBeams)
+    self.buttons2=QWidget()
+    self.buttons2.setLayout(QHBoxLayout())
+    self.buttons2.layout().addWidget(self.btn3)
+    self.mainVL.addWidget(self.buttons2)
     self.show()
   def getDisp(self):
     shapes=[y for x in FreeCADGui.Selection.getSelectionEx() for y in x.SubObjects if hasattr(y,'ShapeType')][:2]
@@ -187,13 +201,26 @@ class translateForm(prototypeForm):
         disp=target.Point-base.Point
       if base.ShapeType==target.ShapeType=='Edge':
         disp=target.CenterOfMass-base.CenterOfMass
+      if base.ShapeType=='Vertex' and target.ShapeType=='Face':
+        disp=frameCmd.intersection(base.Point,target.normalAt(0,0),target)-base.Point
+      if base.ShapeType=='Face' and target.ShapeType=='Vertex':
+        disp=target.Point-frameCmd.intersection(target.Point,base.normalAt(0,0),base)
       if disp!=None:
         dx,dy,dz=list(disp)
-        self.edit1.setText(str(dx))
-        self.edit2.setText(str(dy))
-        self.edit3.setText(str(dz))
+        self.edit1.setText(str(round(dx,3)))
+        self.edit2.setText(str(round(dy,3)))
+        self.edit3.setText(str(round(dz,3)))
+        self.edit4.setText('1')
+  def getVect(self):
+    if len(frameCmd.edges())>0:
+      edge=frameCmd.edges()[0]
+      dx,dy,dz=list(edge.tangentAt(0))
+      self.edit1.setText(str(round(dx,3)))
+      self.edit2.setText(str(round(dy,3)))
+      self.edit3.setText(str(round(dz,3)))
+      self.edit4.setText(str(edge.Length))
   def translateTheBeams(self):
-    disp=FreeCAD.Vector(float(self.edit1.text()),float(self.edit2.text()),float(self.edit3.text()))
+    disp=FreeCAD.Vector(float(self.edit1.text()),float(self.edit2.text()),float(self.edit3.text())).scale(float(self.edit4.text()),float(self.edit4.text()),float(self.edit4.text()))
     FreeCAD.activeDocument().openTransaction('Translate')    
     if self.radio2.isChecked():
       for o in set(FreeCADGui.Selection.getSelection()):
