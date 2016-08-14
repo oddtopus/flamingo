@@ -130,7 +130,7 @@ class alignEdge:
 class pivotBeam:
   def Activated(self):
     import frameForms
-    FreeCADGui.Selection.clearSelection()
+    #FreeCADGui.Selection.clearSelection()
     frameFormObj=frameForms.pivotForm()
       
     

@@ -185,6 +185,11 @@ class translateForm(prototypeForm):   #add selection options in getDisp()
     self.edit4.setAlignment(Qt.AlignHCenter)
     self.edit4.setMaximumWidth(120)
     self.inputs.layout().addRow('Multiple',self.edit4)
+    self.edit5=QLineEdit('1')
+    self.edit5.setMinimumWidth(40)
+    self.edit5.setAlignment(Qt.AlignHCenter)
+    self.edit5.setMaximumWidth(120)
+    self.inputs.layout().addRow('Steps',self.edit5)
     self.btn3=QPushButton('Translate')
     self.btn3.clicked.connect(self.translateTheBeams)
     self.buttons2=QWidget()
@@ -193,6 +198,7 @@ class translateForm(prototypeForm):   #add selection options in getDisp()
     self.mainVL.addWidget(self.buttons2)
     self.show()
   def getDisp(self):
+    roundDigits=3
     shapes=[y for x in FreeCADGui.Selection.getSelectionEx() for y in x.SubObjects if hasattr(y,'ShapeType')][:2]
     if len(shapes)>1:
       base,target=shapes[:2]
@@ -206,21 +212,24 @@ class translateForm(prototypeForm):   #add selection options in getDisp()
       if base.ShapeType=='Face' and target.ShapeType=='Vertex':
         disp=target.Point-frameCmd.intersection(target.Point,base.normalAt(0,0),base)
       if disp!=None:
+        self.edit4.setText(str(disp.Length))
+        disp.normalize()
         dx,dy,dz=list(disp)
-        self.edit1.setText(str(round(dx,3)))
-        self.edit2.setText(str(round(dy,3)))
-        self.edit3.setText(str(round(dz,3)))
-        self.edit4.setText('1')
+        self.edit1.setText(str(round(dx,roundDigits)))
+        self.edit2.setText(str(round(dy,roundDigits)))
+        self.edit3.setText(str(round(dz,roundDigits)))
   def getVect(self):
+    roundDigits=3
     if len(frameCmd.edges())>0:
       edge=frameCmd.edges()[0]
-      dx,dy,dz=list(edge.tangentAt(0))
-      self.edit1.setText(str(round(dx,3)))
-      self.edit2.setText(str(round(dy,3)))
-      self.edit3.setText(str(round(dz,3)))
       self.edit4.setText(str(edge.Length))
+      dx,dy,dz=list(edge.tangentAt(0))
+      self.edit1.setText(str(round(dx,roundDigits)))
+      self.edit2.setText(str(round(dy,roundDigits)))
+      self.edit3.setText(str(round(dz,roundDigits)))
   def translateTheBeams(self):
-    disp=FreeCAD.Vector(float(self.edit1.text()),float(self.edit2.text()),float(self.edit3.text())).scale(float(self.edit4.text()),float(self.edit4.text()),float(self.edit4.text()))
+    scale=float(self.edit4.text())/float(self.edit5.text())
+    disp=FreeCAD.Vector(float(self.edit1.text()),float(self.edit2.text()),float(self.edit3.text())).scale(scale,scale,scale)
     FreeCAD.activeDocument().openTransaction('Translate')    
     if self.radio2.isChecked():
       for o in set(FreeCADGui.Selection.getSelection()):
