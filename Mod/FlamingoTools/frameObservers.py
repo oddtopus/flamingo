@@ -130,7 +130,7 @@ class extendObserver(frameObserverPrototype):
 
 class adjustAngleObserver(frameObserverPrototype): 
     def __init__(self):
-      super(adjustAngleObserver,self).__init__('Select 2 edges$')
+      super(adjustAngleObserver,self).__init__('Select 2 edges')
       self.edges=[]
       self.beams=[]
     def addSelection(self,doc,obj,sub,pnt):

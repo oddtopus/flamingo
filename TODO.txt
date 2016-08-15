@@ -1,4 +1,0 @@
-- manuals from the home web page of this repository
-- add non-modal dialogs with more options, selection tools etc. for each command
-- remove automatically selection observers and callbacks when switching to another command, without the need to press [ESC] each time. That make an odd behaviour of FreeCAD sometimes.
-- improve frameCmd.rotjoinTheBeam(), that doesn't satisfy me completely...

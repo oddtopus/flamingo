@@ -1,3 +1,6 @@
+# FreeCAD Frame Tools module  
+# (c) 2016 Riccardo Treu LGPL
+
 import FreeCAD,FreeCADGui
 import frameCmd
 from PySide.QtCore import *
@@ -146,6 +149,8 @@ class stretchForm(prototypeForm):
   'dialog for stretchTheBeam()'
   def __init__(self):
     super(stretchForm,self).__init__('stretchForm','Get Length','Stretch','1000','mm')
+    self.edit1.setMaximumWidth(150)
+    self.edit1.setMinimumWidth(40)
     self.btn1.clicked.connect(self.getL)
     self.btn2.clicked.connect(self.stretch)
     self.btn1.setFocus()
@@ -213,6 +218,7 @@ class translateForm(prototypeForm):   #add selection options in getDisp()
         disp=target.Point-frameCmd.intersection(target.Point,base.normalAt(0,0),base)
       if disp!=None:
         self.edit4.setText(str(disp.Length))
+        self.edit5.setText('1')
         disp.normalize()
         dx,dy,dz=list(disp)
         self.edit1.setText(str(round(dx,roundDigits)))
@@ -223,6 +229,7 @@ class translateForm(prototypeForm):   #add selection options in getDisp()
     if len(frameCmd.edges())>0:
       edge=frameCmd.edges()[0]
       self.edit4.setText(str(edge.Length))
+      self.edit5.setText('1')
       dx,dy,dz=list(edge.tangentAt(0))
       self.edit1.setText(str(round(dx,roundDigits)))
       self.edit2.setText(str(round(dy,roundDigits)))
