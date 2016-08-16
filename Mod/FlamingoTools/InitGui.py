@@ -32,8 +32,8 @@ class flamingoToolsWorkbench ( Workbench ):
   ToolTip = "Flamingo tools workbench"
   def Initialize(self):
     import CommandsEagle
-    list = ["bareImport","doBrdImport","doBrdDispose"]
-    self.appendToolbar("eagleTools",list)
+    list1 = ["bareImport","doBrdImport","doBrdDispose"]
+    self.appendToolbar("eagleTools",list1)
     Log ('Loading Eagle tools: done\n')
     import CommandsSpSh
     list2=["findFirst","queryModel"]
@@ -44,12 +44,12 @@ class flamingoToolsWorkbench ( Workbench ):
     self.appendToolbar("polarTools",list3)
     Log ('Loading Polar tools: done\n')
     import CommandsFrame
-    list4=["frameIt","fillFrame","alignFlange","levelBeam","pivotBeam","alignEdge","rotJoin","shiftBeam","spinSect","stretchBeam","extend","adjustFrameAngle"]
+    list4=["frameIt","fillFrame","alignFlange","spinSect","pivotBeam","levelBeam","alignEdge","rotJoin","shiftBeam","stretchBeam","extend","adjustFrameAngle"]
     self.appendToolbar("frameTools",list4)
     Log ('Loading Frame tools: done\n')
     menu = ["Flamingo tools"]
     self.appendMenu(menu,list4)
-    self.appendMenu(menu,list)
+    self.appendMenu(menu,list1)
     self.appendMenu(menu,list2)
     self.appendMenu(menu,list3)
 

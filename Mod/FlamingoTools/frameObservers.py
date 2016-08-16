@@ -66,7 +66,9 @@ class levelBeamObserver(frameObserverPrototype):
           FreeCAD.Console.PrintMessage('Target face selected.\n')
         else:
           beam=FreeCAD.getDocument(doc).getObject(obj)
+          FreeCAD.activeDocument().openTransaction('levelTheBeam')
           frameCmd.levelTheBeam(beam,[self.targetFace,subObject])
+          FreeCAD.activeDocument().commitTransaction()
 
 class alignFlangeObserver(frameObserverPrototype):
     def __init__(self):
@@ -79,7 +81,9 @@ class alignFlangeObserver(frameObserverPrototype):
           self.faceBase=subObject
           FreeCAD.Console.PrintMessage('Target face selected.\n')
         else:
+          FreeCAD.activeDocument().openTransaction('alignFlange')
           frameCmd.rotTheBeam(FreeCAD.getDocument(doc).getObject(obj),self.faceBase,subObject)
+          FreeCAD.activeDocument().commitTransaction()
 
 class alignEdgeObserver(frameObserverPrototype):
     def __init__(self):
@@ -93,12 +97,14 @@ class alignEdgeObserver(frameObserverPrototype):
       if len(self.edges)>1:
         sel=FreeCADGui.Selection.getSelection()
         beam=sel[len(sel)-1]
+        FreeCAD.activeDocument().openTransaction('joinTheBeamsEdges')
         frameCmd.joinTheBeamsEdges(beam,self.edges[0],self.edges[1])
+        FreeCAD.activeDocument().commitTransaction()
         FreeCAD.Console.PrintMessage('Done.\n')
         self.edges=[]
         FreeCAD.Console.PrintWarning('Select other edges or [ESC] to exit\n')
 
-class stretchBeamObserver(frameObserverPrototype): 
+class stretchBeamObserver(frameObserverPrototype): #OBSOLETE: replaced with dialog
     def __init__(self):
       super(stretchBeamObserver,self).__init__('Select the beam and input the length')
       self.beam=None
@@ -115,7 +121,7 @@ class stretchBeamObserver(frameObserverPrototype):
         FreeCADGui.Selection.removeObserver(self)
         FreeCAD.Console.PrintMessage("I quit.")
 
-class extendObserver(frameObserverPrototype): 
+class extendObserver(frameObserverPrototype): #OBSOLETE: replaced with dialog
     def __init__(self):
       super(extendObserver,self).__init__('First Select the target shape, then the beams to extend.')
       self.target=None
@@ -160,11 +166,12 @@ class rotjoinObserver(frameObserverPrototype):
         self.edges.append(subLastSel)
         FreeCAD.Console.PrintMessage('Edge'+str(len(self.edges))+' OK.\n')
       if len(self.edges)==2:
+        FreeCAD.activeDocument().openTransaction('rotJoin')
         frameCmd.rotjoinTheBeam()
+        FreeCAD.activeDocument().commitTransaction()
         FreeCAD.activeDocument().recompute()
         self.edges=[]
         FreeCADGui.Selection.clearSelection()
-        #FreeCADGui.Selection.removeObserver(self)
         FreeCAD.Console.PrintWarning("Edges aligned.\nRepeat selection or press [ESC]\n")
 
 
