@@ -69,6 +69,8 @@ class levelBeamObserver(frameObserverPrototype):
           FreeCAD.activeDocument().openTransaction('levelTheBeam')
           frameCmd.levelTheBeam(beam,[self.targetFace,subObject])
           FreeCAD.activeDocument().commitTransaction()
+          FreeCAD.Console.PrintMessage('Face moved.\n')
+          FreeCAD.Console.PrintWarning('Select another face or press [ESC].\n')
 
 class alignFlangeObserver(frameObserverPrototype):
     def __init__(self):

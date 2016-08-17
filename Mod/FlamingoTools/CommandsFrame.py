@@ -89,7 +89,7 @@ class levelBeam:
     selex=Gui.Selection.getSelectionEx()
     faces=frameCmd.faces(selex)
     beams=[sx.Object for sx in selex]
-    if len(faces)==len(beams)>0:
+    if len(faces)==len(beams)>1:
       FreeCAD.activeDocument().openTransaction('LevelTheBeams')
       beams.pop(0)
       fBase=faces.pop(0)
