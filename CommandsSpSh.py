@@ -58,7 +58,7 @@ class queryModel:
     #o.enter()
 
   def GetResources(self):
-    return{'Pixmap':str(FreeCAD.getResourceDir() + "Mod/FlamingoTools/query.svg"),'MenuText':'query the model','ToolTip':'Click objects to print infos'}
+    return{'Pixmap':str(FreeCAD.getHomePath() + "Mod/FlamingoTools/icons/query.svg"),'MenuText':'query the model','ToolTip':'Click objects to print infos'}
 
 #---------------------------------------------------------------------------
 # Adds the commands to the FreeCAD command manager

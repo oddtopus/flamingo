@@ -148,14 +148,18 @@ class adjustAngleObserver(frameObserverPrototype):
         self.edges.append(subLastSel)
         self.beams.append(lastSel)
         FreeCAD.Console.PrintMessage('Edge/beam pair nr.'+str(len(self.edges))+'  selected.\n')
-      if (len(self.edges)==len(self.beams)==2) and frameCmd.isOrtho(*self.edges):
-        self.beams.reverse()
-        for i in range(len(self.edges)):
-        	frameCmd.extendTheBeam(self.beams[i],self.edges[i])
+      if (len(self.edges)==len(self.beams)==2):
+        if frameCmd.isOrtho(*self.edges):
+          self.beams.reverse()
+          for i in range(len(self.edges)):
+          	frameCmd.extendTheBeam(self.beams[i],self.edges[i])
+          FreeCAD.Console.PrintWarning("Adjustment executed.\n")
+        else:
+          FreeCAD.Console.PrintError("Edges must be orthogonal.\n")
         self.edges=[]
         self.beams=[]
         FreeCADGui.Selection.clearSelection()
-        FreeCAD.Console.PrintWarning("Adjustment executed.\nRepeat selection or press [ESC]\n")
+        FreeCAD.Console.PrintWarning("Repeat selection or press [ESC]\n")
 
 class rotjoinObserver(frameObserverPrototype): 
     def __init__(self):
@@ -168,12 +172,16 @@ class rotjoinObserver(frameObserverPrototype):
         self.edges.append(subLastSel)
         FreeCAD.Console.PrintMessage('Edge'+str(len(self.edges))+' OK.\n')
       if len(self.edges)==2:
-        FreeCAD.activeDocument().openTransaction('rotJoin')
-        frameCmd.rotjoinTheBeam()
-        FreeCAD.activeDocument().commitTransaction()
-        FreeCAD.activeDocument().recompute()
+        try:
+          FreeCAD.activeDocument().openTransaction('rotJoin')
+          frameCmd.rotjoinTheBeam()
+          FreeCAD.activeDocument().commitTransaction()
+          FreeCAD.activeDocument().recompute()
+          FreeCAD.Console.PrintWarning("Edges aligned.\n")
+        except:
+          FreeCAD.Console.PrintError("Edges must be selected holding [Ctrl] down for the correct execution. \nRetry.\n")
         self.edges=[]
         FreeCADGui.Selection.clearSelection()
-        FreeCAD.Console.PrintWarning("Edges aligned.\nRepeat selection or press [ESC]\n")
+        FreeCAD.Console.PrintWarning("Repeat selection or press [ESC]\n")
 
 

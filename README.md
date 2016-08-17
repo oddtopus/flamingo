@@ -1,5 +1,5 @@
 "Flamingo tools" is a set of macros that I made to speed up some actions in FreeCAD, collected them in toolbars to make them readily available on the GUI.
-To install the workbenches, copy as usual the sub-folders of \data and \Mod in the corresponding folders of FreeCAD installation of your system. 
+To install the workbenches, you may copy as usual the files of this repository in a subfolder of \Mod in you FreeCAD installation of your system. 
 
 The most developed workbench is CommandsFrame.py: that is one simple toolbox of 12 commands to arrange frames, trusses and similar in FreeCAD with the Arch`s Structure objects. 
 Read tutorialFrame.pdf for more informations.

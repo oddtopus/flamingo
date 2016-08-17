@@ -27,7 +27,7 @@
 
 class flamingoToolsWorkbench ( Workbench ):
   "Test workbench object"
-  Icon=FreeCAD.getResourceDir() + "Mod/FlamingoTools/flamingo.svg"
+  Icon=str(FreeCAD.getHomePath() + "Mod/FlamingoTools/icons/flamingo.svg")
   MenuText = "Flamingo Tools WB"
   ToolTip = "Flamingo tools workbench"
   def Initialize(self):

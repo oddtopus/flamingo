@@ -1,6 +1,3 @@
-# FreeCAD Frame Tools module  
-# (c) 2016 Riccardo Treu LGPL
-
 import xml.etree.ElementTree as et
 import FreeCAD as App
 from PySide import QtGui as qg
