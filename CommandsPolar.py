@@ -2,7 +2,7 @@
 # (c) 2016 Riccardo Treu LGPL
 
 # import FreeCAD modules
-import FreeCAD, FreeCADGui,inspect
+import FreeCAD, FreeCADGui,inspect , os
 
 # helper -------------------------------------------------------------------
 # FreeCAD TemplatePyMod module  
@@ -38,7 +38,7 @@ class drawPolygon:
           puc.disegna(sk,puc.cerchio(R,n))
     
   def GetResources(self):
-    return{'Pixmap':str(FreeCAD.getHomePath() + "Mod/FlamingoTools/icons/poligono.svg"),'MenuText':'Make-a-polygon','ToolTip':'Draws n-polygon in a circle'}
+    return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","poligono.svg"),'MenuText':'Make-a-polygon','ToolTip':'Draws n-polygon in a circle'}
 
 class drawFromFile():
   def Activated(self):
@@ -50,7 +50,7 @@ class drawFromFile():
     puc.disegna(sketch,puc.getFromFile())
     
   def GetResources(self):
-    return{'Pixmap':str(FreeCAD.getHomePath() + "Mod/FlamingoTools/icons/daFile.svg"),'MenuText':'Polygon from file','ToolTip':'The file .csv must be ";" separated: column A = radius, column B = angle'}
+    return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","daFile.svg"),'MenuText':'Polygon from file','ToolTip':'The file .csv must be ";" separated: column A = radius, column B = angle'}
 
 #---------------------------------------------------------------------------
 # Adds the commands to the FreeCAD command manager

@@ -2,7 +2,7 @@
 # (c) 2016 Riccardo Treu LGPL
 
 # import FreeCAD modules
-import FreeCAD, FreeCADGui, inspect
+import FreeCAD, FreeCADGui, inspect, os
 
 # helper -------------------------------------------------------------------
 # FreeCAD TemplatePyMod module  
@@ -30,7 +30,7 @@ class frameIt:
     FreeCADGui.Selection.addObserver(s)
     
   def GetResources(self):
-    return{'Pixmap':str(FreeCAD.getHomePath() + "Mod/FlamingoTools/icons/beamFit.svg"),'MenuText':'Beam-fit','ToolTip':'Place one beam over the sketch of a frame'}
+    return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","beamFit.svg"),'MenuText':'Beam-fit','ToolTip':'Place one beam over the sketch of a frame'}
 
 class spinSect:
   def Activated(self):
@@ -43,7 +43,7 @@ class spinSect:
     FreeCAD.activeDocument().commitTransaction()
         
   def GetResources(self):
-    return{'Pixmap':str(FreeCAD.getHomePath() + "Mod/FlamingoTools/icons/beamRot.svg"),'MenuText':'SpinTheBeam','ToolTip':'Rotates the section of the beam by 45 degrees'}
+    return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","beamRot.svg"),'MenuText':'SpinTheBeam','ToolTip':'Rotates the section of the beam by 45 degrees'}
 
 class fillFrame:
   def Activated(self):
@@ -51,7 +51,7 @@ class fillFrame:
     frameFormObj=frameForms.fillForm()
       
   def GetResources(self):
-    return{'Pixmap':str(FreeCAD.getHomePath() + "Mod/FlamingoTools/icons/fillFrame.svg"),'MenuText':'fillTheFrame','ToolTip':'Fill the sketch of the frame with the selected beam'}
+    return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","fillFrame.svg"),'MenuText':'fillTheFrame','ToolTip':'Fill the sketch of the frame with the selected beam'}
 
 class alignFlange:
   def Activated(self):
@@ -72,7 +72,7 @@ class alignFlange:
       FreeCADGui.Selection.addObserver(s)
 
   def GetResources(self):
-    return{'Pixmap':str(FreeCAD.getHomePath() + "Mod/FlamingoTools/icons/flangeAlign.svg"),'MenuText':'alignFlange','ToolTip':'Rotates the section of the beam to make the faces parallel to the first selection'}
+    return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","flangeAlign.svg"),'MenuText':'alignFlange','ToolTip':'Rotates the section of the beam to make the faces parallel to the first selection'}
 
 class shiftBeam:
   
@@ -81,7 +81,7 @@ class shiftBeam:
     frameFormObj=frameForms.translateForm()
 
   def GetResources(self):
-    return{'Pixmap':str(FreeCAD.getHomePath() + "Mod/FlamingoTools/icons/beamShift.svg"),'MenuText':'shiftTheBeam','ToolTip':'Move one beam along one edge'}
+    return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","beamShift.svg"),'MenuText':'shiftTheBeam','ToolTip':'Move one beam along one edge'}
 
 class levelBeam:
   def Activated(self):
@@ -104,7 +104,7 @@ class levelBeam:
       FreeCADGui.Selection.addObserver(s)
 
   def GetResources(self):
-    return{'Pixmap':str(FreeCAD.getHomePath() + "Mod/FlamingoTools/icons/beamLevel.svg"),'MenuText':'levelTheBeam','ToolTip':'Shift the beams to line-up the faces to the first selection (faces must be //)'}
+    return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","beamLevel.svg"),'MenuText':'levelTheBeam','ToolTip':'Shift the beams to line-up the faces to the first selection (faces must be //)'}
 
 class alignEdge:
   def Activated(self):
@@ -125,7 +125,7 @@ class alignEdge:
       FreeCADGui.Selection.addObserver(s)
     
   def GetResources(self):
-    return{'Pixmap':str(FreeCAD.getHomePath() + "Mod/FlamingoTools/icons/edgeAlign.svg"),'MenuText':'alignEdge','ToolTip':'Align two edges: select two or pre-select several'}
+    return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","edgeAlign.svg"),'MenuText':'alignEdge','ToolTip':'Align two edges: select two or pre-select several'}
 
 class pivotBeam:
   def Activated(self):
@@ -134,7 +134,7 @@ class pivotBeam:
       
     
   def GetResources(self):
-    return{'Pixmap':str(FreeCAD.getHomePath() + "Mod/FlamingoTools/icons/pivot.svg"),'MenuText':'pivotTheBeam','ToolTip':'Pivots the beam around an edge'}
+    return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","pivot.svg"),'MenuText':'pivotTheBeam','ToolTip':'Pivots the beam around an edge'}
 
 class stretchBeam:
   def Activated(self):
@@ -142,7 +142,7 @@ class stretchBeam:
     frameFormObj=frameForms.stretchForm()
     
   def GetResources(self):
-    return{'Pixmap':str(FreeCAD.getHomePath() + "Mod/FlamingoTools/icons/beamStretch.svg"),'MenuText':'stretchTheBeam','ToolTip':'Changes the length of the beam, either according a preselected edge or a direct input'}
+    return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","beamStretch.svg"),'MenuText':'stretchTheBeam','ToolTip':'Changes the length of the beam, either according a preselected edge or a direct input'}
 
 class extend:
   def Activated(self):
@@ -150,7 +150,7 @@ class extend:
     frameFormObj=frameForms.extendForm()
     
   def GetResources(self):
-    return{'Pixmap':str(FreeCAD.getHomePath() + "Mod/FlamingoTools/icons/extend.svg"),'MenuText':'extendTheBeam','ToolTip':'Extend the beam either to a face, a vertex or the c.o.m. of the selected object'}
+    return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","extend.svg"),'MenuText':'extendTheBeam','ToolTip':'Extend the beam either to a face, a vertex or the c.o.m. of the selected object'}
 
 class adjustFrameAngle:
   def Activated(self):
@@ -160,7 +160,7 @@ class adjustFrameAngle:
     FreeCADGui.Selection.addObserver(s)
     
   def GetResources(self):
-    return{'Pixmap':str(FreeCAD.getHomePath() + "Mod/FlamingoTools/icons/adjustAngle.svg"),'MenuText':'adjustFrameAngle','ToolTip':'Adjust the angle of frame by two edges'}
+    return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","adjustAngle.svg"),'MenuText':'adjustFrameAngle','ToolTip':'Adjust the angle of frame by two edges'}
 
 class rotJoin:
   def Activated(self):
@@ -176,7 +176,7 @@ class rotJoin:
       FreeCADGui.Selection.addObserver(s)
 
   def GetResources(self):
-    return{'Pixmap':str(FreeCAD.getHomePath() + "Mod/FlamingoTools/icons/rotjoin.svg"),'MenuText':'rotJoinEdge','ToolTip':'Rotates and align the beam according another edge'}
+    return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","rotjoin.svg"),'MenuText':'rotJoinEdge','ToolTip':'Rotates and align the beam according another edge'}
 
 
 #---------------------------------------------------------------------------

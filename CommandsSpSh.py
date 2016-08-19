@@ -2,7 +2,7 @@
 # (c) 2016 Riccardo Treu LGPL
 
 # import FreeCAD modules
-import FreeCAD, FreeCADGui,inspect
+import FreeCAD, FreeCADGui,inspect, os
 
 # helper -------------------------------------------------------------------
 # FreeCAD TemplatePyMod module  
@@ -58,7 +58,8 @@ class queryModel:
     #o.enter()
 
   def GetResources(self):
-    return{'Pixmap':str(FreeCAD.getHomePath() + "Mod/FlamingoTools/icons/query.svg"),'MenuText':'query the model','ToolTip':'Click objects to print infos'}
+    return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","query.svg"),'MenuText':'query the model','ToolTip':'Click objects to print infos'}
+    
 
 #---------------------------------------------------------------------------
 # Adds the commands to the FreeCAD command manager
