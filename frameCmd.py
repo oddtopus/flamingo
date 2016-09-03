@@ -22,7 +22,7 @@ def edges(selex=[], except1st=False):
 def beams(sel=[]):
   if len(sel)==0:
     sel=FreeCADGui.Selection.getSelection()
-  return [i for i in sel if i.TypeId=="Part::FeaturePython" and hasattr(i,"Height")]
+  return [i for i in sel if i.TypeId=="Part::FeaturePython" and hasattr(i,"Height") and hasattr(i,"Profile")]
 
 def faces(selex=[]):
   '''returns the list of faces in the selection set'''
@@ -35,25 +35,61 @@ def faces(selex=[]):
     FreeCAD.Console.PrintError('\nNo valid selection.\n')
   return fcs
 
-def intersection(base=None,v=None,face=None):   
+def intersectionLines(p1=None,v1=None,p2=None,v2=None):
+  '''
+  intersectionLines(p1,v1,p2,v2)
+  If exist, returns the intersection between two lines and the angle between them, as a tuple(vector, deg)
+    p1,v1: the reference point and direction of first line
+    p2,v2: the reference point and direction of second line
+  '''
+  
+  if p1==p2==v1==v2==None:
+    eds=edges()[:2]
+    p1,p2=[e.valueAt(0) for e in eds]
+    v1,v2=[e.tangentAt(0) for e in eds]
+  if not isParallel(v1,v2):  
+    dist=p1-p2
+    import numpy
+    #M=numpy.matrix([list(v1),list(v2),list(dist)])  : does not work for lack of accuracy!
+    rowM1=[round(x,1) for x in v1]
+    rowM2=[round(x,1) for x in v2]
+    rowM3=[round(x,1) for x in dist]
+    M=numpy.matrix([rowM1,rowM2,rowM3])
+    if numpy.linalg.det(M)==0: 
+      #3 equations, 2 unknowns => 1 eq. must be dependent
+      a11,a21,a31=list(v1)
+      a12,a22,a32=list(v2*-1)
+      M1=numpy.matrix([[a11,a12],[a21,a22]])
+      M2=numpy.matrix([[a21,a22],[a31,a32]])
+      pl1=list(p1)
+      pl2=list(p2)
+      if numpy.linalg.det(M1)==0:
+        k=numpy.linalg.inv(M2)*numpy.matrix([[pl2[1]-pl1[1]],[pl2[2]-pl1[2]]])
+      else:
+        k=numpy.linalg.inv(M1)*numpy.matrix([[pl2[0]-pl1[0]],[pl2[1]-pl1[1]]])
+      P=p1+v1*float(k[0]) # ..=p2+v2*float(k[1])
+      #FreeCAD.Console.PrintWarning("k1 = "+str(float(k[0]))+"\nk2 = "+str(float(k[1]))+"\n")
+      return P
+    else:     #se i vettori non sono complanari <=>  intersezione nulla
+      FreeCAD.Console.PrintError('Lines are not in the same plane.\n')
+  else:  #se i vettori sono paralleli <=>  intersezione nulla
+    FreeCAD.Console.PrintError('Lines are parallel.\n')
+
+def intersectionPlane(base=None,v=None,face=None):
+  '''
+  intersectionPlane(base,v,face)
+  Returns the point (vector) at the intersection of a line and a plane.
+    base (vector): the base point to be projected
+    v (vector): the direction of the line that intersect the plane
+    face (Face): the face that defines the plane to be intersect
+  '''   
   # only for quick testing:
   if base==v==face==None:
     face = faces()[0]
     beam=beams()[0]
     base=beam.Placement.Base
     v=beamAx(beam)
-  
-  # funziona esattamente solo se d!=0, ovvero se l'origine non appartiene al piano della faccia, altrimenti approssima con coeff. "a,b,c" molto alti :
-  #from numpy import matrix
-  # definition of plane
-  #range=face.ParameterRange
-  #points=[face.valueAt(x,y) for x in range[:2] for y in range[2:]]
-  #m=[[p.x,p.y,p.z] for p in points[:3]]
-  #M=matrix(m)
-  #abc=M.getI()*matrix('-1;-1;-1')      
-  #a,b,c=[float(abc[i,0]) for i in [0,1,2]]
-  #d=1
-  # MATEMATICA + ROBUSTA:
+  # equation of plane: ax+by+cz+d=0
   if isOrtho(v,face):
     FreeCAD.Console.PrintError('Direction of projection and Face are parallel.\n')
     return None
@@ -61,11 +97,7 @@ def intersection(base=None,v=None,face=None):
     a,b,c=list(face.normalAt(0,0))
     d=-face.CenterOfMass.dot(face.normalAt(0,0))
     FreeCAD.Console.PrintMessage('a=%.2f b=%.2f c=%.2f d=%.2f\n' %(a,b,c,d))
-    
     # definition of line
-    #if not beam==None:
-    #  base=beam.Placement.Base
-    #  v=beamAx(beam)
     FreeCAD.Console.PrintMessage('base=(%.2f,%.2f,%.2f)\n' %(base.x,base.y,base.z))
     FreeCAD.Console.PrintMessage('v=(%.2f,%.2f,%.2f)\n' %(v.x,v.y,v.z))
     #intersection
@@ -110,9 +142,18 @@ def isParallel(e1=None,e2=None):
       v.append(e)
   return round(v[0].cross(v[1]).Length,2)==0
 
-def beamAx(beam):
+def beamAx(beam, vShapeRef=None):
+  '''
+  beamAx(beam, vShapeRef=None)
+  Returns the new orientation of a vector referred to Shape's coordinates
+  rotated according the Placement of the object.
+    beam: the object (any)
+    vShapeRef: the Shape's reference vector (defaults Z axis of Shape)
+  '''
+  if vShapeRef==None:
+    vShapeRef=FreeCAD.Vector(0.0,0.0,1.0)
   "returns the vector parallel to the beam's axis"
-  return beam.Placement.Rotation.multVec(FreeCAD.Vector(0.0,0.0,1.0)).normalize()
+  return beam.Placement.Rotation.multVec(vShapeRef).normalize()
 
 def getDistance():
   'measure the lenght of an edge or the distance of two shapes'
@@ -124,9 +165,26 @@ def getDistance():
   else:
     return None
 
+def bisect(w1=None,w2=None):
+  '''
+  bisect(w1=None,w2=None)
+  Returns the bisect vector between vectors w1 and w2.
+  If no argument is given the function takes the selected edges, if any.
+  '''
+  if w1==w2==None and len(edges())>=2:
+    w1,w2=[(e.CenterOfMass-FreeCAD.Vector(0,0,0)).normalize() for e in frameCmd.edges()[:2]]
+  if w1!=None and w2!=None:
+    w1.normalize()
+    w2.normalize()
+    b=FreeCAD.Vector()
+    for i in range(3):
+    	b[i]=(w1[i]+w2[i])/2
+    return b
+
+
 ############ COMMANDS #############
 
-def spinTheBeam(beam, angle):
+def spinTheBeam(beam, angle):  # OBSOLETE: replaced by rotateTheTubeAx
   '''arg1=beam, arg2=angle: rotate the section of the beam'''
   if beam.TypeId=="Part::FeaturePython" and "Base" in beam.PropertiesList:
     beam.Base.Placement=FreeCAD.Placement(FreeCAD.Vector(0.0,0.0,0.0),FreeCAD.Rotation(FreeCAD.Vector(0.0,0.0,1.0),angle))
@@ -181,7 +239,7 @@ def pivotTheBeam(ang=None, ask4revert=True):
     ang=float(qid.getText(None,"pivot a beam","angle?")[0])
   rot=FreeCAD.Rotation(edge.tangentAt(0),ang)
   beam.Placement.Rotation=rot.multiply(beam.Placement.Rotation)
-  edgePost=edges()[0] #FreeCADGui.Selection.getSelectionEx()[0].SubObjects[0]
+  edgePost=edges()[0] #save position for revert
   dist=edge.CenterOfMass-edgePost.CenterOfMass
   beam.Placement.move(dist)
   if ask4revert:
@@ -216,7 +274,7 @@ def extendTheBeam(beam,target):
   elif target.ShapeType=="Face":
     if not isOrtho(target,vBeam):
       from Part import Point
-      Pint=Point(intersection(beam.Placement.Base,beamAx(beam),target)).toShape()
+      Pint=Point(intersectionPlane(beam.Placement.Base,beamAx(beam),target)).toShape()
       distBase=vBase.distanceToPlane(Pint.Point,vBeam)
       distTop=vTop.distanceToPlane(Pint.Point,vBeam)
   elif hasattr(target,"CenterOfMass"):

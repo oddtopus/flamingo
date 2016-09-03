@@ -146,7 +146,12 @@ class extendForm(prototypeForm):
       FreeCAD.activeDocument().commitTransaction()
       
 class stretchForm(prototypeForm):
-  'dialog for stretchTheBeam()'
+  '''dialog for stretchTheBeam()
+    [Get Length] measures the min. distance of the selected objects or
+      the length of the selected edge or
+      the Height of the selected beam
+    [ Stretch ] changes the Height of the selected beams
+  '''
   def __init__(self):
     super(stretchForm,self).__init__('stretchForm','Get Length','Stretch','1000','mm')
     self.edit1.setMaximumWidth(150)
@@ -160,6 +165,8 @@ class stretchForm(prototypeForm):
     L=frameCmd.getDistance()
     if L!=None:
       self.edit1.setText(str(L))
+    elif len(frameCmd.beams())>0:
+      self.edit1.setText(str(frameCmd.beams()[0].Height))
   def stretch(self):
     FreeCAD.activeDocument().openTransaction('Stretch beam')
     for beam in frameCmd.beams():
@@ -213,9 +220,9 @@ class translateForm(prototypeForm):   #add selection options in getDisp()
       if base.ShapeType==target.ShapeType=='Edge':
         disp=target.CenterOfMass-base.CenterOfMass
       if base.ShapeType=='Vertex' and target.ShapeType=='Face':
-        disp=frameCmd.intersection(base.Point,target.normalAt(0,0),target)-base.Point
+        disp=frameCmd.intersectionPlane(base.Point,target.normalAt(0,0),target)-base.Point
       if base.ShapeType=='Face' and target.ShapeType=='Vertex':
-        disp=target.Point-frameCmd.intersection(target.Point,base.normalAt(0,0),base)
+        disp=target.Point-frameCmd.intersectionPlane(target.Point,base.normalAt(0,0),base)
       if disp!=None:
         self.edit4.setText(str(disp.Length))
         self.edit5.setText('1')

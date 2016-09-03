@@ -34,11 +34,12 @@ class frameIt:
 
 class spinSect:
   def Activated(self):
-    import FreeCAD, FreeCADGui, frameCmd
+    import FreeCAD, FreeCADGui, frameCmd, pipeCmd
     from math import pi
     FreeCAD.activeDocument().openTransaction('Spin')
     for beam in frameCmd.beams():
-      frameCmd.spinTheBeam(beam,beam.Base.Placement.Rotation.Angle/pi*180+45)
+      #frameCmd.spinTheBeam(beam,beam.Base.Placement.Rotation.Angle/pi*180+45)
+      pipeCmd.rotateTheTubeAx(beam)
     FreeCAD.activeDocument().recompute()
     FreeCAD.activeDocument().commitTransaction()
         

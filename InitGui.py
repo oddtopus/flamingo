@@ -121,14 +121,17 @@ static char * image[] =
     list4=["frameIt","fillFrame","alignFlange","spinSect","pivotBeam","levelBeam","alignEdge","rotJoin","shiftBeam","stretchBeam","extend","adjustFrameAngle"]
     self.appendToolbar("frameTools",list4)
     Log ('Loading Frame tools: done\n')
+    import CommandsPipe
+    list5=["insertPipe","insertElbow","insertFlange","mateEdges","rotateAx","rotateEdge","flat"]
+    self.appendToolbar("pipeTools",list5)
+    Log ('Loading Pipe tools: done\n')
     menu = ["Flamingo tools"]
     self.appendMenu(menu,list4)
     self.appendMenu(menu,list1)
     self.appendMenu(menu,list2)
     self.appendMenu(menu,list3)
+    self.appendMenu(menu,list5)
 
-    Log ('Loading Frame tools: done\n')
-  
   def Activated(self):
     if hasattr(FreeCADGui,"draftToolBar"):
       FreeCADGui.draftToolBar.Activated()
