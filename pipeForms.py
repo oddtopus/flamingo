@@ -24,6 +24,7 @@ class protopypeForm(QWidget):
     selected PType.   
     '''
     super(protopypeForm,self).__init__()
+    self.move(QPoint(100,250))
     self.PType=PType
     self.PRating=PRating
     self.setWindowFlags(Qt.WindowStaysOnTopHint)
@@ -32,6 +33,7 @@ class protopypeForm(QWidget):
     self.setLayout(self.mainHL)
     self.sizeList=QListWidget()
     self.sizeList.setMaximumWidth(120)
+    self.sizeList.setCurrentRow(0)
     self.mainHL.addWidget(self.sizeList)
     self.pipeDictList=[]
     self.fileList=listdir(join(dirname(abspath(__file__)),"tables"))
@@ -105,6 +107,9 @@ class insertElbowForm(protopypeForm):
     self.edit1=QLineEdit('<insert angle>')
     self.edit1.setAlignment(Qt.AlignHCenter)
     self.secondCol.layout().addWidget(self.edit1)
+    self.btn2=QPushButton('Trim')
+    self.btn2.clicked.connect(self.trim)
+    self.secondCol.layout().addWidget(self.btn2)
     self.show()
   def insert(self):
     d=self.pipeDictList[self.sizeList.currentRow()]
@@ -136,10 +141,14 @@ class insertElbowForm(protopypeForm):
         # get the position
         p1,v1,p2,v2=axes[:4]
         P=frameCmd.intersectionLines(p1,v1,p2,v2)
-        w1=(P-p1)
-        w1.normalize()
-        w2=(P-p2)
-        w2.normalize()
+        if P!=None:
+          w1=(P-p1)
+          w1.normalize()
+          w2=(P-p2)
+          w2.normalize()
+        else:
+          FreeCAD.Console.PrintError('frameCmd.intersectionLines() has failed!\n')
+          return None
         # calculate the bending angle and the plane fo the elbow
         from math import pi
         ang=180-w1.getAngle(w2)*180/pi # ..-acos(w1.dot(w2))/pi*180
@@ -153,6 +162,17 @@ class insertElbowForm(protopypeForm):
         elb.Placement.Rotation=rot.multiply(elb.Placement.Rotation)
     FreeCAD.activeDocument().commitTransaction()
     FreeCAD.activeDocument().recompute()
+  def trim(self):
+    if len(frameCmd.beams())==1:
+      pipe=frameCmd.beams()[0]
+      comPipeEdges=[e.CenterOfMass for e in pipe.Shape.Edges]
+      eds=[e for e in frameCmd.edges() if not e.CenterOfMass in comPipeEdges]
+      FreeCAD.activeDocument().openTransaction('Trim pipes')
+      for edge in eds:
+        frameCmd.extendTheBeam(frameCmd.beams()[0],edge)
+      FreeCAD.activeDocument().commitTransaction()
+    else:
+      FreeCAD.Console.PrintError("Wrong selection\n")
 
 class insertFlangeForm(protopypeForm):
   def __init__(self):

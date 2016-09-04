@@ -70,8 +70,15 @@ class rotateEdge:
 
 class flat:
   def Activated (self):
-    import pipeCmd
-    pipeCmd.flattenTheTube()
+    import pipeCmd, frameCmd
+    if len(frameCmd.beams())>=2:
+      v1,v2=[frameCmd.beamAx(b) for b in frameCmd.beams()[:2]]
+      fittings=[o for o in FreeCADGui.Selection.getSelection() if hasattr(o,'PType') and (o.PType=='Elbow' or o.PType=='Flange')]
+      if len(fittings)>0:
+        FreeCAD.activeDocument().openTransaction('Flatten')
+        pipeCmd.flattenTheTube(fittings[0],v1,v2)
+        fittings[0].Placement.Base=frameCmd.beams()[0].Placement.Base
+        FreeCAD.activeDocument().commitTransaction()
     FreeCAD.activeDocument().recompute()
   def GetResources(self):
     return{'Pixmap':'python','MenuText':'Put in the plane','ToolTip':'Put the selected component in the plane defined by 2 axis'}

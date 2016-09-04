@@ -50,7 +50,7 @@ def intersectionLines(p1=None,v1=None,p2=None,v2=None):
   if not isParallel(v1,v2):  
     dist=p1-p2
     import numpy
-    #M=numpy.matrix([list(v1),list(v2),list(dist)])  : does not work for lack of accuracy!
+    #M=numpy.matrix([list(v1),list(v2),list(dist)]) # does not work: it seems for lack of accuracy of FreeCAD.Base.Vector operations!
     rowM1=[round(x,1) for x in v1]
     rowM2=[round(x,1) for x in v2]
     rowM3=[round(x,1) for x in dist]
@@ -61,12 +61,15 @@ def intersectionLines(p1=None,v1=None,p2=None,v2=None):
       a12,a22,a32=list(v2*-1)
       M1=numpy.matrix([[a11,a12],[a21,a22]])
       M2=numpy.matrix([[a21,a22],[a31,a32]])
+      M3=numpy.matrix([[a31,a32],[a11,a12]])
       pl1=list(p1)
       pl2=list(p2)
-      if numpy.linalg.det(M1)==0:
+      if numpy.linalg.det(M1)!=0:
+        k=numpy.linalg.inv(M1)*numpy.matrix([[pl2[0]-pl1[0]],[pl2[1]-pl1[1]]])
+      elif numpy.linalg.det(M2)!=0:
         k=numpy.linalg.inv(M2)*numpy.matrix([[pl2[1]-pl1[1]],[pl2[2]-pl1[2]]])
       else:
-        k=numpy.linalg.inv(M1)*numpy.matrix([[pl2[0]-pl1[0]],[pl2[1]-pl1[1]]])
+        k=numpy.linalg.inv(M3)*numpy.matrix([[pl2[2]-pl1[2]],[pl2[0]-pl1[0]]])
       P=p1+v1*float(k[0]) # ..=p2+v2*float(k[1])
       #FreeCAD.Console.PrintWarning("k1 = "+str(float(k[0]))+"\nk2 = "+str(float(k[1]))+"\n")
       return P

@@ -194,8 +194,7 @@ def rotateTheTubeEdge(ang=45):
 def flattenTheTube(obj=None,v1=None,v2=None):
   '''
   flattenTheTube(obj=None,v1=None,v2=None)
-  Make the axis Z of obj's Shape parallel to the normal of
-  the plane defined by two vectors.
+  Put obj in the same plane defined by vectors v1 and v2.
     obj: the object to be rotated
     v1, v2: the vectors of the plane
   If no parameter is defined: v1, v2 are the axis of the first two beams 
