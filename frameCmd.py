@@ -41,6 +41,11 @@ def intersectionLines(p1=None,v1=None,p2=None,v2=None):
   If exist, returns the intersection between two lines and the angle between them, as a tuple(vector, deg)
     p1,v1: the reference point and direction of first line
     p2,v2: the reference point and direction of second line
+  
+  ALERT, bug report: sometimes, for some values of pn and vn this function may
+  loop until overflow. This is going to be fixed soon. 
+  When this happens during elbow creation, in the meantime use alternative
+  positioning methods: for example select one vertex and then rotate the elbow.
   '''
   
   if p1==p2==v1==v2==None:
@@ -262,6 +267,7 @@ def stretchTheBeam(beam,L):
       
 def extendTheBeam(beam,target):
   '''arg1=beam, arg2=target: extend the beam to a plane, normal to its axis, defined by target.
+  If target is a list of 4 vectors [p1,v1,p2,v2] the plane is the one that includes intersection of p1 and p2 projected along vectors v1 and v2.
   If target is a Vertex the plane is the one that includes target.
   If target is a Face, the plane is the one that includes the intersection between the axis of beam and the plane of the face.
   Else, the plane is the one normal to the axis of beam that includes the CenterOfMass'''
@@ -271,7 +277,10 @@ def extendTheBeam(beam,target):
   vBeam=beamAx(beam)
   h=beam.Height
   vTop=vBase+vBeam.scale(h,h,h)
-  if target.ShapeType=="Vertex":
+  if type(target)==list and len(target)==4 and  type(target[0])==type(target[1])==type(target[2])==type(target[3])==FreeCAD.Vector:
+    distBase=vBase.distanceToPlane(intersectionLines(*target),vBeam)
+    distTop=vTop.distanceToPlane(intersectionLines(*target),vBeam)
+  elif target.ShapeType=="Vertex":
     distBase=vBase.distanceToPlane(target.Point,vBeam)
     distTop=vTop.distanceToPlane(target.Point,vBeam)
   elif target.ShapeType=="Face":

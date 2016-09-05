@@ -122,15 +122,15 @@ static char * image[] =
     self.appendToolbar("frameTools",list4)
     Log ('Loading Frame tools: done\n')
     import CommandsPipe
-    list5=["insertPipe","insertElbow","insertFlange","mateEdges","rotateAx","rotateEdge","flat"]
+    list5=["insertPipe","insertElbow","insertFlange","rotateAx","rotateEdge","mateEdges","flat","extend2intersection"]
     self.appendToolbar("pipeTools",list5)
     Log ('Loading Pipe tools: done\n')
     menu = ["Flamingo tools"]
     self.appendMenu(menu,list4)
-    self.appendMenu(menu,list1)
+    self.appendMenu(menu,list5)    
     self.appendMenu(menu,list2)
     self.appendMenu(menu,list3)
-    self.appendMenu(menu,list5)
+    self.appendMenu(menu,list1)
 
   def Activated(self):
     if hasattr(FreeCADGui,"draftToolBar"):

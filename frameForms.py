@@ -12,6 +12,7 @@ class prototypeForm(QWidget):
     super(prototypeForm,self).__init__()
     self.setWindowFlags(Qt.WindowStaysOnTopHint)
     self.setWindowTitle(winTitle)
+    self.move(QPoint(100,250))
     self.mainVL=QVBoxLayout()
     self.setLayout(self.mainVL)
     self.inputs=QWidget()
@@ -166,7 +167,7 @@ class stretchForm(prototypeForm):
     if L!=None:
       self.edit1.setText(str(L))
     elif len(frameCmd.beams())>0:
-      self.edit1.setText(str(frameCmd.beams()[0].Height))
+      self.edit1.setText(str(float(frameCmd.beams()[0].Height)))
   def stretch(self):
     FreeCAD.activeDocument().openTransaction('Stretch beam')
     for beam in frameCmd.beams():

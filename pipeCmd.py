@@ -208,4 +208,16 @@ def flattenTheTube(obj=None,v1=None,v2=None):
   rot=FreeCAD.Rotation(frameCmd.beamAx(obj),planeNorm)
   obj.Placement.Rotation=rot.multiply(obj.Placement.Rotation)
     
-
+def extendTheTubes2intersection(pipe1=None,pipe2=None):
+  '''
+  Does what it says; also with beams.
+  If arguments are None, it picks the first 2 selected beams().
+  '''
+  if pipe1==pipe2==None:
+    pipe1,pipe2=frameCmd.beams()[:2]
+  vectors=[]
+  for pipe in [pipe1,pipe2]:
+    vectors.append(pipe.Placement.Base)
+    vectors.append(frameCmd.beamAx(pipe))
+  frameCmd.extendTheBeam(pipe1,vectors)
+  frameCmd.extendTheBeam(pipe2,vectors)
