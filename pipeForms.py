@@ -61,7 +61,7 @@ class protopypeForm(QWidget):
         self.pipeDictList=[DNx for DNx in reader]
         f.close()
         for row in self.pipeDictList:
-          s=row['DN']
+          s=row['PSize']
           if row.has_key('OD'):
             s+=" - "+row['OD']
           if row.has_key('thk'):
@@ -87,30 +87,44 @@ class insertPipeForm(protopypeForm):
     self.edit1=QLineEdit(' <insert lenght>')
     self.edit1.setAlignment(Qt.AlignHCenter)
     self.secondCol.layout().addWidget(self.edit1)
-    self.btn2=QPushButton('Rotate 180 deg')
+    self.btn2=QPushButton('Reverse')
     self.secondCol.layout().addWidget(self.btn2)
     self.btn2.clicked.connect(lambda: pipeCmd.rotateTheTubeAx(frameCmd.beams()[0],FreeCAD.Vector(1,0,0),180))
+    self.btn3=QPushButton('Apply')
+    self.secondCol.layout().addWidget(self.btn3)
+    self.btn3.clicked.connect(self.apply)
     self.show()
   def insert(self):
     d=self.pipeDictList[self.sizeList.currentRow()]
     FreeCAD.activeDocument().openTransaction('Insert pipe')
+    try:
+      H=float(self.edit1.text())
+    except:
+      H=200
     if len(frameCmd.edges())==0:
-      try:
-        H=float(self.edit1.text())
-      except:
-        H=200
-      propList=[d['DN'],float(d['OD']),float(d['thk']),H]
+      propList=[d['PSize'],float(d['OD']),float(d['thk']),H]
       pipeCmd.makePipe(propList)
     else:
       for edge in frameCmd.edges():
         if edge.curvatureAt(0)==0:
-          propList=[d['DN'],float(d['OD']),float(d['thk']),edge.Length]
+          propList=[d['PSize'],float(d['OD']),float(d['thk']),edge.Length]
           pipeCmd.makePipe(propList,edge.valueAt(0),edge.tangentAt(0))
         else:
-          propList=[d['DN'],float(d['OD']),float(d['thk']),200]
+          propList=[d['PSize'],float(d['OD']),float(d['thk']),H]
           pipeCmd.makePipe(propList,edge.centerOfCurvatureAt(0),edge.tangentAt(0).cross(edge.normalAt(0)))
     FreeCAD.activeDocument().commitTransaction()
     FreeCAD.activeDocument().recompute()
+  def apply(self):
+    for obj in FreeCADGui.Selection.getSelection():
+      d=self.pipeDictList[self.sizeList.currentRow()]
+      if hasattr(obj,'PType') and obj.PType==self.PType:
+        #for k in d.keys():
+        #  obj.setExpression(k,d[k])
+        obj.PSize=d['PSize']
+        obj.OD=d['OD']
+        obj.thk=d['thk']
+        obj.PRating=self.PRating
+        FreeCAD.activeDocument().recompute()
 
 class insertElbowForm(protopypeForm):
   '''
@@ -131,6 +145,9 @@ class insertElbowForm(protopypeForm):
     self.btn2=QPushButton('Trim')
     self.btn2.clicked.connect(self.trim)
     self.secondCol.layout().addWidget(self.btn2)
+    self.btn3=QPushButton('Apply')
+    self.secondCol.layout().addWidget(self.btn3)
+    self.btn3.clicked.connect(self.apply)
     self.show()
   def insert(self):
     DN=OD=thk=PRating=None
@@ -140,14 +157,14 @@ class insertElbowForm(protopypeForm):
         self.edit1.setText("179")
       ang=float(self.edit1.text())
     except:
-      ang=float(d['BA'])
+      ang=float(d['BendAngle'])
     selex=FreeCADGui.Selection.getSelectionEx()
     FreeCAD.activeDocument().openTransaction('Insert elbow')
     if len(selex)==0:     # insert one elbow at origin
-      propList=[d['DN'],float(d['OD']),float(d['thk']),ang,float(d['BR'])]
+      propList=[d['PSize'],float(d['OD']),float(d['thk']),ang,float(d['BendRadius'])]
       pipeCmd.makeElbow(propList)
     elif len(selex)==1 and len(selex[0].SubObjects)==1 and selex[0].SubObjects[0].ShapeType=="Vertex":   # insert one elbow on one vertex
-      propList=[d['DN'],float(d['OD']),float(d['thk']),ang,float(d['BR'])]
+      propList=[d['PSize'],float(d['OD']),float(d['thk']),ang,float(d['BendRadius'])]
       pipeCmd.makeElbow(propList,selex[0].SubObjects[0].Point)
     else:    
       ## insert one elbow at intersection of two edges or "beams" ##
@@ -193,14 +210,14 @@ class insertElbowForm(protopypeForm):
         ang=180-w1.getAngle(w2)*180/pi # ..-acos(w1.dot(w2))/pi*180
         #create the feature
         if None in [DN,OD,thk,PRating]:
-          propList=[d['DN'],float(d['OD']),float(d['thk']),ang,float(d['BR'])]
+          propList=[d['PSize'],float(d['OD']),float(d['thk']),ang,float(d['BendRadius'])]
           elb=pipeCmd.makeElbow(propList,P,axes[1].cross(axes[3]))
           elb.PRating=self.ratingList.item(self.ratingList.currentRow()).text()
         else:
           BR=None
           for prop in self.pipeDictList:
-            if prop['DN']==DN:
-              BR=float(prop['BR'])
+            if prop['PSize']==DN:
+              BR=float(prop['BendRadius'])
           if BR==None:
             BR=1.5*OD/2
           propList=[DN,OD,thk,ang,BR]
@@ -225,6 +242,17 @@ class insertElbowForm(protopypeForm):
       FreeCAD.activeDocument().commitTransaction()
     else:
       FreeCAD.Console.PrintError("Wrong selection\n")
+  def apply(self):
+    for obj in FreeCADGui.Selection.getSelection():
+      d=self.pipeDictList[self.sizeList.currentRow()]
+      if hasattr(obj,'PType') and obj.PType==self.PType:
+        obj.PSize=d['PSize']
+        obj.OD=d['OD']
+        obj.thk=d['thk']
+        #obj.BendAngle=d['BendAngle']
+        obj.BendRadius=d['BendRadius']
+        obj.PRating=self.PRating
+        FreeCAD.activeDocument().recompute()
 
 class insertFlangeForm(protopypeForm):
   '''
@@ -238,18 +266,21 @@ class insertFlangeForm(protopypeForm):
     self.sizeList.item(0).setSelected(True)
     self.ratingList.item(0).setSelected(True)
     self.btn1.clicked.connect(self.insert)
+    self.btn3=QPushButton('Apply')
+    self.secondCol.layout().addWidget(self.btn3)
+    self.btn3.clicked.connect(self.apply)
     self.show()
   def insert(self):
     tubes=[t for t in frameCmd.beams() if hasattr(t,'PSize')]
-    if len(tubes)>0 and tubes[0].PSize in [prop['DN'] for prop in self.pipeDictList]:
+    if len(tubes)>0 and tubes[0].PSize in [prop['PSize'] for prop in self.pipeDictList]:
       for prop in self.pipeDictList:
-        if prop['DN']==tubes[0].PSize:
+        if prop['PSize']==tubes[0].PSize:
           d=prop
           break
-        print "checking ",prop['DN']
+        print "checking ",prop['PSize']
     else:
       d=self.pipeDictList[self.sizeList.currentRow()]
-    propList=[d['DN'],d['FlangeType'],float(d['D']),float(d['d']),float(d['df']),float(d['f']),float(d['t']),int(d['n'])]
+    propList=[d['PSize'],d['FlangeType'],float(d['D']),float(d['d']),float(d['df']),float(d['f']),float(d['t']),int(d['n'])]
     FreeCAD.activeDocument().openTransaction('Insert flange')
     if len(frameCmd.edges())==0:
       pipeCmd.makeFlange(propList)
@@ -259,6 +290,20 @@ class insertFlangeForm(protopypeForm):
           pipeCmd.makeFlange(propList,edge.centerOfCurvatureAt(0),edge.tangentAt(0).cross(edge.normalAt(0)))
     FreeCAD.activeDocument().commitTransaction()
     FreeCAD.activeDocument().recompute()
+  def apply(self):
+    for obj in FreeCADGui.Selection.getSelection():
+      d=self.pipeDictList[self.sizeList.currentRow()]
+      if hasattr(obj,'PType') and obj.PType==self.PType:
+        obj.PSize=d['PSize']
+        obj.FlangeType=d['FlangeType']
+        obj.D=d['D']
+        obj.d=d['d']
+        obj.df=d['df']
+        obj.f=d['f']
+        obj.t=d['t']
+        obj.n=int(d['n'])
+        obj.PRating=self.PRating
+        FreeCAD.activeDocument().recompute()
 
 class rotateForm(prototypeForm):
   '''
