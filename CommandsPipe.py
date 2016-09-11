@@ -37,7 +37,7 @@ class insertElbow:
     import pipeForms
     pipeFormObj=pipeForms.insertElbowForm()
   def GetResources(self):
-    return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","elbow.svg"),'MenuText':'Insert a curve','ToolTip':'Insert a curve\nALERT: may be unstable for some intersections!\nSee documentation of frameCmd.intersectionLines().'}
+    return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","elbow.svg"),'MenuText':'Insert a curve','ToolTip':'Insert a curve'}
 
 class insertFlange:
   def Activated (self):
@@ -45,6 +45,15 @@ class insertFlange:
     pipeFormObj=pipeForms.insertFlangeForm()
   def GetResources(self):
     return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","flange.svg"),'MenuText':'Insert a flange','ToolTip':'Insert a flange'}
+
+class tank:
+  def Activated (self):
+    import pipeCmd
+    from PySide import QtGui as qg
+    thk=float(qg.QInputDialog.getText(None,"make a shell out of a solid","Shell thickness (mm):")[0])
+    pipeCmd.makeTank(thk)
+  def GetResources(self):
+    return{'Pixmap':'python','MenuText':'Create tank','ToolTip':'Create a tank shell from an existing object'}
 
 class rotateAx:
   def Activated (self):
@@ -63,7 +72,9 @@ class rotateEdge:
 class mateEdges:
   def Activated (self):
     import pipeCmd
+    FreeCAD.activeDocument().openTransaction('Mate')
     pipeCmd.alignTheTube()
+    FreeCAD.activeDocument().commitTransaction()
     FreeCAD.activeDocument().recompute()
   def GetResources(self):
     return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","mate.svg"),'MenuText':'Mate pipes edges','ToolTip':'Mate two terminations through their edges'}
@@ -105,4 +116,5 @@ addCommand('rotateAx',rotateAx())
 addCommand('rotateEdge',rotateEdge())
 addCommand('flat',flat())
 addCommand('extend2intersection',extend2intersection())
+addCommand('tank',tank())
 

@@ -142,6 +142,20 @@ def makeFlange(propList=[], pos=None, Z=None):
   a.Placement.Rotation=rot.multiply(a.Placement.Rotation)
   return a
 
+def makeTank(thk=6, obj=None, facesOpen=[]):
+  '''
+  Makes the shell from an existing object
+  '''
+  if obj==None and FreeCADGui.Selection.getSelection()>0:
+    obj=FreeCADGui.Selection.getSelection()[0]
+  else:
+    return None
+  if len(facesOpen)==0:
+    facesOpen=frameCmd.faces()
+  if len(obj.Shape.Solids)>0:
+    obj.Shape=obj.Shape.Solids[0].makeThickness(facesOpen,-thk,1.e-3)
+    return obj    
+
 def alignTheTube():
   '''
   Mates the selected 2 circular edges

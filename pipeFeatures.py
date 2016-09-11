@@ -49,7 +49,7 @@ class Elbow():
   def __init__(self, obj,DN="DN50",OD=60.3,thk=3,BA=90,BR=45.225):
     obj.Proxy = self
     obj.addProperty("App::PropertyString","PType","Elbow","Type of pipeFeature").PType="Elbow"
-    obj.addProperty("App::PropertyString","PRating","Pipe","Rating of pipeFeature").PRating="SCH-STD"
+    obj.addProperty("App::PropertyString","PRating","Elbow","Rating of pipeFeature").PRating="SCH-STD"
     obj.addProperty("App::PropertyString","PSize","Elbow","Nominal diameter").PSize=DN
     obj.addProperty("App::PropertyLength","OD","Elbow","Outside diameter").OD=OD
     obj.addProperty("App::PropertyLength","thk","Elbow","Wall thickness").thk=thk
@@ -57,38 +57,38 @@ class Elbow():
     obj.addProperty("App::PropertyAngle","BendAngle","Elbow","Bend Angle").BendAngle=BA
     obj.addProperty("App::PropertyLength","BendRadius","Elbow","Bend Radius").BendRadius=BR
     obj.addProperty("App::PropertyString","Profile","Elbow","Section dim.").Profile=str(obj.OD)+"x"+str(obj.thk)
+    obj.addProperty("App::PropertyVectorList","Ports","Elbow","Ports relative position").Ports=[]
 
   def onChanged(self, fp, prop):
     #FreeCAD.Console.PrintMessage("Changed Pipe feature\n")
     return None
 
   def execute(self, fp):
-    if fp.thk>fp.OD/2:
-      fp.thk=fp.OD/2.1
-    fp.ID=fp.OD-2*fp.thk
-    fp.Profile=str(fp.OD)+"x"+str(fp.thk)
-    CenterOfBend=FreeCAD.Vector(fp.BendRadius,fp.BendRadius,0)
-    a=Part.makeCircle(fp.BendRadius,CenterOfBend,FreeCAD.Vector(0,0,1),225-float(fp.BendAngle)/2,225+float(fp.BendAngle)/2)
-    from math import pi, cos, sin, sqrt
-    c1=Part.makeCircle(fp.OD/2,FreeCAD.Vector(fp.BendRadius*(1-cos(pi/4)),fp.BendRadius*(1-sin(pi/4)),0),FreeCAD.Vector(-1,1,0))
-    c1.rotate(CenterOfBend,FreeCAD.Vector(0,0,1),-fp.BendAngle/2)
-    b=Part.makeSweepSurface(a,c1)
-    p1=Part.Face(Part.Wire(c1))
-    p2=p1.copy()
-    p2.rotate(CenterOfBend,FreeCAD.Vector(0,0,1),fp.BendAngle)
-    ### Change Placement.Base according BendAngle ###
-    r=(fp.BendRadius*sqrt(2)-fp.BendRadius/cos(fp.BendAngle*pi/180/2))*cos(pi/4)
-    P=FreeCAD.Vector(-r,-r,0)
-    b.translate(P)
-    p1.translate(P)
-    p2.translate(P)
-    #####
-    sh=Part.Shell([b,p1,p2])
-    sol=Part.Solid(sh)
-    faces=[f for f in sol.Faces if type(f.Surface)==Part.Plane]
-    elbow=sol.makeThickness(faces,-fp.thk,1.e-3)
-    fp.Shape = elbow
-    
+    if fp.BendAngle<180:
+      if fp.thk>fp.OD/2:
+        fp.thk=fp.OD/2.1
+      fp.ID=fp.OD-2*fp.thk
+      fp.Profile=str(fp.OD)+"x"+str(fp.thk)
+      CenterOfBend=FreeCAD.Vector(fp.BendRadius,fp.BendRadius,0)
+      ## make center-line ##
+      R=Part.makeCircle(fp.BendRadius,CenterOfBend,FreeCAD.Vector(0,0,1),225-float(fp.BendAngle)/2,225+float(fp.BendAngle)/2)
+      ## move the cl so that Placement.Base is the center of elbow ##
+      from math import pi, cos, sqrt
+      d=(fp.BendRadius*sqrt(2)-fp.BendRadius/cos(fp.BendAngle/180*pi/2))
+      P=FreeCAD.Vector(-d*cos(pi/4),-d*cos(pi/4),0)
+      R.translate(P)
+      ## calculate Ports position ##
+      fp.Ports=[R.valueAt(R.FirstParameter),R.valueAt(R.LastParameter)]
+      ## make the shape of the elbow ##
+      c=Part.makeCircle(fp.OD/2,fp.Ports[0],R.tangentAt(R.FirstParameter)*-1)
+      b=Part.makeSweepSurface(R,c)
+      p1=Part.Face(Part.Wire(c))
+      p2=Part.Face(Part.Wire(Part.makeCircle(fp.OD/2,fp.Ports[1],R.tangentAt(R.LastParameter))))
+      sol=Part.Solid(Part.Shell([b,p1,p2]))
+      planeFaces=[f for f in sol.Faces if type(f.Surface)==Part.Plane]
+      elbow=sol.makeThickness(planeFaces,-fp.thk,1.e-3)
+      fp.Shape = elbow
+      
 class Flange():
   '''Class for object PType="Flange"
   Flange(obj,[DN="DN50",FlangeType="SO", D=160, d=60.3,df=132, f=14 t=15,n=4])

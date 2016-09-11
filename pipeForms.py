@@ -45,6 +45,7 @@ class protopypeForm(QWidget):
     self.ratingList.setMaximumWidth(120)
     self.ratingList.addItems(self.PRatingsList)
     self.ratingList.itemClicked.connect(self.changeRating)
+    self.ratingList.setCurrentRow(0)
     self.secondCol.layout().addWidget(self.ratingList)
     self.btn1=QPushButton('Insert')
     self.btn1.setDefault(True)
@@ -72,12 +73,23 @@ class protopypeForm(QWidget):
     self.fillSizes()
     
 class insertPipeForm(protopypeForm):
+  '''
+  Dialog to insert tubes.
+  If edges are selected, it places the tubes over the straight edges or at the center of the curved edges.
+  If nothing is selected it places one tube in the origin with the selected size and height (default 200 mm).
+  Available one button to reverse the orientation of the selected tube.
+  '''
   def __init__(self):
     super(insertPipeForm,self).__init__("Insert pipes","Pipe","SCH-STD")
+    self.sizeList.item(0).setSelected(True)
+    self.ratingList.item(0).setSelected(True)
     self.btn1.clicked.connect(self.insert)
     self.edit1=QLineEdit(' <insert lenght>')
     self.edit1.setAlignment(Qt.AlignHCenter)
     self.secondCol.layout().addWidget(self.edit1)
+    self.btn2=QPushButton('Rotate 180 deg')
+    self.secondCol.layout().addWidget(self.btn2)
+    self.btn2.clicked.connect(lambda: pipeCmd.rotateTheTubeAx(frameCmd.beams()[0],FreeCAD.Vector(1,0,0),180))
     self.show()
   def insert(self):
     d=self.pipeDictList[self.sizeList.currentRow()]
@@ -101,8 +113,17 @@ class insertPipeForm(protopypeForm):
     FreeCAD.activeDocument().recompute()
 
 class insertElbowForm(protopypeForm):
+  '''
+  Dialog to insert one elbow.
+  It allows to select one vertex or a pair of edges or pipes or beams.
+  If at least one tube is selected it automatically takes its size and apply   it to the elbows created.
+  If nothing is selected, it places one elbow in the origin.
+  Available button to trim/extend one selected pipe to the selected edges of the elbow, after its placed.
+  '''
   def __init__(self):
     super(insertElbowForm,self).__init__("Insert elbows","Elbow","SCH-STD")
+    self.sizeList.item(0).setSelected(True)
+    self.ratingList.item(0).setSelected(True)
     self.btn1.clicked.connect(self.insert)
     self.edit1=QLineEdit('<insert angle>')
     self.edit1.setAlignment(Qt.AlignHCenter)
@@ -112,11 +133,12 @@ class insertElbowForm(protopypeForm):
     self.secondCol.layout().addWidget(self.btn2)
     self.show()
   def insert(self):
+    DN=OD=thk=PRating=None
     d=self.pipeDictList[self.sizeList.currentRow()]
     try:
+      if float(self.edit1.text())>=180:
+        self.edit1.setText("179")
       ang=float(self.edit1.text())
-      if ang>90:
-        ang=90
     except:
       ang=float(d['BA'])
     selex=FreeCADGui.Selection.getSelectionEx()
@@ -127,12 +149,19 @@ class insertElbowForm(protopypeForm):
     elif len(selex)==1 and len(selex[0].SubObjects)==1 and selex[0].SubObjects[0].ShapeType=="Vertex":   # insert one elbow on one vertex
       propList=[d['DN'],float(d['OD']),float(d['thk']),ang,float(d['BR'])]
       pipeCmd.makeElbow(propList,selex[0].SubObjects[0].Point)
-    else:    # insert one elbow at intersection of two edges or "beams"
-      axes=[] # selection of axes
+    else:    
+      ## insert one elbow at intersection of two edges or "beams" ##
+      axes=[] 
+      # selection of axes
       for objEx in selex:
         if len(frameCmd.beams([objEx.Object]))==1:
-          axes.append(objEx.Object.Shape.Solids[0].CenterOfMass)
+          axes.append(objEx.Object.Placement.Base)
           axes.append(frameCmd.beamAx(objEx.Object))
+          if OD==thk==None and hasattr(objEx.Object,'PType') and objEx.Object.PType=='Pipe': # if the selction is one pipe, take its profile for elbow
+            DN=objEx.Object.PSize
+            OD=objEx.Object.OD
+            thk=objEx.Object.thk
+            PRating=objEx.Object.PRating
         else:
           for edge in frameCmd.edges([objEx]):
             axes.append(edge.CenterOfMass)
@@ -140,26 +169,49 @@ class insertElbowForm(protopypeForm):
       if len(axes)>=4:
         # get the position
         p1,v1,p2,v2=axes[:4]
+        print "p1:",p1,"\nv1:",v1,"\np2:",p2,"\nv2:",v2
         P=frameCmd.intersectionLines(p1,v1,p2,v2)
+        print P
+        ## weak patches! but it works 99% ##
         if P!=None:
-          w1=(P-p1)
+          if P!=p1:
+            w1=P-p1
+          else:
+            w1=P-(p1+v1)
           w1.normalize()
-          w2=(P-p2)
+          if P!=p2:
+            w2=P-p2
+          else:
+            w2=P-(p2+v2)
+          ####
           w2.normalize()
         else:
           FreeCAD.Console.PrintError('frameCmd.intersectionLines() has failed!\n')
           return None
-        # calculate the bending angle and the plane fo the elbow
+        # calculate the bending angle and the plane of the elbow
         from math import pi
         ang=180-w1.getAngle(w2)*180/pi # ..-acos(w1.dot(w2))/pi*180
-        propList=[d['DN'],float(d['OD']),float(d['thk']),ang,float(d['BR'])]
-        # create the feature
-        elb=pipeCmd.makeElbow(propList,P,axes[1].cross(axes[3]))
+        #create the feature
+        if None in [DN,OD,thk,PRating]:
+          propList=[d['DN'],float(d['OD']),float(d['thk']),ang,float(d['BR'])]
+          elb=pipeCmd.makeElbow(propList,P,axes[1].cross(axes[3]))
+          elb.PRating=self.ratingList.item(self.ratingList.currentRow()).text()
+        else:
+          BR=None
+          for prop in self.pipeDictList:
+            if prop['DN']==DN:
+              BR=float(prop['BR'])
+          if BR==None:
+            BR=1.5*OD/2
+          propList=[DN,OD,thk,ang,BR]
+          elb=pipeCmd.makeElbow(propList,P,axes[1].cross(axes[3]))
+          elb.PRating=PRating
         # mate the elbow ends with the pipes or edges
         b=frameCmd.bisect(w1*-1,w2*-1)
         elbBisect=frameCmd.beamAx(elb,FreeCAD.Vector(1,1,0))
         rot=FreeCAD.Rotation(elbBisect,b)
         elb.Placement.Rotation=rot.multiply(elb.Placement.Rotation)
+      ####
     FreeCAD.activeDocument().commitTransaction()
     FreeCAD.activeDocument().recompute()
   def trim(self):
@@ -175,12 +227,28 @@ class insertElbowForm(protopypeForm):
       FreeCAD.Console.PrintError("Wrong selection\n")
 
 class insertFlangeForm(protopypeForm):
+  '''
+  Dialog to insert flanges.
+  If edges are selected, it places the flange over the selected circular edges.
+  If at least one tube is selected it automatically takes its Nominal Size and apply it to the flange created, if it is included in the Nominal Size list of the flange.
+  If nothing is selected it places one flange in the origin with the selected size.
+  '''
   def __init__(self):
     super(insertFlangeForm,self).__init__("Insert flanges","Flange","DIN-PN16")
+    self.sizeList.item(0).setSelected(True)
+    self.ratingList.item(0).setSelected(True)
     self.btn1.clicked.connect(self.insert)
     self.show()
   def insert(self):
-    d=self.pipeDictList[self.sizeList.currentRow()]
+    tubes=[t for t in frameCmd.beams() if hasattr(t,'PSize')]
+    if len(tubes)>0 and tubes[0].PSize in [prop['DN'] for prop in self.pipeDictList]:
+      for prop in self.pipeDictList:
+        if prop['DN']==tubes[0].PSize:
+          d=prop
+          break
+        print "checking ",prop['DN']
+    else:
+      d=self.pipeDictList[self.sizeList.currentRow()]
     propList=[d['DN'],d['FlangeType'],float(d['D']),float(d['d']),float(d['df']),float(d['f']),float(d['t']),int(d['n'])]
     FreeCAD.activeDocument().openTransaction('Insert flange')
     if len(frameCmd.edges())==0:
@@ -194,7 +262,8 @@ class insertFlangeForm(protopypeForm):
 
 class rotateForm(prototypeForm):
   '''
-  dialog for rotateTheTubeAx()
+  Dialog for rotateTheTubeAx().
+  It allows to rotate one object respect to the axis of its shape.
   '''
   def __init__(self):
     super(rotateForm,self).__init__('rotateForm','Rotate','Reverse','90','Angle - deg:')
@@ -297,7 +366,10 @@ class rotateForm(prototypeForm):
       self.zval.setText(str(coord[2]))
 
 class rotateEdgeForm(prototypeForm):
-  'dialog for rotateTheTubeEdge()'
+  '''
+  Dialog for rotateTheTubeEdge().
+  It allows to rotate one object respect to the axis of one circular edge.
+  '''
   def __init__(self):
     super(rotateEdgeForm,self).__init__('rotateEdgeForm','Rotate','Reverse','90','Angle - deg:')
     self.btn1.clicked.connect(self.rotate)

@@ -20,6 +20,9 @@ def edges(selex=[], except1st=False):
   return eds
 
 def beams(sel=[]):
+  '''
+  Returns the selected "beams", i.e. FeaturePythons which have a Profile and an Height properties.
+  '''
   if len(sel)==0:
     sel=FreeCADGui.Selection.getSelection()
   return [i for i in sel if i.TypeId=="Part::FeaturePython" and hasattr(i,"Height") and hasattr(i,"Profile")]
@@ -38,17 +41,12 @@ def faces(selex=[]):
 def intersectionLines(p1=None,v1=None,p2=None,v2=None):
   '''
   intersectionLines(p1,v1,p2,v2)
-  If exist, returns the intersection between two lines and the angle between them, as a tuple(vector, deg)
+  If exist, returns the intersection (vector) between two lines 
     p1,v1: the reference point and direction of first line
     p2,v2: the reference point and direction of second line
-  
-  ALERT, bug report: sometimes, for some values of pn and vn this function may
-  loop until overflow. This is going to be fixed soon. 
-  When this happens during elbow creation, in the meantime use alternative
-  positioning methods: for example select one vertex and then rotate the elbow.
   '''
   
-  if p1==p2==v1==v2==None:
+  if None in [p1,p2,v1,v2]:
     eds=edges()[:2]
     p1,p2=[e.valueAt(0) for e in eds]
     v1,v2=[e.tangentAt(0) for e in eds]
@@ -56,9 +54,9 @@ def intersectionLines(p1=None,v1=None,p2=None,v2=None):
     dist=p1-p2
     import numpy
     #M=numpy.matrix([list(v1),list(v2),list(dist)]) # does not work: it seems for lack of accuracy of FreeCAD.Base.Vector operations!
-    rowM1=[round(x,1) for x in v1]
-    rowM2=[round(x,1) for x in v2]
-    rowM3=[round(x,1) for x in dist]
+    rowM1=[round(x,3) for x in v1]
+    rowM2=[round(x,3) for x in v2]
+    rowM3=[round(x,3) for x in dist]
     M=numpy.matrix([rowM1,rowM2,rowM3])
     if numpy.linalg.det(M)==0: 
       #3 equations, 2 unknowns => 1 eq. must be dependent
@@ -80,8 +78,10 @@ def intersectionLines(p1=None,v1=None,p2=None,v2=None):
       return P
     else:     #se i vettori non sono complanari <=>  intersezione nulla
       FreeCAD.Console.PrintError('Lines are not in the same plane.\n')
+      return None
   else:  #se i vettori sono paralleli <=>  intersezione nulla
     FreeCAD.Console.PrintError('Lines are parallel.\n')
+    return None
 
 def intersectionPlane(base=None,v=None,face=None):
   '''
@@ -278,8 +278,12 @@ def extendTheBeam(beam,target):
   h=beam.Height
   vTop=vBase+vBeam.scale(h,h,h)
   if type(target)==list and len(target)==4 and  type(target[0])==type(target[1])==type(target[2])==type(target[3])==FreeCAD.Vector:
-    distBase=vBase.distanceToPlane(intersectionLines(*target),vBeam)
-    distTop=vTop.distanceToPlane(intersectionLines(*target),vBeam)
+    P=intersectionLines(*target)
+    if P!=None:
+      distBase=vBase.distanceToPlane(P,vBeam)
+      distTop=vTop.distanceToPlane(P,vBeam)
+    else:
+      FreeCAD.Console.PrintError('frameCmd.intersectionLines() has failed!\n')
   elif target.ShapeType=="Vertex":
     distBase=vBase.distanceToPlane(target.Point,vBeam)
     distTop=vTop.distanceToPlane(target.Point,vBeam)
