@@ -233,5 +233,9 @@ def extendTheTubes2intersection(pipe1=None,pipe2=None):
   for pipe in [pipe1,pipe2]:
     vectors.append(pipe.Placement.Base)
     vectors.append(frameCmd.beamAx(pipe))
-  frameCmd.extendTheBeam(pipe1,vectors)
-  frameCmd.extendTheBeam(pipe2,vectors)
+  P=frameCmd.intersectionLines(*vectors)
+  if P!=None:
+    frameCmd.extendTheBeam(pipe1,P)
+    frameCmd.extendTheBeam(pipe2,P)
+  else:
+    FreeCAD.Console.PrintError('frameCmd.intersectionLines() has failed in extendTheTubes2intersection()!\n')

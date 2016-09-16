@@ -57,7 +57,7 @@ class Elbow():
     obj.addProperty("App::PropertyAngle","BendAngle","Elbow","Bend Angle").BendAngle=BA
     obj.addProperty("App::PropertyLength","BendRadius","Elbow","Bend Radius").BendRadius=BR
     obj.addProperty("App::PropertyString","Profile","Elbow","Section dim.").Profile=str(obj.OD)+"x"+str(obj.thk)
-    obj.addProperty("App::PropertyVectorList","Ports","Elbow","Ports relative position").Ports=[]
+    obj.addProperty("App::PropertyVectorList","Ports","Elbow","Ports relative position").Ports=[FreeCAD.Vector(1,0,0),FreeCAD.Vector(0,1,0)]
 
   def onChanged(self, fp, prop):
     #FreeCAD.Console.PrintMessage("Changed Pipe feature\n")

@@ -267,23 +267,25 @@ def stretchTheBeam(beam,L):
       
 def extendTheBeam(beam,target):
   '''arg1=beam, arg2=target: extend the beam to a plane, normal to its axis, defined by target.
-  If target is a list of 4 vectors [p1,v1,p2,v2] the plane is the one that includes intersection of p1 and p2 projected along vectors v1 and v2.
-  If target is a Vertex the plane is the one that includes target.
+  If target is a Vertex or a Vector, the plane is the one that includes the point defined by target.
   If target is a Face, the plane is the one that includes the intersection between the axis of beam and the plane of the face.
-  Else, the plane is the one normal to the axis of beam that includes the CenterOfMass'''
+  Else, the plane is the one normal to the axis of beam that includes the CenterOfMass of target'''
   distBase=distTop=0
   vBase=beam.Placement.Base
   #vBeam=beam.Placement.Rotation.multVec(FreeCAD.Vector(0.0,0.0,1.0))
   vBeam=beamAx(beam)
   h=beam.Height
   vTop=vBase+vBeam.scale(h,h,h)
-  if type(target)==list and len(target)==4 and  type(target[0])==type(target[1])==type(target[2])==type(target[3])==FreeCAD.Vector:
-    P=intersectionLines(*target)
-    if P!=None:
-      distBase=vBase.distanceToPlane(P,vBeam)
-      distTop=vTop.distanceToPlane(P,vBeam)
-    else:
-      FreeCAD.Console.PrintError('frameCmd.intersectionLines() has failed!\n')
+  #if type(target)==list and len(target)==4 and  type(target[0])==type(target[1])==type(target[2])==type(target[3])==FreeCAD.Vector:
+  #  P=intersectionLines(*target)
+  #  if P!=None:
+  #    distBase=vBase.distanceToPlane(P,vBeam)
+  #    distTop=vTop.distanceToPlane(P,vBeam)
+  #  else:
+  #    FreeCAD.Console.PrintError('frameCmd.intersectionLines() has failed in extendTheBeam()!\n')
+  if type(target)==FreeCAD.Vector:
+    distBase=vBase.distanceToPlane(target,vBeam)
+    distTop=vTop.distanceToPlane(target,vBeam)
   elif target.ShapeType=="Vertex":
     distBase=vBase.distanceToPlane(target.Point,vBeam)
     distTop=vTop.distanceToPlane(target.Point,vBeam)

@@ -110,7 +110,11 @@ class insertPipeForm(protopypeForm):
           propList=[d['PSize'],float(d['OD']),float(d['thk']),edge.Length]
           pipeCmd.makePipe(propList,edge.valueAt(0),edge.tangentAt(0))
         else:
-          propList=[d['PSize'],float(d['OD']),float(d['thk']),H]
+          objs=[o for o in FreeCADGui.Selection.getSelection() if hasattr(o,'PSize') and hasattr(o,'OD') and hasattr(o,'thk')]
+          if len(objs)>0:
+            propList=[objs[0].PSize,objs[0].OD,objs[0].thk,H]
+          else:
+            propList=[d['PSize'],float(d['OD']),float(d['thk']),H]
           pipeCmd.makePipe(propList,edge.centerOfCurvatureAt(0),edge.tangentAt(0).cross(edge.normalAt(0)))
     FreeCAD.activeDocument().commitTransaction()
     FreeCAD.activeDocument().recompute()
@@ -142,7 +146,7 @@ class insertElbowForm(protopypeForm):
     self.edit1=QLineEdit('<insert angle>')
     self.edit1.setAlignment(Qt.AlignHCenter)
     self.secondCol.layout().addWidget(self.edit1)
-    self.btn2=QPushButton('Trim')
+    self.btn2=QPushButton('Trim/Extend')
     self.btn2.clicked.connect(self.trim)
     self.secondCol.layout().addWidget(self.btn2)
     self.btn3=QPushButton('Apply')
@@ -168,7 +172,7 @@ class insertElbowForm(protopypeForm):
       pipeCmd.makeElbow(propList,selex[0].SubObjects[0].Point)
     else:    
       ## insert one elbow at intersection of two edges or "beams" ##
-      axes=[] 
+      axes=[]
       # selection of axes
       for objEx in selex:
         if len(frameCmd.beams([objEx.Object]))==1:
@@ -186,13 +190,10 @@ class insertElbowForm(protopypeForm):
       if len(axes)>=4:
         # get the position
         p1,v1,p2,v2=axes[:4]
-        print "p1:",p1,"\nv1:",v1,"\np2:",p2,"\nv2:",v2
         P=frameCmd.intersectionLines(p1,v1,p2,v2)
-        print P
-        ## weak patches! but it works 99% ##
         if P!=None:
           if P!=p1:
-            w1=P-p1
+            w1=P-p1  # weak patch, but it works!
           else:
             w1=P-(p1+v1)
           w1.normalize()
@@ -200,7 +201,6 @@ class insertElbowForm(protopypeForm):
             w2=P-p2
           else:
             w2=P-(p2+v2)
-          ####
           w2.normalize()
         else:
           FreeCAD.Console.PrintError('frameCmd.intersectionLines() has failed!\n')
@@ -228,9 +228,24 @@ class insertElbowForm(protopypeForm):
         elbBisect=frameCmd.beamAx(elb,FreeCAD.Vector(1,1,0))
         rot=FreeCAD.Rotation(elbBisect,b)
         elb.Placement.Rotation=rot.multiply(elb.Placement.Rotation)
+        # trim automatically the adjacent tubes
+        FreeCAD.activeDocument().recompute()
+        portA=elb.Placement.multVec(elb.Ports[0])
+        portB=elb.Placement.multVec(elb.Ports[1])
+        for tube in frameCmd.beams():
+          vectA=tube.Shape.Solids[0].CenterOfMass-portA
+          vectB=tube.Shape.Solids[0].CenterOfMass-portB
+          if frameCmd.isParallel(vectA,frameCmd.beamAx(tube)):
+            frameCmd.extendTheBeam(tube,portA)
+            print tube.Label," is parallel to A"
+          else:
+            frameCmd.extendTheBeam(tube,portB)
+            print tube.Label," is parallel to B"
+          FreeCAD.activeDocument().recompute()
       ####
     FreeCAD.activeDocument().commitTransaction()
     FreeCAD.activeDocument().recompute()
+    
   def trim(self):
     if len(frameCmd.beams())==1:
       pipe=frameCmd.beams()[0]
