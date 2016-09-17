@@ -32,6 +32,10 @@ class QueryForm(QtGui.QWidget):
     # 5th row
     self.labSubObj = QtGui.QLabel("(Sub object property)", self)
     # 6th row
+    self.labBeam = QtGui.QLabel("(Beam property)", self)
+    # 7th row
+    self.labProfile = QtGui.QLabel("(Profile property)", self)
+    # 8th row
     self.pushButton1 = QtGui.QPushButton('QueryObject')
     self.pushButton1.setDefault(True)
     self.pushButton1.clicked.connect(self.onPushButton1)
@@ -49,13 +53,16 @@ class QueryForm(QtGui.QWidget):
     self.mainVLayout.addLayout(self.subFLayout2)
     self.mainVLayout.addLayout(self.subFLayout3)
     self.mainVLayout.addWidget(self.labSubObj)
+    self.mainVLayout.addWidget(self.labBeam)
+    self.mainVLayout.addWidget(self.labProfile)
     self.mainVLayout.addLayout(self.subHLayout1)
     QtGui.QWidget.setLayout(self,self.mainVLayout)
     # now make the window visible
     self.show()
     
   def onPushButton1(self):
-    from math import pi
+    from math import pi, degrees
+    import frameCmd
     try:
       obj=self.Selection.getSelection()[0]
       self.labName.setText(obj.Label)
@@ -76,6 +83,17 @@ class QueryForm(QtGui.QWidget):
         self.labSubObj.setText(shapes[0].ShapeType+' to '+shapes[1].ShapeType+': distance = %.1f mm' %(shapes[0].distToShape(shapes[1])[0]))
       else:
         self.labSubObj.setText(' ')
+      if len(frameCmd.beams())==1:
+        b=frameCmd.beams()[0]
+        self.labBeam.setText(b.Label+": L=%.2f"%(b.Height))
+        self.labProfile.setText("Profile: "+b.Profile)
+      elif len(frameCmd.beams())>1:
+        b1,b2=frameCmd.beams()[:2]
+        self.labBeam.setText(b1.Label+"^"+b2.Label+": %.2f"%(degrees(frameCmd.beamAx(b1).getAngle(frameCmd.beamAx(b2)))))
+        self.labProfile.setText("")
+      else:
+        self.labBeam.setText("")
+        self.labProfile.setText("")
     except:
       pass
     

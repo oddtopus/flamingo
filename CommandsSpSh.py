@@ -48,21 +48,8 @@ class findFirst:
   def GetResources(self):
     return{'Pixmap':'Std_Tool1','MenuText':'Find first occurence','ToolTip':'Find content in sheet and print address'}
 
-class queryModel:
-
-  def Activated(self):
-    import FreeCAD, FreeCADGui, qForms
-    form = qForms.QueryForm(FreeCADGui.Selection)
-    #import qCmd
-    #o=qCmd.infos()
-    #o.enter()
-
-  def GetResources(self):
-    return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","query.svg"),'MenuText':'query the model','ToolTip':'Click objects to print infos'}
-    
 
 #---------------------------------------------------------------------------
 # Adds the commands to the FreeCAD command manager
 #---------------------------------------------------------------------------
 addCommand('findFirst',findFirst()) 
-addCommand('queryModel',queryModel()) 

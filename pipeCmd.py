@@ -142,18 +142,21 @@ def makeFlange(propList=[], pos=None, Z=None):
   a.Placement.Rotation=rot.multiply(a.Placement.Rotation)
   return a
 
-def makeTank(thk=6, obj=None, facesOpen=[]):
+def makeTank(thk=6, obj=None, height=500, facesOpen=[]):
+  import Part
   '''
   Makes the shell from an existing object
   '''
-  if obj==None and FreeCADGui.Selection.getSelection()>0:
-    obj=FreeCADGui.Selection.getSelection()[0]
-  else:
-    return None
+  if obj==None:
+    obj=FreeCAD.activeDocument().addObject('Part::Feature','Tank')
+    obj.Shape=Part.makeBox(1000,400,height)
+    FreeCAD.activeDocument().recompute()
   if len(facesOpen)==0:
-    facesOpen=frameCmd.faces()
+    #facesOpen=frameCmd.faces()
+    facesOpen=[obj.Shape.Faces[0]]
   if len(obj.Shape.Solids)>0:
     obj.Shape=obj.Shape.Solids[0].makeThickness(facesOpen,-thk,1.e-3)
+    FreeCAD.activeDocument().recompute()
     return obj    
 
 def alignTheTube():

@@ -52,8 +52,21 @@ class drawFromFile():
   def GetResources(self):
     return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","daFile.svg"),'MenuText':'Polygon from file','ToolTip':'The file .csv must be ";" separated: column A = radius, column B = angle'}
 
+class queryModel:
+
+  def Activated(self):
+    import FreeCAD, FreeCADGui, qForms
+    form = qForms.QueryForm(FreeCADGui.Selection)
+    #import qCmd
+    #o=qCmd.infos()
+    #o.enter()
+
+  def GetResources(self):
+    return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","query.svg"),'MenuText':'query the model','ToolTip':'Click objects to print infos'}
+    
 #---------------------------------------------------------------------------
 # Adds the commands to the FreeCAD command manager
 #---------------------------------------------------------------------------
 addCommand('drawPolygon',drawPolygon()) 
 addCommand('drawFromFile',drawFromFile())
+addCommand('queryModel',queryModel()) 

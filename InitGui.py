@@ -110,11 +110,11 @@ static char * image[] =
     self.appendToolbar("eagleTools",list1)
     Log ('Loading Eagle tools: done\n')
     import CommandsSpSh
-    list2=["findFirst","queryModel"]
-    self.appendToolbar("spreadsheetTools",list2)
-    Log ('Loading Spreadsheet tools: done\n')
+    #list2=["findFirst"]
+    #self.appendToolbar("spreadsheetTools",list2)
+    #Log ('Loading Spreadsheet tools: done\n')
     import CommandsPolar
-    list3=["drawPolygon","drawFromFile"]
+    list3=["drawPolygon","drawFromFile","queryModel"]
     self.appendToolbar("polarTools",list3)
     Log ('Loading Polar tools: done\n')
     import CommandsFrame
@@ -128,7 +128,7 @@ static char * image[] =
     menu = ["Flamingo tools"]
     self.appendMenu(menu,list4)
     self.appendMenu(menu,list5)    
-    self.appendMenu(menu,list2)
+    #self.appendMenu(menu,list2)
     self.appendMenu(menu,list3)
     self.appendMenu(menu,list1)
 
