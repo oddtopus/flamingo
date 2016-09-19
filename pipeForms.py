@@ -8,6 +8,7 @@ from os import listdir
 from os.path import join, dirname, abspath
 from PySide.QtCore import *
 from PySide.QtGui import *
+from math import degrees
 
 class protopypeForm(QWidget):
   'prototype dialog for insert pipeFeatures'
@@ -76,7 +77,8 @@ class insertPipeForm(protopypeForm):
   '''
   Dialog to insert tubes.
   If edges are selected, it places the tubes over the straight edges or at the center of the curved edges.
-  If nothing is selected it places one tube in the origin with the selected size and height (default 200 mm).
+  If vertexes are selected, it places the tubes at the selected vertexes.
+  If nothing is selected it places one tube in the origin with the selected size and height, or default = 200 mm.
   Available one button to reverse the orientation of the selected tube.
   '''
   def __init__(self):
@@ -103,7 +105,12 @@ class insertPipeForm(protopypeForm):
       H=200
     if len(frameCmd.edges())==0:
       propList=[d['PSize'],float(d['OD']),float(d['thk']),H]
-      pipeCmd.makePipe(propList)
+      vs=[v for sx in FreeCADGui.Selection.getSelectionEx() for so in sx.SubObjects for v in so.Vertexes]
+      if len(vs)==0:
+        pipeCmd.makePipe(propList)
+      else:
+        for v in vs:
+          pipeCmd.makePipe(propList,v.Point)
     else:
       for edge in frameCmd.edges():
         if edge.curvatureAt(0)==0:
@@ -133,10 +140,10 @@ class insertPipeForm(protopypeForm):
 class insertElbowForm(protopypeForm):
   '''
   Dialog to insert one elbow.
-  It allows to select one vertex or a pair of edges or pipes or beams.
-  If at least one tube is selected it automatically takes its size and apply   it to the elbows created.
+  It allows to select one vertex, one circular edge or a pair of edges or pipes or beams.
+  If at least one tube is selected it automatically takes its size and apply   it to the elbows created. It also trim or extend automatically the tube.
   If nothing is selected, it places one elbow in the origin.
-  Available button to trim/extend one selected pipe to the selected edges of the elbow, after its placed.
+  Available button to trim/extend one selected pipe to the selected edges of the elbow, after it's modified (for example, changed the bend radius).
   '''
   def __init__(self):
     super(insertElbowForm,self).__init__("Insert elbows","Elbow","SCH-STD")
@@ -156,20 +163,54 @@ class insertElbowForm(protopypeForm):
   def insert(self):
     DN=OD=thk=PRating=None
     d=self.pipeDictList[self.sizeList.currentRow()]
+    print "d OK"
     try:
       if float(self.edit1.text())>=180:
         self.edit1.setText("179")
       ang=float(self.edit1.text())
     except:
       ang=float(d['BendAngle'])
+    print "ang OK"
     selex=FreeCADGui.Selection.getSelectionEx()
+    print "selex OK"
     FreeCAD.activeDocument().openTransaction('Insert elbow')
-    if len(selex)==0:     # insert one elbow at origin
+    if len(selex)==0:     # no selection -> insert one elbow at origin
       propList=[d['PSize'],float(d['OD']),float(d['thk']),ang,float(d['BendRadius'])]
       pipeCmd.makeElbow(propList)
-    elif len(selex)==1 and len(selex[0].SubObjects)==1 and selex[0].SubObjects[0].ShapeType=="Vertex":   # insert one elbow on one vertex
-      propList=[d['PSize'],float(d['OD']),float(d['thk']),ang,float(d['BendRadius'])]
-      pipeCmd.makeElbow(propList,selex[0].SubObjects[0].Point)
+    elif len(selex)==1 and len(selex[0].SubObjects)==1:  #one selection -> ...
+      print "one selection"
+      if pipeCmd.isPipe(selex[0].Object):
+        print "is pipe"
+        DN=selex[0].Object.PSize
+        print DN
+        OD=float(selex[0].Object.OD)
+        print OD
+        thk=float(selex[0].Object.thk)
+        print thk
+        BR=None
+        for prop in self.pipeDictList:
+          if prop['PSize']==DN:
+            BR=float(prop['BendRadius'])
+        if BR==None:
+          BR=1.5*OD/2
+        print BR
+        propList=[DN,OD,thk,ang,BR]
+      else:
+        propList=[d['PSize'],float(d['OD']),float(d['thk']),ang,float(d['BendRadius'])]
+      if selex[0].SubObjects[0].ShapeType=="Vertex":   # ...on vertex
+        pipeCmd.makeElbow(propList,selex[0].SubObjects[0].Point)
+      elif selex[0].SubObjects[0].ShapeType=="Edge" and  selex[0].SubObjects[0].curvatureAt(0)!=0: # ...on center of curved edge
+        P=selex[0].SubObjects[0].centerOfCurvatureAt(0)
+        Z=selex[0].SubObjects[0].tangentAt(0)
+        e=pipeCmd.makeElbow(propList,P,Z)
+        FreeCAD.activeDocument().recompute()
+        if pipeCmd.isPipe(selex[0].Object):
+          Port0=e.Placement.Rotation.multVec(e.Ports[0])
+          rot=FreeCAD.Rotation(Port0*-1,frameCmd.beamAx(selex[0].Object))
+          e.Placement.Rotation=rot.multiply(e.Placement.Rotation)
+          Port0=e.Placement.multVec(e.Ports[0])
+          #frameCmd.extendTheBeam(selex[0].Object,Port0)
+          e.Placement.move(P-Port0)
     else:    
       ## insert one elbow at intersection of two edges or "beams" ##
       axes=[]
@@ -274,6 +315,7 @@ class insertFlangeForm(protopypeForm):
   Dialog to insert flanges.
   If edges are selected, it places the flange over the selected circular edges.
   If at least one tube is selected it automatically takes its Nominal Size and apply it to the flange created, if it is included in the Nominal Size list of the flange.
+  If vertexes are selected, it places the flange at the selected vertexes.
   If nothing is selected it places one flange in the origin with the selected size.
   '''
   def __init__(self):
@@ -292,13 +334,17 @@ class insertFlangeForm(protopypeForm):
         if prop['PSize']==tubes[0].PSize:
           d=prop
           break
-        print "checking ",prop['PSize']
     else:
       d=self.pipeDictList[self.sizeList.currentRow()]
     propList=[d['PSize'],d['FlangeType'],float(d['D']),float(d['d']),float(d['df']),float(d['f']),float(d['t']),int(d['n'])]
     FreeCAD.activeDocument().openTransaction('Insert flange')
     if len(frameCmd.edges())==0:
-      pipeCmd.makeFlange(propList)
+      vs=[v for sx in FreeCADGui.Selection.getSelectionEx() for so in sx.SubObjects for v in so.Vertexes]
+      if len(vs)==0:
+        pipeCmd.makeFlange(propList)
+      else:
+        for v in vs:
+          pipeCmd.makeFlange(propList,v.Point)
     else:
       for edge in frameCmd.edges():
         if edge.curvatureAt(0)!=0:

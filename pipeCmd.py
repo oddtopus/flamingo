@@ -46,6 +46,14 @@ def shapeReferenceAxis(obj=None, axObj=None):
   axShapeRef=FreeCAD.Vector(X,Y,Z)
   return axShapeRef
 
+def isPipe(obj):
+  'True if obj is a tube'
+  return hasattr(obj,'PType') and obj.PType=='Pipe'
+
+def isElbow(obj):
+  'True if obj is a tube'
+  return hasattr(obj,'PType') and obj.PType=='Elbow'
+
 ################## COMMANDS ########################
 
 def simpleSurfBend(path=None,profile=None):
@@ -142,22 +150,12 @@ def makeFlange(propList=[], pos=None, Z=None):
   a.Placement.Rotation=rot.multiply(a.Placement.Rotation)
   return a
 
-def makeTank(thk=6, obj=None, height=500, facesOpen=[]):
-  import Part
-  '''
-  Makes the shell from an existing object
-  '''
-  if obj==None:
-    obj=FreeCAD.activeDocument().addObject('Part::Feature','Tank')
-    obj.Shape=Part.makeBox(1000,400,height)
-    FreeCAD.activeDocument().recompute()
-  if len(facesOpen)==0:
-    #facesOpen=frameCmd.faces()
-    facesOpen=[obj.Shape.Faces[0]]
-  if len(obj.Shape.Solids)>0:
-    obj.Shape=obj.Shape.Solids[0].makeThickness(facesOpen,-thk,1.e-3)
-    FreeCAD.activeDocument().recompute()
-    return obj    
+def makeShell(L=800,W=400,H=500,thk=6):
+  a=FreeCAD.ActiveDocument.addObject("Part::FeaturePython","Serbatoio")
+  pipeFeatures.Shell(a)
+  a.ViewObject.Proxy=0
+  a.Placement.Base=FreeCAD.Vector(0,0,0)
+  return a
 
 def alignTheTube():
   '''

@@ -58,6 +58,7 @@ class Elbow():
     obj.addProperty("App::PropertyLength","BendRadius","Elbow","Bend Radius").BendRadius=BR
     obj.addProperty("App::PropertyString","Profile","Elbow","Section dim.").Profile=str(obj.OD)+"x"+str(obj.thk)
     obj.addProperty("App::PropertyVectorList","Ports","Elbow","Ports relative position").Ports=[FreeCAD.Vector(1,0,0),FreeCAD.Vector(0,1,0)]
+    self.execute(obj)
 
   def onChanged(self, fp, prop):
     #FreeCAD.Console.PrintMessage("Changed Pipe feature\n")
@@ -114,11 +115,9 @@ class Flange():
     obj.addProperty("App::PropertyLength","f","Flange","Bolts hole diameter").f=f
     obj.addProperty("App::PropertyLength","t","Flange","Thickness of flange").t=t
     obj.addProperty("App::PropertyInteger","n","Flange","Nr. of bolts").n=n
-
   def onChanged(self, fp, prop):
     #FreeCAD.Console.PrintMessage("Changed Pipe feature\n")
     return None
-
   def execute(self, fp):
     base=Part.Face(Part.Wire(Part.makeCircle(fp.D/2)))
     base=base.cut(Part.Face(Part.Wire(Part.makeCircle(fp.d/2))))
@@ -127,5 +126,33 @@ class Flange():
     for i in list(range(fp.n)):
       base=base.cut(hole)
       hole.rotate(FreeCAD.Vector(0,0,0),FreeCAD.Vector(0,0,1),360/fp.n)
-
     fp.Shape = base.extrude(FreeCAD.Vector(0,0,fp.t))
+    
+class Shell():
+  def __init__(self,obj,L=800,W=400,H=500,thk=6):
+    obj.addProperty("App::PropertyLength","L","Tank","Tank's length").L=L
+    obj.addProperty("App::PropertyLength","W","Tank","Tank's width").W=W
+    obj.addProperty("App::PropertyLength","H","Tank","Tank's height").H=H
+    obj.addProperty("App::PropertyLength","thk","Tank","Thikness of tank's shell").thk=thk
+    self.execute(obj)
+  def onChanged(self, fp, prop):
+    return None
+  def execute(self, fp):
+    O=FreeCAD.Vector(0,0,0)
+    vectL=FreeCAD.Vector(fp.L,0,0)
+    vectW=FreeCAD.Vector(0,fp.W,0)
+    vectH=FreeCAD.Vector(0,0,fp.H)
+    base=[vectL,vectW,vectH]
+    outline=[]
+    for i in range(3):
+      f1=Part.Face(Part.makePolygon([O,base[0],base[0]+base[1],base[1],O]))
+      outline.append(f1)
+      f2=f1.copy()
+      f2.translate(base[2])
+      outline.append(f2)
+      base.append(base.pop(0))
+    box=Part.Solid(Part.Shell(outline))
+    tank=box.makeThickness([box.Faces[2]],-fp.thk,1.e-3)
+    fp.Shape=tank
+    
+    

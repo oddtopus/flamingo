@@ -66,8 +66,8 @@ class QueryForm(QtGui.QWidget):
     try:
       obj=self.Selection.getSelection()[0]
       self.labName.setText(obj.Label)
-      self.labBaseVal.setText(str(obj.Placement.Base))
-      self.labRotAng.setText(str("%.2f deg" %(obj.Placement.Rotation.Angle/pi*180)))
+      self.labBaseVal.setText(str("P = %.1f,%.1f,%.1f"%tuple(obj.Placement.Base)))
+      self.labRotAng.setText(str("%.2f " %(degrees(obj.Placement.Rotation.Angle))))
       ax=obj.Placement.Rotation.Axis
       self.labRotAx.setText(str("v = (%(x).2f,%(y).2f,%(z).2f)" %{'x':ax.x,'y':ax.y,'z':ax.z}))
       shapes=[y for x in self.Selection.getSelectionEx() for y in x.SubObjects if hasattr(y,'ShapeType')]
