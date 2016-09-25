@@ -74,7 +74,7 @@ def makePipe(propList=[], pos=None, Z=None):
     H (float): length of pipe
   Default is "DN50 (SCH-STD)"
   pos (vector): position of insertion; default = 0,0,0
-  Z (vector): orientation: default = 0,0,0
+  Z (vector): orientation: default = 0,0,1
   '''
   if pos==None:
     pos=FreeCAD.Vector(0,0,0)
@@ -102,7 +102,7 @@ def makeElbow(propList=[], pos=None, Z=None):
     BR (float): bend radius
   Default is "DN50"
   pos (vector): position of insertion; default = 0,0,0
-  Z (vector): orientation: default = 0,0,0
+  Z (vector): orientation: default = 0,0,1
   '''
   if pos==None:
     pos=FreeCAD.Vector(0,0,0)
@@ -133,7 +133,7 @@ def makeFlange(propList=[], pos=None, Z=None):
     n (int): nr. of bolts
   Default is "DN50 (PN16)"
   pos (vector): position of insertion; default = 0,0,0
-  Z (vector): orientation: default = 0,0,0
+  Z (vector): orientation: default = 0,0,1
   '''
   if pos==None:
     pos=FreeCAD.Vector(0,0,0)
