@@ -163,37 +163,28 @@ class insertElbowForm(protopypeForm):
   def insert(self):
     DN=OD=thk=PRating=None
     d=self.pipeDictList[self.sizeList.currentRow()]
-    print "d OK"
     try:
       if float(self.edit1.text())>=180:
         self.edit1.setText("179")
       ang=float(self.edit1.text())
     except:
       ang=float(d['BendAngle'])
-    print "ang OK"
     selex=FreeCADGui.Selection.getSelectionEx()
-    print "selex OK"
     FreeCAD.activeDocument().openTransaction('Insert elbow')
     if len(selex)==0:     # no selection -> insert one elbow at origin
       propList=[d['PSize'],float(d['OD']),float(d['thk']),ang,float(d['BendRadius'])]
       pipeCmd.makeElbow(propList)
     elif len(selex)==1 and len(selex[0].SubObjects)==1:  #one selection -> ...
-      print "one selection"
       if pipeCmd.isPipe(selex[0].Object):
-        print "is pipe"
         DN=selex[0].Object.PSize
-        print DN
         OD=float(selex[0].Object.OD)
-        print OD
         thk=float(selex[0].Object.thk)
-        print thk
         BR=None
         for prop in self.pipeDictList:
           if prop['PSize']==DN:
             BR=float(prop['BendRadius'])
         if BR==None:
           BR=1.5*OD/2
-        print BR
         propList=[DN,OD,thk,ang,BR]
       else:
         propList=[d['PSize'],float(d['OD']),float(d['thk']),ang,float(d['BendRadius'])]
@@ -305,6 +296,10 @@ class insertElbowForm(protopypeForm):
         obj.PSize=d['PSize']
         obj.OD=d['OD']
         obj.thk=d['thk']
+        try:
+          obj.BendAngle=float(self.edit1.text())
+        except:
+          pass
         #obj.BendAngle=d['BendAngle']
         obj.BendRadius=d['BendRadius']
         obj.PRating=self.PRating

@@ -120,21 +120,23 @@ class Flange():
     return None
   def execute(self, fp):
     base=Part.Face(Part.Wire(Part.makeCircle(fp.D/2)))
-    base=base.cut(Part.Face(Part.Wire(Part.makeCircle(fp.d/2))))
-    hole=Part.Face(Part.Wire(Part.makeCircle(fp.f/2,FreeCAD.Vector(fp.df/2,0,0),FreeCAD.Vector(0,0,1))))
-    hole.rotate(FreeCAD.Vector(0,0,0),FreeCAD.Vector(0,0,1),360/fp.n/2)
-    for i in list(range(fp.n)):
-      base=base.cut(hole)
-      hole.rotate(FreeCAD.Vector(0,0,0),FreeCAD.Vector(0,0,1),360/fp.n)
+    if fp.d>0:
+      base=base.cut(Part.Face(Part.Wire(Part.makeCircle(fp.d/2))))
+    if fp.n>0:
+      hole=Part.Face(Part.Wire(Part.makeCircle(fp.f/2,FreeCAD.Vector(fp.df/2,0,0),FreeCAD.Vector(0,0,1))))
+      hole.rotate(FreeCAD.Vector(0,0,0),FreeCAD.Vector(0,0,1),360/fp.n/2)
+      for i in list(range(fp.n)):
+        base=base.cut(hole)
+        hole.rotate(FreeCAD.Vector(0,0,0),FreeCAD.Vector(0,0,1),360/fp.n)
     fp.Shape = base.extrude(FreeCAD.Vector(0,0,fp.t))
     
 class Shell():
   def __init__(self,obj,L=800,W=400,H=500,thk=6):
+    obj.Proxy=self
     obj.addProperty("App::PropertyLength","L","Tank","Tank's length").L=L
     obj.addProperty("App::PropertyLength","W","Tank","Tank's width").W=W
     obj.addProperty("App::PropertyLength","H","Tank","Tank's height").H=H
     obj.addProperty("App::PropertyLength","thk","Tank","Thikness of tank's shell").thk=thk
-    self.execute(obj)
   def onChanged(self, fp, prop):
     return None
   def execute(self, fp):
@@ -152,7 +154,7 @@ class Shell():
       outline.append(f2)
       base.append(base.pop(0))
     box=Part.Solid(Part.Shell(outline))
-    tank=box.makeThickness([box.Faces[2]],-fp.thk,1.e-3)
+    tank=box.makeThickness([box.Faces[0],box.Faces[2]],-fp.thk,1.e-3)
     fp.Shape=tank
     
     

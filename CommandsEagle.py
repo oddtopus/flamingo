@@ -22,39 +22,17 @@ def addCommand(name,cmdObject):
 #---------------------------------------------------------------------------
 
 # Eagle import tool
-# Riccardo Treu - LGPL
+# Riccardo Treu - LGPL  2016
 
-class bareImport:
+class importPos:
   def Activated (self):
-    from eagleCmd import *
-    print "- module eagleCmd.py imported -"
+    import eagleForms
+    eagleForm=eagleForms.eagleForm()
   def GetResources(self):
-    return{'Pixmap':'Std_Tool1','MenuText':'Import Eagle tools','ToolTip':'Use this to import function brdIn() and brdCompare()'}
-
-class doBrdImport:
-  def Activated (self):
-    import eagleCmd
-    global brdPos
-    brdPos=eagleCmd.brdIn()
-    print "*** created global variable 'brdPos' ***\n"
-  def GetResources(self):
-    return{'Pixmap':'Std_Tool2','MenuText':'Import .brd positions','ToolTip':'Use this to execute function brdIn()'}
-
-class doBrdDispose:
-  def Activated (self):
-    import eagleCmd
-    if (brdPos):
-      eagleCmd.brdCompare(brdPos)
-      print "*** components moved to the specified position ***\n"
-    else:
-      print "*** global variable 'brdPos' not defined ***\n"
-  def GetResources(self):
-    return{'Pixmap':'Std_Tool3','MenuText':'Dispose components on PCB','ToolTip':'Use this to dispose components after imported the .brd'}
+    return{'Pixmap':'Std_Tool1','MenuText':'Dispose components on PCB','ToolTip':'Use this to import positions from a .brd file and dispose components'}
 
 #---------------------------------------------------------------------------
 # Adds the commands to the FreeCAD command manager
 #---------------------------------------------------------------------------
-addCommand('bareImport',bareImport()) 
-addCommand('doBrdImport',doBrdImport())
-addCommand('doBrdDispose',doBrdDispose())
+addCommand('importPos',importPos())
 

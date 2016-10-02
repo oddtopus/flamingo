@@ -9,12 +9,11 @@ try:
 	else:
 		App.Console.PrintMessage('Parts has no components') 
 except:
-	print 'no group "Parts" found'
+	App.Console.PrintWarning('no group "Parts" found\n')
 
 
 def brdIn():
-  fileName=qg.QFileDialog().getOpenFileName()
-  board=fileName[0]
+  board=qg.QFileDialog().getOpenFileName() [0]
   try:
 		radice=et.parse(board).getroot()
 		el=[]

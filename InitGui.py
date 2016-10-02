@@ -106,7 +106,7 @@ static char * image[] =
   ToolTip = "Flamingo tools workbench"
   def Initialize(self):
     import CommandsEagle
-    list1 = ["bareImport","doBrdImport","doBrdDispose"]
+    list1 = ["importPos"]
     self.appendToolbar("eagleTools",list1)
     Log ('Loading Eagle tools: done\n')
     import CommandsSpSh

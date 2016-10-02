@@ -89,7 +89,7 @@ class flat:
       if len(fittings)>0:
         FreeCAD.activeDocument().openTransaction('Flatten')
         pipeCmd.flattenTheTube(fittings[0],v1,v2)
-        fittings[0].Placement.Base=frameCmd.intersectionLines(p1,v1,p2,v2)
+        fittings[0].Placement.Base=frameCmd.intersectionLines2(p1,v1,p2,v2)
         FreeCAD.activeDocument().commitTransaction()
     FreeCAD.activeDocument().recompute()
   def GetResources(self):

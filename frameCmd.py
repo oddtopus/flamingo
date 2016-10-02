@@ -38,6 +38,23 @@ def faces(selex=[]):
     FreeCAD.Console.PrintError('\nNo valid selection.\n')
   return fcs
 
+def intersectionLines2(p1=None,v1=None,p2=None,v2=None):
+  '''
+  intersectionLines2(p1,v1,p2,v2)
+  Returns the intersection between one line and the plane that includes the
+  second line and orthogonal to the plane defined by both lines.
+    p1,v1: the reference point and direction of first line
+    p2,v2: the reference point and direction of second line
+  '''
+  if isParallel(v1,v2):
+    FreeCAD.Console.PrintError("Directions are pallel\n")
+    return None
+  else:
+    dist=p1-p2
+    norm=dist.cross(v2).cross(v2)
+    P1=FreeCAD.Vector(p1.x,p1.y,p1.z)
+    return P1.projectToPlane(p2,norm)
+
 def intersectionLines(p1=None,v1=None,p2=None,v2=None):
   '''
   intersectionLines(p1,v1,p2,v2)
@@ -54,9 +71,9 @@ def intersectionLines(p1=None,v1=None,p2=None,v2=None):
     dist=p1-p2
     import numpy
     #M=numpy.matrix([list(v1),list(v2),list(dist)]) # does not work: it seems for lack of accuracy of FreeCAD.Base.Vector operations!
-    rowM1=[round(x,3) for x in v1]
-    rowM2=[round(x,3) for x in v2]
-    rowM3=[round(x,3) for x in dist]
+    rowM1=[round(x,2) for x in v1]
+    rowM2=[round(x,2) for x in v2]
+    rowM3=[round(x,2) for x in dist]
     M=numpy.matrix([rowM1,rowM2,rowM3])
     if numpy.linalg.det(M)==0: 
       #3 equations, 2 unknowns => 1 eq. must be dependent
@@ -97,11 +114,11 @@ def intersectionPlane(base=None,v=None,face=None):
     beam=beams()[0]
     base=beam.Placement.Base
     v=beamAx(beam)
-  # equation of plane: ax+by+cz+d=0
   if isOrtho(v,face):
     FreeCAD.Console.PrintError('Direction of projection and Face are parallel.\n')
     return None
   else:
+    # equation of plane: ax+by+cz+d=0
     a,b,c=list(face.normalAt(0,0))
     d=-face.CenterOfMass.dot(face.normalAt(0,0))
     FreeCAD.Console.PrintMessage('a=%.2f b=%.2f c=%.2f d=%.2f\n' %(a,b,c,d))
@@ -111,7 +128,7 @@ def intersectionPlane(base=None,v=None,face=None):
     #intersection
     k=-1*(a*base.x+b*base.y+c*base.z+d)/(a*v.x+b*v.y+c*v.z)
     FreeCAD.Console.PrintMessage('k=%f\n' %float(k))
-    P=base+v.scale(k,k,k)
+    P=base+v.multiply(k) #scale(k,k,k)
     return P
 
 def isOrtho(e1=None,e2=None):
@@ -275,7 +292,7 @@ def extendTheBeam(beam,target):
   #vBeam=beam.Placement.Rotation.multVec(FreeCAD.Vector(0.0,0.0,1.0))
   vBeam=beamAx(beam)
   h=beam.Height
-  vTop=vBase+vBeam.scale(h,h,h)
+  vTop=vBase+vBeam.multiply(h)#.scale(h,h,h)
   #if type(target)==list and len(target)==4 and  type(target[0])==type(target[1])==type(target[2])==type(target[3])==FreeCAD.Vector:
   #  P=intersectionLines(*target)
   #  if P!=None:
@@ -303,14 +320,14 @@ def extendTheBeam(beam,target):
       beam.Height+=FreeCAD.Units.Quantity(str(abs(distTop))+"mm")
     else:
       beam.Height+=FreeCAD.Units.Quantity(str(abs(distBase))+"mm")
-      vMove=vBeam.normalize().scale(-distBase,-distBase,-distBase)
+      vMove=vBeam.normalize().multiply(-distBase) #scale(-distBase,-distBase,-distBase)
       beam.Placement.move(vMove)
   else:
     if abs(distBase)>abs(distTop):
       beam.Height-=FreeCAD.Units.Quantity(str(abs(distTop))+"mm")
     else:
       beam.Height-=FreeCAD.Units.Quantity(str(abs(distBase))+"mm")
-      vMove=vBeam.normalize().scale(-distBase,-distBase,-distBase)
+      vMove=vBeam.normalize().multiply(-distBase) #scale(-distBase,-distBase,-distBase)
       beam.Placement.move(vMove)
   
   FreeCAD.activeDocument().recompute()
