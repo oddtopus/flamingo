@@ -9,6 +9,7 @@ from os.path import join, dirname, abspath
 from PySide.QtCore import *
 from PySide.QtGui import *
 from math import degrees
+from DraftVecUtils import rounded
 
 class protopypeForm(QWidget):
   'prototype dialog for insert pipeFeatures'
@@ -170,10 +171,11 @@ class insertElbowForm(protopypeForm):
     except:
       ang=float(d['BendAngle'])
     selex=FreeCADGui.Selection.getSelectionEx()
-    FreeCAD.activeDocument().openTransaction('Insert elbow')
     if len(selex)==0:     # no selection -> insert one elbow at origin
       propList=[d['PSize'],float(d['OD']),float(d['thk']),ang,float(d['BendRadius'])]
+      FreeCAD.activeDocument().openTransaction('Insert elbow in (0,0,0)')
       pipeCmd.makeElbow(propList)
+      FreeCAD.activeDocument().commitTransaction()
     elif len(selex)==1 and len(selex[0].SubObjects)==1:  #one selection -> ...
       if pipeCmd.isPipe(selex[0].Object):
         DN=selex[0].Object.PSize
@@ -189,10 +191,13 @@ class insertElbowForm(protopypeForm):
       else:
         propList=[d['PSize'],float(d['OD']),float(d['thk']),ang,float(d['BendRadius'])]
       if selex[0].SubObjects[0].ShapeType=="Vertex":   # ...on vertex
+        FreeCAD.activeDocument().openTransaction('Insert elbow on vertex')
         pipeCmd.makeElbow(propList,selex[0].SubObjects[0].Point)
+        FreeCAD.activeDocument().commitTransaction()
       elif selex[0].SubObjects[0].ShapeType=="Edge" and  selex[0].SubObjects[0].curvatureAt(0)!=0: # ...on center of curved edge
         P=selex[0].SubObjects[0].centerOfCurvatureAt(0)
         Z=selex[0].SubObjects[0].tangentAt(0)
+        FreeCAD.activeDocument().openTransaction('Insert elbow on curved edge')
         e=pipeCmd.makeElbow(propList,P,Z)
         FreeCAD.activeDocument().recompute()
         if pipeCmd.isPipe(selex[0].Object):
@@ -200,26 +205,32 @@ class insertElbowForm(protopypeForm):
           rot=FreeCAD.Rotation(Port0*-1,frameCmd.beamAx(selex[0].Object))
           e.Placement.Rotation=rot.multiply(e.Placement.Rotation)
           Port0=e.Placement.multVec(e.Ports[0])
-          #frameCmd.extendTheBeam(selex[0].Object,Port0)
           e.Placement.move(P-Port0)
+        FreeCAD.activeDocument().commitTransaction()
     else:    
       ## insert one elbow at intersection of two edges or "beams" ##
-      axes=[]
       # selection of axes
+      axes=[]
       for objEx in selex:
+        # if the profile is not defined and the selection is one piping object, take its profile for elbow
+        if OD==thk==None and hasattr(objEx.Object,'PType') and objEx.Object.PType in ['Pipe','Elbow']: 
+          DN=objEx.Object.PSize
+          OD=objEx.Object.OD
+          thk=objEx.Object.thk
+          PRating=objEx.Object.PRating
+        # if the object is a beam or pipe, append it to the axes..
         if len(frameCmd.beams([objEx.Object]))==1:
           axes.append(objEx.Object.Placement.Base)
           axes.append(frameCmd.beamAx(objEx.Object))
-          if OD==thk==None and hasattr(objEx.Object,'PType') and objEx.Object.PType=='Pipe': # if the selction is one pipe, take its profile for elbow
-            DN=objEx.Object.PSize
-            OD=objEx.Object.OD
-            thk=objEx.Object.thk
-            PRating=objEx.Object.PRating
         else:
+          # ..else append its edges to axes
           for edge in frameCmd.edges([objEx]):
             axes.append(edge.CenterOfMass)
             axes.append(edge.tangentAt(0))
-      if len(axes)>=4:
+        if len(axes)>=4:
+          break
+      FreeCAD.activeDocument().openTransaction('Insert elbow on intersection')
+      try:
         # get the position
         p1,v1,p2,v2=axes[:4]
         P=frameCmd.intersectionLines(p1,v1,p2,v2)
@@ -238,8 +249,7 @@ class insertElbowForm(protopypeForm):
           FreeCAD.Console.PrintError('frameCmd.intersectionLines() has failed!\n')
           return None
         # calculate the bending angle and the plane of the elbow
-        from math import pi
-        ang=180-w1.getAngle(w2)*180/pi # ..-acos(w1.dot(w2))/pi*180
+        ang=180-degrees(w1.getAngle(w2))
         #create the feature
         if None in [DN,OD,thk,PRating]:
           propList=[d['PSize'],float(d['OD']),float(d['thk']),ang,float(d['BendRadius'])]
@@ -256,7 +266,7 @@ class insertElbowForm(protopypeForm):
           elb=pipeCmd.makeElbow(propList,P,axes[1].cross(axes[3]))
           elb.PRating=PRating
         # mate the elbow ends with the pipes or edges
-        b=frameCmd.bisect(w1*-1,w2*-1)
+        b=frameCmd.bisect(w1.negative(),w2.negative())
         elbBisect=frameCmd.beamAx(elb,FreeCAD.Vector(1,1,0))
         rot=FreeCAD.Rotation(elbBisect,b)
         elb.Placement.Rotation=rot.multiply(elb.Placement.Rotation)
@@ -269,13 +279,13 @@ class insertElbowForm(protopypeForm):
           vectB=tube.Shape.Solids[0].CenterOfMass-portB
           if frameCmd.isParallel(vectA,frameCmd.beamAx(tube)):
             frameCmd.extendTheBeam(tube,portA)
-            print tube.Label," is parallel to A"
           else:
             frameCmd.extendTheBeam(tube,portB)
-            print tube.Label," is parallel to B"
           FreeCAD.activeDocument().recompute()
+      except:
+        FreeCAD.Console.PrintError('Creation of elbow is failed\n')
+      FreeCAD.activeDocument().commitTransaction()
       ####
-    FreeCAD.activeDocument().commitTransaction()
     FreeCAD.activeDocument().recompute()
     
   def trim(self):
@@ -361,6 +371,39 @@ class insertFlangeForm(protopypeForm):
         obj.PRating=self.PRating
         FreeCAD.activeDocument().recompute()
 
+class insertUboltForm(protopypeForm):
+  '''
+  Dialog to insert U-bolts.
+  '''
+  def __init__(self):
+    super(insertUboltForm,self).__init__("Insert U-bolt","Clamp","DIN-UBolt")
+    self.sizeList.item(0).setSelected(True)
+    self.ratingList.item(0).setSelected(True)
+    self.btn1.clicked.connect(self.insert)
+    self.show()
+  def insert(self):
+    selex=FreeCADGui.Selection.getSelectionEx()
+    if len(selex)==0:
+      d=self.pipeDictList[self.sizeList.currentRow()]
+      propList=[d['PSize'],self.PRating,float(d['C']),float(d['H']),float(d['d'])]
+      FreeCAD.activeDocument().openTransaction('Insert clamp in (0,0,0)')
+      pipeCmd.makeUbolt(propList)
+      FreeCAD.activeDocument().commitTransaction()
+      FreeCAD.activeDocument().recompute()
+    else:
+      for objex in selex:
+        if hasattr(objex.Object,'PType') and objex.Object.PType=='Pipe':
+          d=[typ for typ in self.pipeDictList if typ['PSize']==objex.Object.PSize]
+          if len(d)>0:
+            d=d[0]
+          else:
+            d=self.pipeDictList[self.sizeList.currentRow()]
+          propList=[d['PSize'],self.PRating,float(d['C']),float(d['H']),float(d['d'])]
+          FreeCAD.activeDocument().openTransaction('Insert clamp on tube')
+          ub=pipeCmd.makeUbolt(propList,pos=objex.Object.Placement.Base, Z=frameCmd.beamAx(objex.Object))
+          ub.Placement.move(frameCmd.beamAx(objex.Object).multiply(float(d['C'])/2)) # aesthetic
+          FreeCAD.activeDocument().commitTransaction()
+    FreeCAD.activeDocument().recompute()
 class rotateForm(prototypeForm):
   '''
   Dialog for rotateTheTubeAx().

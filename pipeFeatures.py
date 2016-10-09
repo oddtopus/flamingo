@@ -7,12 +7,12 @@ import FreeCAD, Part, frameCmd
 
 class Pipe():
   '''Class for object PType="Pipe"
-  Pipe(obj,[DN="DN50",OD=60.3,thk=3, H=100])
-  obj: the "App::FeaturePython object"
-  DN (string): nominal diameter
-  OD (float): outside diameter
-  thk (float): shell thickness
-  H (float): length of pipe'''
+  Pipe(obj,[PSize="DN50",OD=60.3,thk=3, H=100])
+    obj: the "App::FeaturePython object"
+    PSize (string): nominal diameter
+    OD (float): outside diameter
+    thk (float): shell thickness
+    H (float): length of pipe'''
   def __init__(self, obj,DN="DN50",OD=60.3,thk=3, H=100):
     obj.Proxy = self
     obj.addProperty("App::PropertyString","PType","Pipe","Type of tubeFeature").PType="Pipe"
@@ -39,13 +39,13 @@ class Pipe():
     
 class Elbow():
   '''Class for object PType="Elbow"
-  Elbow(obj,[DN="DN50",OD=60.3,thk=3,BA=90,BR=45.225])
-  obj: the "App::FeaturePython object"
-  DN (string): nominal diameter
-  OD (float): outside diameter
-  thk (float): shell thickness
-  BA (float): bend angle
-  BR (float): bend radius'''
+  Elbow(obj,[PSize="DN50",OD=60.3,thk=3,BA=90,BR=45.225])
+    obj: the "App::FeaturePython" object
+    PSize (string): nominal diameter
+    OD (float): outside diameter
+    thk (float): shell thickness
+    BA (float): bend angle
+    BR (float): bend radius'''
   def __init__(self, obj,DN="DN50",OD=60.3,thk=3,BA=90,BR=45.225):
     obj.Proxy = self
     obj.addProperty("App::PropertyString","PType","Elbow","Type of pipeFeature").PType="Elbow"
@@ -92,16 +92,16 @@ class Elbow():
       
 class Flange():
   '''Class for object PType="Flange"
-  Flange(obj,[DN="DN50",FlangeType="SO", D=160, d=60.3,df=132, f=14 t=15,n=4])
-  obj: the "App::FeaturePython object"
-  DN (string): nominal diameter
-  FlangeType (string): type of Flange
-  D (float): flange diameter
-  d (float): bore diameter
-  df (float): bolts holes distance
-  f (float): bolts holes diameter
-  t (float): flange thickness
-  n (int): nr. of bolts
+  Flange(obj,[PSize="DN50",FlangeType="SO", D=160, d=60.3,df=132, f=14 t=15,n=4])
+    obj: the "App::FeaturePython" object
+    PSize (string): nominal diameter
+    FlangeType (string): type of Flange
+    D (float): flange diameter
+    d (float): bore diameter
+    df (float): bolts holes distance
+    f (float): bolts holes diameter
+    t (float): flange thickness
+    n (int): nr. of bolts
   '''
   def __init__(self, obj,DN="DN50",FlangeType="SO",D=160,d=60.3,df=132,f=14, t=15, n=4):
     obj.Proxy = self
@@ -130,7 +130,46 @@ class Flange():
         hole.rotate(FreeCAD.Vector(0,0,0),FreeCAD.Vector(0,0,1),360/fp.n)
     fp.Shape = base.extrude(FreeCAD.Vector(0,0,fp.t))
     
+class Ubolt():
+  '''Class for object PType="Clamp"
+  UBolt(obj,[PSize="DN50",ClampType="U-bolt", C=76, H=109, d=10])
+    obj: the "App::FeaturePython" object
+    PSize (string): nominal diameter
+    ClampType (string): the clamp type or standard
+    C (float): the diameter of the U-bolt
+    H (float): the total height of the U-bolt
+    d (float): the rod diameter
+  '''
+  def __init__(self, obj,DN="DN50",ClampType="DIN-UBolt", C=76, H=109, d=10):
+    obj.Proxy = self
+    obj.addProperty("App::PropertyString","PType","Ubolt","Type of pipeFeature").PType="Clamp"
+    obj.addProperty("App::PropertyString","ClampType","Ubolt","Type of clamp").ClampType=ClampType
+    obj.addProperty("App::PropertyString","PSize","Ubolt","Size of clamp").PSize=DN
+    obj.addProperty("App::PropertyLength","C","Ubolt","Arc diameter").C=C
+    obj.addProperty("App::PropertyLength","H","Ubolt","Overall height").H=H
+    obj.addProperty("App::PropertyLength","d","Ubolt","Rod diameter").d=d
+    obj.addProperty("App::PropertyString","thread","Ubolt","Size of thread").thread="M"+str(d)
+  def onChanged(self, fp, prop):
+    return None
+  def execute(self, fp):
+    fp.thread="M"+str(float(fp.d))
+    c=Part.makeCircle(fp.C/2,FreeCAD.Vector(0,0,0),FreeCAD.Vector(0,0,1),0,180)
+    l1=Part.makeLine((fp.C/2,0,0),(fp.C/2,fp.C/2-fp.H,0))
+    l2=Part.makeLine((-fp.C/2,0,0),(-fp.C/2,fp.C/2-fp.H,0))
+    p=Part.Face(Part.Wire(Part.makeCircle(fp.d/2,c.valueAt(c.FirstParameter),c.tangentAt(c.FirstParameter))))
+    path=Part.Wire([c,l1,l2])
+    fp.Shape=path.makePipe(p)
+
 class Shell():
+  '''
+  Class for a lateral-shell-of-tank object
+  Shell(obj[,L=800,W=400,H=500,thk=6])
+    obj: the "App::FeaturePython" object
+    L (float): the length
+    W (float): the width
+    H (float): the height
+    thk (float): the plate's thickness
+  '''
   def __init__(self,obj,L=800,W=400,H=500,thk=6):
     obj.Proxy=self
     obj.addProperty("App::PropertyLength","L","Tank","Tank's length").L=L
@@ -156,5 +195,4 @@ class Shell():
     box=Part.Solid(Part.Shell(outline))
     tank=box.makeThickness([box.Faces[0],box.Faces[2]],-fp.thk,1.e-3)
     fp.Shape=tank
-    
     

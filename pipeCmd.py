@@ -150,6 +150,22 @@ def makeFlange(propList=[], pos=None, Z=None):
   a.Placement.Rotation=rot.multiply(a.Placement.Rotation)
   return a
 
+def makeUbolt(propList=[], pos=None, Z=None):
+  if pos==None:
+    pos=FreeCAD.Vector(0,0,0)
+  if Z==None:
+    Z=FreeCAD.Vector(0,0,1)
+  a=FreeCAD.ActiveDocument.addObject("Part::FeaturePython","U-Bolt")
+  if len(propList)==5:
+    pipeFeatures.Ubolt(a,*propList)
+  else:
+    pipeFeatures.Ubolt(a)
+  a.ViewObject.Proxy=0
+  a.Placement.Base=pos
+  rot=FreeCAD.Rotation(FreeCAD.Vector(0,0,1),Z)
+  a.Placement.Rotation=rot.multiply(a.Placement.Rotation)
+  return a
+
 def makeShell(L=800,W=400,H=500,thk=6):
   a=FreeCAD.ActiveDocument.addObject("Part::FeaturePython","Serbatoio")
   pipeFeatures.Shell(a)
@@ -163,8 +179,8 @@ def alignTheTube():
   of 2 separate objects.
   '''
   try:
-    t1,t2=FreeCADGui.Selection.getSelection()
-    d1,d2=frameCmd.edges()
+    t1,t2=FreeCADGui.Selection.getSelection()[:2]
+    d1,d2=frameCmd.edges()[:2]
     if d1.curvatureAt(0)!=0 and d2.curvatureAt(0)!=0:
       n1=d1.tangentAt(0).cross(d1.normalAt(0))
       n2=d2.tangentAt(0).cross(d2.normalAt(0))
@@ -228,15 +244,17 @@ def extendTheTubes2intersection(pipe1=None,pipe2=None):
   Does what it says; also with beams.
   If arguments are None, it picks the first 2 selected beams().
   '''
-  if pipe1==pipe2==None:
-    pipe1,pipe2=frameCmd.beams()[:2]
-  vectors=[]
-  for pipe in [pipe1,pipe2]:
-    vectors.append(pipe.Placement.Base)
-    vectors.append(frameCmd.beamAx(pipe))
-  P=frameCmd.intersectionLines(*vectors)
+  if not (pipe1 and pipe2):
+    try:
+      pipe1,pipe2=frameCmd.beams()[:2]
+    except:
+      FreeCAD.Console.PrintError('Insufficient arguments for extendTheTubes2intersection\n')
+  #vectors=[]
+  #for pipe in [pipe1,pipe2]:
+  #  vectors.append(pipe.Placement.Base)
+  #  vectors.append(frameCmd.beamAx(pipe))
+  #P=frameCmd.intersectionLines(*vectors)
+  P=frameCmd.intersectionCLines(pipe1,pipe2)
   if P!=None:
     frameCmd.extendTheBeam(pipe1,P)
     frameCmd.extendTheBeam(pipe2,P)
-  else:
-    FreeCAD.Console.PrintError('frameCmd.intersectionLines() has failed in extendTheTubes2intersection()!\n')

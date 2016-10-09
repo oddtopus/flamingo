@@ -2,6 +2,9 @@
 # (c) 2016 Riccardo Treu LGPL
 
 import FreeCAD,FreeCADGui
+import DraftGeomUtils as dgu
+from DraftVecUtils import rounded as roundVec
+
 
 ############## AUXILIARY FUNCTIONS ###############
 
@@ -38,7 +41,7 @@ def faces(selex=[]):
     FreeCAD.Console.PrintError('\nNo valid selection.\n')
   return fcs
 
-def intersectionLines2(p1=None,v1=None,p2=None,v2=None):
+def intersectionLines2(p1=None,v1=None,p2=None,v2=None):   # TODO!
   '''
   intersectionLines2(p1,v1,p2,v2)
   Returns the intersection between one line and the plane that includes the
@@ -54,6 +57,34 @@ def intersectionLines2(p1=None,v1=None,p2=None,v2=None):
     norm=dist.cross(v2).cross(v2)
     P1=FreeCAD.Vector(p1.x,p1.y,p1.z)
     return P1.projectToPlane(p2,norm)
+
+def intersectionCLines(thing1=None, thing2=None):
+  '''
+  intersectionCLines(thing1=None, thing2=None)
+  Returns the intersection (vector) of the center lines of thing1 and thing2.
+  Things can be any combination of beams, pipes or edges.
+  If less than 2 arguments are given, thing1 and thing2 are the first 2 beams
+  or pipes found in the selection set.
+  '''
+  if not (thing1 and thing2):
+    try:
+      thing1,thing2=beams()[:2]
+    except:
+      FreeCAD.Console.PrintError('Insufficient arguments for intersectionCLines\n')
+      return None
+  edges=[]
+  for thing in [thing1,thing2]:
+    if beams([thing]):
+      edges.append(vec2edge(thing.Placement.Base,beamAx(thing)))
+    elif hasattr(thing,'ShapeType') and thing.ShapeType=='Edge':
+      edges.append(thing)
+  intersections=dgu.findIntersection(*edges, infinite1=True, infinite2=True)
+  if len(intersections):
+    return roundVec(intersections[0])
+  else:
+    FreeCAD.Console.PrintError('No intersection found\n')
+    return None
+  
 
 def intersectionLines(p1=None,v1=None,p2=None,v2=None):
   '''
@@ -128,7 +159,7 @@ def intersectionPlane(base=None,v=None,face=None):
     #intersection
     k=-1*(a*base.x+b*base.y+c*base.z+d)/(a*v.x+b*v.y+c*v.z)
     FreeCAD.Console.PrintMessage('k=%f\n' %float(k))
-    P=base+v.multiply(k) #scale(k,k,k)
+    P=base+v.multiply(k) 
     return P
 
 def isOrtho(e1=None,e2=None):
@@ -177,12 +208,12 @@ def beamAx(beam, vShapeRef=None):
   '''
   if vShapeRef==None:
     vShapeRef=FreeCAD.Vector(0.0,0.0,1.0)
-  "returns the vector parallel to the beam's axis"
   return beam.Placement.Rotation.multVec(vShapeRef).normalize()
 
-def getDistance():
+def getDistance(shapes=None):
   'measure the lenght of an edge or the distance of two shapes'
-  shapes=[y for x in FreeCADGui.Selection.getSelectionEx() for y in x.SubObjects if hasattr(y,'ShapeType')]
+  if not shapes:
+    shapes=[y for x in FreeCADGui.Selection.getSelectionEx() for y in x.SubObjects if hasattr(y,'ShapeType')]
   if len(shapes)==1 and shapes[0].ShapeType=='Edge':
       return shapes[0].Length
   elif len(shapes)>1:
@@ -206,11 +237,19 @@ def bisect(w1=None,w2=None):
     	b[i]=(w1[i]+w2[i])/2
     return b
 
-
+def vec2edge(point,direct):
+  '''
+  vec2edge(point,direct)
+  Returns an edge placed at point with the orientation and length of direct.
+  '''
+  from Part import makeLine
+  return makeLine(point,point+direct) 
+  
 ############ COMMANDS #############
 
 def spinTheBeam(beam, angle):  # OBSOLETE: replaced by rotateTheTubeAx
-  '''arg1=beam, arg2=angle: rotate the section of the beam'''
+  '''arg1=beam, arg2=angle: rotate the section of the beam
+  OBSOLETE: replaced by rotateTheTubeAx'''
   if beam.TypeId=="Part::FeaturePython" and "Base" in beam.PropertiesList:
     beam.Base.Placement=FreeCAD.Placement(FreeCAD.Vector(0.0,0.0,0.0),FreeCAD.Rotation(FreeCAD.Vector(0.0,0.0,1.0),angle))
 
@@ -219,10 +258,9 @@ def placeTheBeam(beam, edge):
   vect=edge.tangentAt(0)
   beam.Placement.Rotation=FreeCAD.Rotation(0,0,0,1)
   rot=FreeCAD.Rotation(beam.Placement.Rotation.Axis,vect)
-  beam.Placement.Rotation=rot.multiply(beam.Placement.Rotation)  # this method is not fully accurate, probably for the deg/rot conversion: this don't allow verification of perpendicularity or parallelism with the .cross() method!
+  beam.Placement.Rotation=rot.multiply(beam.Placement.Rotation)  # this method is not fully accurate, probably for the deg/rad conversions and floating-point calculation: this don't allow verification of perpendicularity or parallelism with the .cross() or .dot() methods! It would be good to have some symbolic algebra methods available...
   beam.Placement.Base=edge.valueAt(0)
   beam.Height=edge.Length
-  FreeCAD.activeDocument().recompute()
 
 def rotTheBeam(beam,faceBase,faceAlign):
   '''arg1=beam, arg2=faceBase, arg3=faceToMakeParallel: rotate the beams to make the flanges parallel to that of first selection.'''
@@ -232,7 +270,9 @@ def rotTheBeam(beam,faceBase,faceAlign):
   beam.Placement.Rotation=rot.multiply(beam.Placement.Rotation)
 
 def shiftTheBeam(beam,edge,dist=100, ask4revert=True):   # OBSOLETE: replaced by translateForm
-  '''arg1=beam, arg2=edge, arg3=dist=100: shifts the beam along the edge by dist (default 100)'''
+  '''arg1=beam, arg2=edge, arg3=dist=100: shifts the beam along the edge by dist (default 100)
+  OBSOLETE: replaced by translateForm
+  '''
   vect=edge.valueAt(edge.LastParameter)-edge.valueAt(edge.FirstParameter)
   vect.normalize()
   beam.Placement.Base=beam.Placement.Base.add(vect*dist)
@@ -254,6 +294,13 @@ def joinTheBeamsEdges(beam,e1,e2):
     beam.Placement.move(e1.distToShape(e2)[1][0][0]-e1.distToShape(e2)[1][0][1])
 
 def pivotTheBeam(ang=None, ask4revert=True):
+  '''
+  pivotTheBeam(ang=None, ask4revert=True)
+  Rotates the selected object around the selected pivot (one of its edges)
+  by ang degrees.
+  If ask4revert is True, pop-ups a dialog to ask if the direction of
+  rotation is correct.
+  '''
   if len(edges())!=1:
     FreeCAD.Console.PrintError('Wrong selection\n')
     return None
@@ -289,17 +336,9 @@ def extendTheBeam(beam,target):
   Else, the plane is the one normal to the axis of beam that includes the CenterOfMass of target'''
   distBase=distTop=0
   vBase=beam.Placement.Base
-  #vBeam=beam.Placement.Rotation.multVec(FreeCAD.Vector(0.0,0.0,1.0))
   vBeam=beamAx(beam)
   h=beam.Height
-  vTop=vBase+vBeam.multiply(h)#.scale(h,h,h)
-  #if type(target)==list and len(target)==4 and  type(target[0])==type(target[1])==type(target[2])==type(target[3])==FreeCAD.Vector:
-  #  P=intersectionLines(*target)
-  #  if P!=None:
-  #    distBase=vBase.distanceToPlane(P,vBeam)
-  #    distTop=vTop.distanceToPlane(P,vBeam)
-  #  else:
-  #    FreeCAD.Console.PrintError('frameCmd.intersectionLines() has failed in extendTheBeam()!\n')
+  vTop=vBase+vBeam.multiply(h)
   if type(target)==FreeCAD.Vector:
     distBase=vBase.distanceToPlane(target,vBeam)
     distTop=vTop.distanceToPlane(target,vBeam)
@@ -320,22 +359,23 @@ def extendTheBeam(beam,target):
       beam.Height+=FreeCAD.Units.Quantity(str(abs(distTop))+"mm")
     else:
       beam.Height+=FreeCAD.Units.Quantity(str(abs(distBase))+"mm")
-      vMove=vBeam.normalize().multiply(-distBase) #scale(-distBase,-distBase,-distBase)
+      vMove=vBeam.normalize().multiply(-distBase) 
       beam.Placement.move(vMove)
   else:
     if abs(distBase)>abs(distTop):
       beam.Height-=FreeCAD.Units.Quantity(str(abs(distTop))+"mm")
     else:
       beam.Height-=FreeCAD.Units.Quantity(str(abs(distBase))+"mm")
-      vMove=vBeam.normalize().multiply(-distBase) #scale(-distBase,-distBase,-distBase)
+      vMove=vBeam.normalize().multiply(-distBase)
       beam.Placement.move(vMove)
-  
   FreeCAD.activeDocument().recompute()
-
-def rotjoinTheBeam():
-  beam=beams()[1]
-  e1,e2=edges()
+  
+def rotjoinTheBeam(beam=None,e1=None,e2=None):
+  if not (beam and e1 and e2):
+    beam=beams()[1]
+    e1,e2=edges()
   rot=FreeCAD.Rotation(e2.tangentAt(0),e1.tangentAt(0))
+  dist=dgu.findDistance(beam.Placement.Base,e1)
+  delta=beam.Placement.Base-e2.CenterOfMass
   beam.Placement.Rotation=rot.multiply(beam.Placement.Rotation)
-  e2=edges()[1]
-  joinTheBeamsEdges(beam,e1,e2)
+  beam.Placement.move(roundVec(dist+rot.multVec(delta)))

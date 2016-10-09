@@ -161,7 +161,7 @@ class adjustAngleObserver(frameObserverPrototype):
         FreeCADGui.Selection.clearSelection()
         FreeCAD.Console.PrintWarning("Repeat selection or press [ESC]\n")
 
-class rotjoinObserver(frameObserverPrototype): 
+class rotjoinObserver(frameObserverPrototype):   # OBSOLETE
     def __init__(self):
       super(rotjoinObserver,self).__init__('Select 2 edges =>[Ctrl]+select')
       self.edges=[]

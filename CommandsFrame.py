@@ -165,16 +165,11 @@ class adjustFrameAngle:
 
 class rotJoin:
   def Activated(self):
-    import FreeCAD, FreeCADGui, frameCmd, frameObservers
-    try:
-      if FreeCADGui.Selection.getSelectionEx()[0].SubObjects[0].ShapeType==FreeCADGui.Selection.getSelectionEx()[1].SubObjects[0].ShapeType=='Edge':
-        FreeCAD.activeDocument().openTransaction('rotJoin')
-        frameCmd.rotjoinTheBeam()
-        FreeCAD.activeDocument().recompute()
-        FreeCAD.activeDocument().commitTransaction()
-    except:
-      s=frameObservers.rotjoinObserver()
-      FreeCADGui.Selection.addObserver(s)
+    import FreeCAD, frameCmd
+    FreeCAD.activeDocument().openTransaction('rotJoin')
+    frameCmd.rotjoinTheBeam()
+    FreeCAD.activeDocument().recompute()
+    FreeCAD.activeDocument().commitTransaction()
 
   def GetResources(self):
     return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","rotjoin.svg"),'MenuText':'rotJoinEdge','ToolTip':'Rotates and align the beam according another edge'}

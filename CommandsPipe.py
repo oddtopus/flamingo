@@ -46,14 +46,12 @@ class insertFlange:
   def GetResources(self):
     return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","flange.svg"),'MenuText':'Insert a flange','ToolTip':'Insert a flange'}
 
-class tank:
+class insertUbolt:
   def Activated (self):
-    import pipeCmd
-    from PySide import QtGui as qg
-    thk=float(qg.QInputDialog.getText(None,"make a shell out of a solid","Shell thickness (mm):")[0])
-    pipeCmd.makeTank(thk)
+    import pipeForms
+    pipeFormObj=pipeForms.insertUboltForm()
   def GetResources(self):
-    return{'Pixmap':'python','MenuText':'Create tank','ToolTip':'Create a tank shell from an existing object'}
+    return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","clamp.svg"),'MenuText':'Insert a U-bolt','ToolTip':'Insert a U-bolt'}
 
 class rotateAx:
   def Activated (self):
@@ -90,8 +88,8 @@ class flat:
         FreeCAD.activeDocument().openTransaction('Flatten')
         pipeCmd.flattenTheTube(fittings[0],v1,v2)
         fittings[0].Placement.Base=frameCmd.intersectionLines2(p1,v1,p2,v2)
+        FreeCAD.activeDocument().recompute()
         FreeCAD.activeDocument().commitTransaction()
-    FreeCAD.activeDocument().recompute()
   def GetResources(self):
     return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","flat.svg"),'MenuText':'Put in the plane','ToolTip':'Put the selected component in the plane defined by 2 axis'}
 
@@ -100,8 +98,8 @@ class extend2intersection:
     import pipeCmd
     FreeCAD.activeDocument().openTransaction('Xtend2int')
     pipeCmd.extendTheTubes2intersection()
-    FreeCAD.activeDocument().commitTransaction()
     FreeCAD.activeDocument().recompute()
+    FreeCAD.activeDocument().commitTransaction()
   def GetResources(self):
     return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","intersect.svg"),'MenuText':'Extends pipes to intersection','ToolTip':'Extends pipes to intersection'}
 
@@ -111,10 +109,10 @@ class extend2intersection:
 addCommand('insertPipe',insertPipe()) 
 addCommand('insertElbow',insertElbow())
 addCommand('insertFlange',insertFlange())
+addCommand('insertUbolt',insertUbolt())
 addCommand('mateEdges',mateEdges())
 addCommand('rotateAx',rotateAx())
 addCommand('rotateEdge',rotateEdge())
 addCommand('flat',flat())
 addCommand('extend2intersection',extend2intersection())
-addCommand('tank',tank())
 
