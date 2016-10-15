@@ -103,6 +103,20 @@ class extend2intersection:
   def GetResources(self):
     return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","intersect.svg"),'MenuText':'Extends pipes to intersection','ToolTip':'Extends pipes to intersection'}
 
+class laydown:
+  def Activated (self):
+    import pipeCmd, frameCmd
+    from Part import Plane
+    refFace=[f for f in frameCmd.faces() if type(f.Surface)==Plane][0]
+    FreeCAD.activeDocument().openTransaction('Lay-down the pipe')
+    for b in frameCmd.beams():
+      if pipeCmd.isPipe(b):
+        pipeCmd.laydownTheTube(b,refFace)
+    FreeCAD.activeDocument().recompute()
+    FreeCAD.activeDocument().commitTransaction()
+  def GetResources(self):
+    return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","laydown.svg"),'MenuText':'Lay-down the pipe','ToolTip':'Lay-down the pipe'}
+
 #---------------------------------------------------------------------------
 # Adds the commands to the FreeCAD command manager
 #---------------------------------------------------------------------------
@@ -115,4 +129,5 @@ addCommand('rotateAx',rotateAx())
 addCommand('rotateEdge',rotateEdge())
 addCommand('flat',flat())
 addCommand('extend2intersection',extend2intersection())
+addCommand('laydown',laydown())
 

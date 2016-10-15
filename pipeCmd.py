@@ -2,8 +2,8 @@
 #pipeTools functions
 #(c) 2016 Riccardo Treu LGPL
 
-
 import FreeCAD, FreeCADGui, Part, frameCmd, pipeFeatures
+from DraftVecUtils import rounded
 
 ############### AUX FUNCTIONS ###################### 
 
@@ -249,12 +249,24 @@ def extendTheTubes2intersection(pipe1=None,pipe2=None):
       pipe1,pipe2=frameCmd.beams()[:2]
     except:
       FreeCAD.Console.PrintError('Insufficient arguments for extendTheTubes2intersection\n')
-  #vectors=[]
-  #for pipe in [pipe1,pipe2]:
-  #  vectors.append(pipe.Placement.Base)
-  #  vectors.append(frameCmd.beamAx(pipe))
-  #P=frameCmd.intersectionLines(*vectors)
   P=frameCmd.intersectionCLines(pipe1,pipe2)
   if P!=None:
     frameCmd.extendTheBeam(pipe1,P)
     frameCmd.extendTheBeam(pipe2,P)
+
+def laydownTheTube(pipe=None, refFace=None):
+  '''
+  laydownTheTube(pipe=None, refFace=None)
+  Makes one pipe touch one face if the center-line is parallel to it.
+  '''
+  if not(pipe and refFace):  # without argument take from selection set
+    refFace=[f for f in frameCmd.faces() if type(f.Surface)==Part.Plane][0]
+    pipe=[p for p in frameCmd.beams() if hasattr(p,'OD')] [0]
+  try:
+    if type(refFace.Surface)==Part.Plane and frameCmd.isOrtho(refFace,frameCmd.beamAx(pipe)) and hasattr(pipe,'OD'):
+      dist=rounded(refFace.normalAt(0,0).multiply(refFace.normalAt(0,0).dot(pipe.Placement.Base-refFace.CenterOfMass)-float(pipe.OD)/2))
+      pipe.Placement.move(dist.multiply(-1))
+    else:
+      FreeCAD.Console.PrintError('Face is not flat or not parallel to axis of pipe\n')
+  except:
+    FreeCAD.Console.PrintError('Wrong selection\n')

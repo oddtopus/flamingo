@@ -42,7 +42,6 @@ class QueryForm(QtGui.QWidget):
     self.pushButton1.setMinimumWidth(90)
     self.cancelButton = QtGui.QPushButton('Exit')
     self.cancelButton.clicked.connect(self.onCancel)
-    self.cancelButton.setAutoDefault(True)
     self.subHLayout1=QtGui.QHBoxLayout()
     self.subHLayout1.addWidget(self.pushButton1)
     self.subHLayout1.addWidget(self.cancelButton)

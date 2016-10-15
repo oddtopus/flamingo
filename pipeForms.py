@@ -1,7 +1,7 @@
 #pipeTools dialogs
 #(c) 2016 Riccardo Treu LGPL
 
-import FreeCAD,FreeCADGui,csv
+import FreeCAD,FreeCADGui,Part, csv
 import frameCmd, pipeCmd
 from frameForms import prototypeForm
 from os import listdir
@@ -50,8 +50,6 @@ class protopypeForm(QWidget):
     self.ratingList.setCurrentRow(0)
     self.secondCol.layout().addWidget(self.ratingList)
     self.btn1=QPushButton('Insert')
-    self.btn1.setDefault(True)
-    self.btn1.setFocus()
     self.secondCol.layout().addWidget(self.btn1)
     self.mainHL.addWidget(self.secondCol)
   def fillSizes(self):
@@ -141,10 +139,13 @@ class insertPipeForm(protopypeForm):
 class insertElbowForm(protopypeForm):
   '''
   Dialog to insert one elbow.
-  It allows to select one vertex, one circular edge or a pair of edges or pipes or beams.
-  If at least one tube is selected it automatically takes its size and apply   it to the elbows created. It also trim or extend automatically the tube.
+  It allows to select one vertex, one circular edge or a pair of edges or pipes 
+  or beams.
+  If at least one tube is selected it automatically takes its size and apply  
+  it to the elbows created. It also trim or extend automatically the tube.
   If nothing is selected, it places one elbow in the origin.
-  Available button to trim/extend one selected pipe to the selected edges of the elbow, after it's modified (for example, changed the bend radius).
+  Available button to trim/extend one selected pipe to the selected edges of 
+  the elbow, after it's modified (for example, changed the bend radius).
   '''
   def __init__(self):
     super(insertElbowForm,self).__init__("Insert elbows","Elbow","SCH-STD")
@@ -380,7 +381,24 @@ class insertUboltForm(protopypeForm):
     self.sizeList.item(0).setSelected(True)
     self.ratingList.item(0).setSelected(True)
     self.btn1.clicked.connect(self.insert)
+    self.btn2=QPushButton('Ref. face')
+    self.secondCol.layout().addWidget(self.btn2)
+    self.btn2.clicked.connect(self.getReference)
+    self.lab1=QLabel('- no ref. face -')
+    self.lab1.setAlignment(Qt.AlignHCenter)
+    self.secondCol.layout().addWidget(self.lab1)
+    self.btn2.setDefault(True)
+    self.btn2.setFocus()
     self.show()
+    self.refNorm=None
+  def getReference(self):
+    selex=FreeCADGui.Selection.getSelectionEx()
+    for sx in selex:
+      if sx.SubObjects:
+        planes=[f for f in frameCmd.faces([sx]) if type(f.Surface)==Part.Plane]
+        if len(planes)>0:
+          self.refNorm=planes[0].normalAt(0,0)
+          self.lab1.setText("ref. Face on "+sx.Object.Label)
   def insert(self):
     selex=FreeCADGui.Selection.getSelectionEx()
     if len(selex)==0:
@@ -402,6 +420,9 @@ class insertUboltForm(protopypeForm):
           FreeCAD.activeDocument().openTransaction('Insert clamp on tube')
           ub=pipeCmd.makeUbolt(propList,pos=objex.Object.Placement.Base, Z=frameCmd.beamAx(objex.Object))
           ub.Placement.move(frameCmd.beamAx(objex.Object).multiply(float(d['C'])/2)) # aesthetic
+          if self.refNorm:
+            pipeCmd.rotateTheTubeAx(obj=ub,angle=degrees(self.refNorm.getAngle((frameCmd.beamAx(ub,FreeCAD.Vector(0,1,0))))))
+
           FreeCAD.activeDocument().commitTransaction()
     FreeCAD.activeDocument().recompute()
 class rotateForm(prototypeForm):
