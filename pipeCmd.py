@@ -254,10 +254,11 @@ def extendTheTubes2intersection(pipe1=None,pipe2=None):
     frameCmd.extendTheBeam(pipe1,P)
     frameCmd.extendTheBeam(pipe2,P)
 
-def laydownTheTube(pipe=None, refFace=None):
+def laydownTheTube(pipe=None, refFace=None, support=None):
   '''
-  laydownTheTube(pipe=None, refFace=None)
+  laydownTheTube(pipe=None, refFace=None, support=None)
   Makes one pipe touch one face if the center-line is parallel to it.
+  If support is not None, support is moved towards pipe.
   '''
   if not(pipe and refFace):  # without argument take from selection set
     refFace=[f for f in frameCmd.faces() if type(f.Surface)==Part.Plane][0]
@@ -265,7 +266,10 @@ def laydownTheTube(pipe=None, refFace=None):
   try:
     if type(refFace.Surface)==Part.Plane and frameCmd.isOrtho(refFace,frameCmd.beamAx(pipe)) and hasattr(pipe,'OD'):
       dist=rounded(refFace.normalAt(0,0).multiply(refFace.normalAt(0,0).dot(pipe.Placement.Base-refFace.CenterOfMass)-float(pipe.OD)/2))
-      pipe.Placement.move(dist.multiply(-1))
+      if support:
+        support.Placement.move(dist)
+      else:
+        pipe.Placement.move(dist.multiply(-1))
     else:
       FreeCAD.Console.PrintError('Face is not flat or not parallel to axis of pipe\n')
   except:

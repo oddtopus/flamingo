@@ -62,39 +62,6 @@ class pivotForm(prototypeForm):
     self.edit1.setText(str(-1*float(self.edit1.text())))
     FreeCAD.activeDocument().commitTransaction()
 
-class shiftForm(prototypeForm):  # OBSOLETE: replaced by translateForm
-  'dialog for shiftTheBeam()' 
-  def __init__(self):
-    super(shiftForm,self).__init__('shiftForm','Shift','Reverse','500','Distance  - mm:')
-    self.btn1.clicked.connect(self.shift)
-    self.btn2.clicked.connect(self.reverse)
-    self.btn3=QPushButton('Get Distance')
-    self.btn3.clicked.connect(self.getDist)
-    self.buttons.layout().addWidget(self.btn3)
-    self.btn1.setFocus()
-    self.show()
-  def shift(self):    
-    edge=frameCmd.edges()[0]
-    beam=frameCmd.beams()[0]
-    FreeCAD.activeDocument().openTransaction('Shift')
-    if self.radio2.isChecked():
-      FreeCAD.activeDocument().copyObject(FreeCADGui.Selection.getSelection()[0],True)
-      frameCmd.shiftTheBeam(beam,edge,float(self.edit1.text()),ask4revert=False)
-    else:
-      frameCmd.shiftTheBeam(beam,edge,float(self.edit1.text()),ask4revert=False)
-    FreeCAD.activeDocument().commitTransaction()
-  def reverse(self):
-    FreeCAD.activeDocument().openTransaction('Reverse shift')
-    edge=frameCmd.edges()[0]
-    beam=frameCmd.beams()[0]
-    frameCmd.shiftTheBeam(beam,edge,-2*float(self.edit1.text()),ask4revert=False)
-    self.edit1.setText(str(-1*float(self.edit1.text())))
-    FreeCAD.activeDocument().commitTransaction()
-  def getDist(self):
-    L=frameCmd.getDistance()
-    if L!=None:
-      self.edit1.setText(str(L))
-    
 class fillForm(prototypeForm):
   'dialog for fillFrame()'
   def __init__(self):

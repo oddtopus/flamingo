@@ -3,7 +3,7 @@
 
 import FreeCAD,FreeCADGui
 import DraftGeomUtils as dgu
-from DraftVecUtils import rounded as roundVec
+from DraftVecUtils import rounded
 
 
 ############## AUXILIARY FUNCTIONS ###############
@@ -80,7 +80,7 @@ def intersectionCLines(thing1=None, thing2=None):
       edges.append(thing)
   intersections=dgu.findIntersection(*edges, infinite1=True, infinite2=True)
   if len(intersections):
-    return roundVec(intersections[0])
+    return rounded(intersections[0])
   else:
     FreeCAD.Console.PrintError('No intersection found\n')
     return None
@@ -123,7 +123,7 @@ def intersectionLines(p1=None,v1=None,p2=None,v2=None):
         k=numpy.linalg.inv(M3)*numpy.matrix([[pl2[2]-pl1[2]],[pl2[0]-pl1[0]]])
       P=p1+v1*float(k[0]) # ..=p2+v2*float(k[1])
       #FreeCAD.Console.PrintWarning("k1 = "+str(float(k[0]))+"\nk2 = "+str(float(k[1]))+"\n")
-      return P
+      return rounded(P)
     else:     #se i vettori non sono complanari <=>  intersezione nulla
       FreeCAD.Console.PrintError('Lines are not in the same plane.\n')
       return None
@@ -160,7 +160,7 @@ def intersectionPlane(base=None,v=None,face=None):
     k=-1*(a*base.x+b*base.y+c*base.z+d)/(a*v.x+b*v.y+c*v.z)
     FreeCAD.Console.PrintMessage('k=%f\n' %float(k))
     P=base+v.multiply(k) 
-    return P
+    return rounded(P)
 
 def isOrtho(e1=None,e2=None):
   '"True" if two Edges or Vectors or the normal of Faces are orthogonal (with a margin)'
@@ -173,11 +173,11 @@ def isOrtho(e1=None,e2=None):
   for e in [e1,e2]:
     if hasattr(e,'ShapeType'):
       if e.ShapeType=='Edge':
-        v.append(roundVec(e.tangentAt(0)))
+        v.append(rounded(e.tangentAt(0)))
       elif e.ShapeType=='Face':
-        v.append(roundVec(e.normalAt(0,0)))
+        v.append(rounded(e.normalAt(0,0)))
     else:
-      v.append(roundVec(e))
+      v.append(rounded(e))
   return v[0].dot(v[1])==0 #round(v[0].dot(v[1]),2)==0
 
 def isParallel(e1=None,e2=None):
@@ -191,11 +191,11 @@ def isParallel(e1=None,e2=None):
   for e in [e1,e2]:
     if hasattr(e,'ShapeType'):
       if e.ShapeType=='Edge':
-        v.append(roundVec(e.tangentAt(0)))
+        v.append(rounded(e.tangentAt(0)))
       elif e.ShapeType=='Face':
-        v.append(roundVec(e.normalAt(0,0)))
+        v.append(rounded(e.normalAt(0,0)))
     else:
-      v.append(roundVec(e))
+      v.append(rounded(e))
   return v[0].cross(v[1]).Length==0 #round(v[0].cross(v[1]).Length,2)==0
 
 def beamAx(beam, vShapeRef=None):
@@ -208,7 +208,7 @@ def beamAx(beam, vShapeRef=None):
   '''
   if vShapeRef==None:
     vShapeRef=FreeCAD.Vector(0.0,0.0,1.0)
-  return beam.Placement.Rotation.multVec(vShapeRef).normalize()
+  return rounded(beam.Placement.Rotation.multVec(vShapeRef).normalize())
 
 def getDistance(shapes=None):
   'measure the lenght of an edge or the distance of two shapes'
@@ -378,4 +378,4 @@ def rotjoinTheBeam(beam=None,e1=None,e2=None):
   dist=dgu.findDistance(beam.Placement.Base,e1)
   delta=beam.Placement.Base-e2.CenterOfMass
   beam.Placement.Rotation=rot.multiply(beam.Placement.Rotation)
-  beam.Placement.move(roundVec(dist+rot.multVec(delta)))
+  beam.Placement.move(rounded(dist+rot.multVec(delta)))

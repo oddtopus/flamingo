@@ -94,6 +94,8 @@ class insertPipeForm(protopypeForm):
     self.btn3=QPushButton('Apply')
     self.secondCol.layout().addWidget(self.btn3)
     self.btn3.clicked.connect(self.apply)
+    self.btn1.setDefault(True)
+    self.btn1.setFocus()
     self.show()
   def insert(self):
     d=self.pipeDictList[self.sizeList.currentRow()]
@@ -161,6 +163,8 @@ class insertElbowForm(protopypeForm):
     self.btn3=QPushButton('Apply')
     self.secondCol.layout().addWidget(self.btn3)
     self.btn3.clicked.connect(self.apply)
+    self.btn1.setDefault(True)
+    self.btn1.setFocus()
     self.show()
   def insert(self):
     DN=OD=thk=PRating=None
@@ -332,6 +336,8 @@ class insertFlangeForm(protopypeForm):
     self.btn3=QPushButton('Apply')
     self.secondCol.layout().addWidget(self.btn3)
     self.btn3.clicked.connect(self.apply)
+    self.btn1.setDefault(True)
+    self.btn1.setFocus()
     self.show()
   def insert(self):
     tubes=[t for t in frameCmd.beams() if hasattr(t,'PSize')]
@@ -389,15 +395,19 @@ class insertUboltForm(protopypeForm):
     self.secondCol.layout().addWidget(self.lab1)
     self.btn2.setDefault(True)
     self.btn2.setFocus()
+    self.edit1=QLineEdit('1')
+    self.edit1.setAlignment(Qt.AlignHCenter)
+    self.secondCol.layout().addWidget(self.edit1)
     self.show()
     self.refNorm=None
+    self.getReference()
   def getReference(self):
     selex=FreeCADGui.Selection.getSelectionEx()
     for sx in selex:
       if sx.SubObjects:
         planes=[f for f in frameCmd.faces([sx]) if type(f.Surface)==Part.Plane]
         if len(planes)>0:
-          self.refNorm=planes[0].normalAt(0,0)
+          self.refNorm=rounded(planes[0].normalAt(0,0))
           self.lab1.setText("ref. Face on "+sx.Object.Label)
   def insert(self):
     selex=FreeCADGui.Selection.getSelectionEx()
@@ -409,6 +419,10 @@ class insertUboltForm(protopypeForm):
       FreeCAD.activeDocument().commitTransaction()
       FreeCAD.activeDocument().recompute()
     else:
+      try:
+        n=int(self.edit1.text())
+      except:
+        n=1
       for objex in selex:
         if hasattr(objex.Object,'PType') and objex.Object.PType=='Pipe':
           d=[typ for typ in self.pipeDictList if typ['PSize']==objex.Object.PSize]
@@ -417,14 +431,22 @@ class insertUboltForm(protopypeForm):
           else:
             d=self.pipeDictList[self.sizeList.currentRow()]
           propList=[d['PSize'],self.PRating,float(d['C']),float(d['H']),float(d['d'])]
+          if n>1:
+            step=(float(objex.Object.Height)-float(d['C']))/(n-1)
+          else:
+            step=(float(objex.Object.Height)-float(d['C']))
           FreeCAD.activeDocument().openTransaction('Insert clamp on tube')
-          ub=pipeCmd.makeUbolt(propList,pos=objex.Object.Placement.Base, Z=frameCmd.beamAx(objex.Object))
-          ub.Placement.move(frameCmd.beamAx(objex.Object).multiply(float(d['C'])/2)) # aesthetic
-          if self.refNorm:
-            pipeCmd.rotateTheTubeAx(obj=ub,angle=degrees(self.refNorm.getAngle((frameCmd.beamAx(ub,FreeCAD.Vector(0,1,0))))))
-
+          for i in range(n):
+            ub=pipeCmd.makeUbolt(propList,pos=objex.Object.Placement.Base, Z=frameCmd.beamAx(objex.Object))
+            ub.Placement.move(frameCmd.beamAx(objex.Object).multiply(float(d['C'])/2+i*step))
+            if self.refNorm:
+              print self.refNorm
+              print frameCmd.beamAx(ub,FreeCAD.Vector(0,1,0))
+              print degrees(self.refNorm.getAngle((frameCmd.beamAx(ub,FreeCAD.Vector(0,1,0)))))
+              pipeCmd.rotateTheTubeAx(obj=ub,angle=degrees(self.refNorm.getAngle((frameCmd.beamAx(ub,FreeCAD.Vector(0,1,0))))))
           FreeCAD.activeDocument().commitTransaction()
     FreeCAD.activeDocument().recompute()
+    
 class rotateForm(prototypeForm):
   '''
   Dialog for rotateTheTubeAx().

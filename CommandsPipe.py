@@ -115,7 +115,27 @@ class laydown:
     FreeCAD.activeDocument().recompute()
     FreeCAD.activeDocument().commitTransaction()
   def GetResources(self):
-    return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","laydown.svg"),'MenuText':'Lay-down the pipe','ToolTip':'Lay-down the pipe'}
+    return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","laydown.svg"),'MenuText':'Lay-down the pipe','ToolTip':'Lay-down the pipe on the support plane'}
+
+class raiseup:
+  def Activated (self):
+    import pipeCmd, frameCmd
+    from Part import Plane
+    selex=FreeCADGui.Selection.getSelectionEx()
+    for sx in selex:
+      sxFaces=[f for f in frameCmd.faces([sx]) if type(f.Surface)==Plane]
+      if len(sxFaces)>0:
+        refFace=sxFaces[0]
+        support=sx.Object
+    FreeCAD.activeDocument().openTransaction('Raise-up the support')
+    for b in frameCmd.beams():
+      if pipeCmd.isPipe(b):
+        pipeCmd.laydownTheTube(b,refFace,support)
+        break
+    FreeCAD.activeDocument().recompute()
+    FreeCAD.activeDocument().commitTransaction()
+  def GetResources(self):
+    return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","raiseup.svg"),'MenuText':'Raise-up the support','ToolTip':'Raise the support to the pipe'}
 
 #---------------------------------------------------------------------------
 # Adds the commands to the FreeCAD command manager
@@ -130,4 +150,5 @@ addCommand('rotateEdge',rotateEdge())
 addCommand('flat',flat())
 addCommand('extend2intersection',extend2intersection())
 addCommand('laydown',laydown())
+addCommand('raiseup',raiseup())
 
