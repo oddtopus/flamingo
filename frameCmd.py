@@ -173,12 +173,12 @@ def isOrtho(e1=None,e2=None):
   for e in [e1,e2]:
     if hasattr(e,'ShapeType'):
       if e.ShapeType=='Edge':
-        v.append(rounded(e.tangentAt(0)))
+        v.append(e.tangentAt(0))
       elif e.ShapeType=='Face':
-        v.append(rounded(e.normalAt(0,0)))
+        v.append(e.normalAt(0,0))
     else:
-      v.append(rounded(e))
-  return v[0].dot(v[1])==0 #round(v[0].dot(v[1]),2)==0
+      v.append(e)
+  return round(v[0].dot(v[1]),2)==0 #v[0].dot(v[1])==0 
 
 def isParallel(e1=None,e2=None):
   '"True" if two Edges or Vectors or the normal of Faces are parallel (with a margin)'
@@ -191,12 +191,12 @@ def isParallel(e1=None,e2=None):
   for e in [e1,e2]:
     if hasattr(e,'ShapeType'):
       if e.ShapeType=='Edge':
-        v.append(rounded(e.tangentAt(0)))
+        v.append(e.tangentAt(0))
       elif e.ShapeType=='Face':
-        v.append(rounded(e.normalAt(0,0)))
+        v.append(e.normalAt(0,0))
     else:
-      v.append(rounded(e))
-  return v[0].cross(v[1]).Length==0 #round(v[0].cross(v[1]).Length,2)==0
+      v.append(e)
+  return round(v[0].cross(v[1]).Length,2)==0 #v[0].cross(v[1]).Length==0
 
 def beamAx(beam, vShapeRef=None):
   '''
@@ -208,7 +208,7 @@ def beamAx(beam, vShapeRef=None):
   '''
   if vShapeRef==None:
     vShapeRef=FreeCAD.Vector(0.0,0.0,1.0)
-  return rounded(beam.Placement.Rotation.multVec(vShapeRef).normalize())
+  return beam.Placement.Rotation.multVec(vShapeRef).normalize()
 
 def getDistance(shapes=None):
   'measure the lenght of an edge or the distance of two shapes'

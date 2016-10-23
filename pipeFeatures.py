@@ -5,7 +5,14 @@ import FreeCAD, Part, frameCmd
 
 ################ CLASSES ###########################
 
-class Pipe():
+class pypeType(object):
+  def __init__(self,obj):
+    obj.Proxy = self
+    obj.addProperty("App::PropertyString","PType","Pipe","Type of tubeFeature").PType
+    obj.addProperty("App::PropertyString","PRating","Pipe","Rating of pipeFeature").PRating
+    obj.addProperty("App::PropertyString","PSize","Pipe","Nominal diameter").PSize
+
+class Pipe(pypeType):
   '''Class for object PType="Pipe"
   Pipe(obj,[PSize="DN50",OD=60.3,thk=3, H=100])
     obj: the "App::FeaturePython object"
@@ -14,10 +21,13 @@ class Pipe():
     thk (float): shell thickness
     H (float): length of pipe'''
   def __init__(self, obj,DN="DN50",OD=60.3,thk=3, H=100):
-    obj.Proxy = self
-    obj.addProperty("App::PropertyString","PType","Pipe","Type of tubeFeature").PType="Pipe"
-    obj.addProperty("App::PropertyString","PRating","Pipe","Rating of pipeFeature").PRating="SCH-STD"
-    obj.addProperty("App::PropertyString","PSize","Pipe","Nominal diameter").PSize=DN
+    # initialize the parent class
+    super(Pipe,self).__init__(obj)
+    # define common properties
+    obj.PType="Pipe"
+    obj.PRating="SCH-STD"
+    obj.PSize=DN
+    # define specific properties
     obj.addProperty("App::PropertyLength","OD","Pipe","Outside diameter").OD=OD
     obj.addProperty("App::PropertyLength","thk","Pipe","Wall thickness").thk=thk
     obj.addProperty("App::PropertyLength","ID","Pipe","Inside diameter").ID=obj.OD-2*obj.thk
@@ -37,7 +47,7 @@ class Pipe():
     fp.Shape = Part.makeCylinder(fp.OD/2,fp.Height).cut(Part.makeCylinder(fp.ID/2,fp.Height))
     #FreeCAD.Console.PrintMessage("Executed Pipe feature\n")
     
-class Elbow():
+class Elbow(pypeType):
   '''Class for object PType="Elbow"
   Elbow(obj,[PSize="DN50",OD=60.3,thk=3,BA=90,BR=45.225])
     obj: the "App::FeaturePython" object
@@ -47,10 +57,13 @@ class Elbow():
     BA (float): bend angle
     BR (float): bend radius'''
   def __init__(self, obj,DN="DN50",OD=60.3,thk=3,BA=90,BR=45.225):
-    obj.Proxy = self
-    obj.addProperty("App::PropertyString","PType","Elbow","Type of pipeFeature").PType="Elbow"
-    obj.addProperty("App::PropertyString","PRating","Elbow","Rating of pipeFeature").PRating="SCH-STD"
-    obj.addProperty("App::PropertyString","PSize","Elbow","Nominal diameter").PSize=DN
+    # initialize the parent class
+    super(Elbow,self).__init__(obj)
+    # define common properties
+    obj.PType="Elbow"
+    obj.PRating="SCH-STD"
+    obj.PSize=DN
+    # define specific properties
     obj.addProperty("App::PropertyLength","OD","Elbow","Outside diameter").OD=OD
     obj.addProperty("App::PropertyLength","thk","Elbow","Wall thickness").thk=thk
     obj.addProperty("App::PropertyLength","ID","Elbow","Inside diameter").ID=obj.OD-2*obj.thk
@@ -59,11 +72,9 @@ class Elbow():
     obj.addProperty("App::PropertyString","Profile","Elbow","Section dim.").Profile=str(obj.OD)+"x"+str(obj.thk)
     obj.addProperty("App::PropertyVectorList","Ports","Elbow","Ports relative position").Ports=[FreeCAD.Vector(1,0,0),FreeCAD.Vector(0,1,0)]
     self.execute(obj)
-
   def onChanged(self, fp, prop):
     #FreeCAD.Console.PrintMessage("Changed Pipe feature\n")
     return None
-
   def execute(self, fp):
     if fp.BendAngle<180:
       if fp.thk>fp.OD/2:
@@ -90,7 +101,7 @@ class Elbow():
       elbow=sol.makeThickness(planeFaces,-fp.thk,1.e-3)
       fp.Shape = elbow
       
-class Flange():
+class Flange(pypeType):
   '''Class for object PType="Flange"
   Flange(obj,[PSize="DN50",FlangeType="SO", D=160, d=60.3,df=132, f=14 t=15,n=4])
     obj: the "App::FeaturePython" object
@@ -104,10 +115,13 @@ class Flange():
     n (int): nr. of bolts
   '''
   def __init__(self, obj,DN="DN50",FlangeType="SO",D=160,d=60.3,df=132,f=14, t=15, n=4):
-    obj.Proxy = self
-    obj.addProperty("App::PropertyString","PType","Flange","Type of pipeFeature").PType="Flange"
-    obj.addProperty("App::PropertyString","PRating","Pipe","Rating of pipeFeature").PRating="DIN-PN16"
-    obj.addProperty("App::PropertyString","PSize","Flange","Nominal diameter").PSize=DN
+    # initialize the parent class
+    super(Flange,self).__init__(obj)
+    # define common properties
+    obj.PType="Flange"
+    obj.PRating="DIN-PN16"
+    obj.PSize=DN
+    # define specific properties
     obj.addProperty("App::PropertyString","FlangeType","Flange","Type of flange").FlangeType=FlangeType
     obj.addProperty("App::PropertyLength","D","Flange","Flange diameter").D=D
     obj.addProperty("App::PropertyLength","d","Flange","Bore diameter").d=d

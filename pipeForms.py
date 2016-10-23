@@ -77,8 +77,9 @@ class insertPipeForm(protopypeForm):
   Dialog to insert tubes.
   If edges are selected, it places the tubes over the straight edges or at the center of the curved edges.
   If vertexes are selected, it places the tubes at the selected vertexes.
-  If nothing is selected it places one tube in the origin with the selected size and height, or default = 200 mm.
-  Available one button to reverse the orientation of the selected tube.
+  If nothing is selected it places one tube in the origin with the selected 
+  size and height, or default = 200 mm.
+  Available one button to reverse the orientation of the last or selected tubes.
   '''
   def __init__(self):
     super(insertPipeForm,self).__init__("Insert pipes","Pipe","SCH-STD")
@@ -90,13 +91,22 @@ class insertPipeForm(protopypeForm):
     self.secondCol.layout().addWidget(self.edit1)
     self.btn2=QPushButton('Reverse')
     self.secondCol.layout().addWidget(self.btn2)
-    self.btn2.clicked.connect(lambda: pipeCmd.rotateTheTubeAx(frameCmd.beams()[0],FreeCAD.Vector(1,0,0),180))
+    self.btn2.clicked.connect(self.reverse) #lambda: pipeCmd.rotateTheTubeAx(self.lastPipe,FreeCAD.Vector(1,0,0),180))
     self.btn3=QPushButton('Apply')
     self.secondCol.layout().addWidget(self.btn3)
     self.btn3.clicked.connect(self.apply)
     self.btn1.setDefault(True)
     self.btn1.setFocus()
     self.show()
+    self.lastPipe=None
+  def reverse(self):
+    selPipes=[p for p in FreeCADGui.Selection.getSelection() if hasattr(p,'PType') and p.PType=='Pipe']
+    if len(selPipes):
+      for p in selPipes:
+        pipeCmd.rotateTheTubeAx(p,FreeCAD.Vector(1,0,0),180)
+    else:
+      pipeCmd.rotateTheTubeAx(self.lastPipe,FreeCAD.Vector(1,0,0),180)
+  
   def insert(self):
     d=self.pipeDictList[self.sizeList.currentRow()]
     FreeCAD.activeDocument().openTransaction('Insert pipe')
@@ -123,7 +133,7 @@ class insertPipeForm(protopypeForm):
             propList=[objs[0].PSize,objs[0].OD,objs[0].thk,H]
           else:
             propList=[d['PSize'],float(d['OD']),float(d['thk']),H]
-          pipeCmd.makePipe(propList,edge.centerOfCurvatureAt(0),edge.tangentAt(0).cross(edge.normalAt(0)))
+          self.lastPipe=pipeCmd.makePipe(propList,edge.centerOfCurvatureAt(0),edge.tangentAt(0).cross(edge.normalAt(0)))
     FreeCAD.activeDocument().commitTransaction()
     FreeCAD.activeDocument().recompute()
   def apply(self):
@@ -324,21 +334,37 @@ class insertFlangeForm(protopypeForm):
   '''
   Dialog to insert flanges.
   If edges are selected, it places the flange over the selected circular edges.
-  If at least one tube is selected it automatically takes its Nominal Size and apply it to the flange created, if it is included in the Nominal Size list of the flange.
+  If at least one tube is selected it automatically takes its Nominal Size and 
+  apply it to the flange created, if it is included in the Nominal Size list of 
+  the flange.
   If vertexes are selected, it places the flange at the selected vertexes.
-  If nothing is selected it places one flange in the origin with the selected size.
+  If nothing is selected it places one flange in the origin with the selected 
+  size.
+  Available one button to reverse the orientation of the last or selected 
+  flanges.
   '''
   def __init__(self):
     super(insertFlangeForm,self).__init__("Insert flanges","Flange","DIN-PN16")
     self.sizeList.item(0).setSelected(True)
     self.ratingList.item(0).setSelected(True)
     self.btn1.clicked.connect(self.insert)
+    self.btn2=QPushButton('Reverse')
+    self.secondCol.layout().addWidget(self.btn2)
+    self.btn2.clicked.connect(self.reverse) #lambda: pipeCmd.rotateTheTubeAx(self.lastFlange,FreeCAD.Vector(1,0,0),180))
     self.btn3=QPushButton('Apply')
     self.secondCol.layout().addWidget(self.btn3)
     self.btn3.clicked.connect(self.apply)
     self.btn1.setDefault(True)
     self.btn1.setFocus()
     self.show()
+    self.lastFlange=None
+  def reverse(self):
+    selFlanges=[f for f in FreeCADGui.Selection.getSelection() if hasattr(f,'PType') and f.PType=='Flange']
+    if len(selFlanges):
+      for f in selFlanges:
+        pipeCmd.rotateTheTubeAx(f,FreeCAD.Vector(1,0,0),180)
+    else:
+      pipeCmd.rotateTheTubeAx(self.lastFlange,FreeCAD.Vector(1,0,0),180)
   def insert(self):
     tubes=[t for t in frameCmd.beams() if hasattr(t,'PSize')]
     if len(tubes)>0 and tubes[0].PSize in [prop['PSize'] for prop in self.pipeDictList]:
@@ -353,14 +379,14 @@ class insertFlangeForm(protopypeForm):
     if len(frameCmd.edges())==0:
       vs=[v for sx in FreeCADGui.Selection.getSelectionEx() for so in sx.SubObjects for v in so.Vertexes]
       if len(vs)==0:
-        pipeCmd.makeFlange(propList)
+        self.lastFlange=pipeCmd.makeFlange(propList)
       else:
         for v in vs:
-          pipeCmd.makeFlange(propList,v.Point)
+          self.lastFlange=pipeCmd.makeFlange(propList,v.Point)
     else:
       for edge in frameCmd.edges():
         if edge.curvatureAt(0)!=0:
-          pipeCmd.makeFlange(propList,edge.centerOfCurvatureAt(0),edge.tangentAt(0).cross(edge.normalAt(0)))
+          self.lastFlange=pipeCmd.makeFlange(propList,edge.centerOfCurvatureAt(0),edge.tangentAt(0).cross(edge.normalAt(0)))
     FreeCAD.activeDocument().commitTransaction()
     FreeCAD.activeDocument().recompute()
   def apply(self):
