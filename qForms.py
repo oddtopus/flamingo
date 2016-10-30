@@ -1,4 +1,4 @@
-# FreeCAD Spreadsheet Tools module  
+# Dialo for query  
 # (c) 2016 Riccardo Treu LGPL
 
 from PySide import QtGui, QtCore

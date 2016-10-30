@@ -62,7 +62,7 @@ def intersectionCLines(thing1=None, thing2=None):
   '''
   intersectionCLines(thing1=None, thing2=None)
   Returns the intersection (vector) of the center lines of thing1 and thing2.
-  Things can be any combination of beams, pipes or edges.
+  Things can be any combination of intersecting beams, pipes or edges.
   If less than 2 arguments are given, thing1 and thing2 are the first 2 beams
   or pipes found in the selection set.
   '''

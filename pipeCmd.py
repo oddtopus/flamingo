@@ -1,4 +1,3 @@
-
 #pipeTools functions
 #(c) 2016 Riccardo Treu LGPL
 
@@ -7,11 +6,11 @@ from DraftVecUtils import rounded
 
 ############### AUX FUNCTIONS ###################### 
 
-def readTable(fileName="pipe_SCH-STD.csv"):
+def readTable(fileName="Pipe_SCH-STD.csv"):
   '''
   readTable(fileName)
-  Returns the dictionary read from file in ./tables
-    fileName: the file name without path; default="pipe_SCH-STD.csv" 
+  Returns the list of dictionaries read from file in ./tables
+    fileName: the file name without path; default="Pipe_SCH-STD.csv" 
   '''
   from os.path import join, dirname, abspath
   import csv
@@ -75,6 +74,7 @@ def makePipe(propList=[], pos=None, Z=None):
   Default is "DN50 (SCH-STD)"
   pos (vector): position of insertion; default = 0,0,0
   Z (vector): orientation: default = 0,0,1
+  Remember: property PRating must be defined afterwards
   '''
   if pos==None:
     pos=FreeCAD.Vector(0,0,0)
@@ -92,17 +92,18 @@ def makePipe(propList=[], pos=None, Z=None):
   return a
 
 def makeElbow(propList=[], pos=None, Z=None):
-  '''add an Elbow object
+  '''Adds an Elbow object
   makeElbow(propList,pos,Z);
-  propList is one optional list with 5 elements:
-    DN (string): nominal diameter
-    OD (float): outside diameter
-    thk (float): shell thickness
-    BA (float): bend angle
-    BR (float): bend radius
-  Default is "DN50"
-  pos (vector): position of insertion; default = 0,0,0
-  Z (vector): orientation: default = 0,0,1
+    propList is one optional list with 5 elements:
+      DN (string): nominal diameter
+      OD (float): outside diameter
+      thk (float): shell thickness
+      BA (float): bend angle
+      BR (float): bend radius
+    Default is "DN50"
+    pos (vector): position of insertion; default = 0,0,0
+    Z (vector): orientation: default = 0,0,1
+  Remember: property PRating must be defined afterwards
   '''
   if pos==None:
     pos=FreeCAD.Vector(0,0,0)
@@ -119,21 +120,77 @@ def makeElbow(propList=[], pos=None, Z=None):
   a.Placement.Rotation=rot.multiply(a.Placement.Rotation)
   return a
 
-def makeFlange(propList=[], pos=None, Z=None):
-  '''add a Flange object
-  makeFlange(propList,pos,Z);
-  propList is one optional list with 8 elements:
+def makeElbowBetweenThings(thing1=None, thing2=None, propList=None):
+  '''
+  makeElbowBetweenThings(thing1, thing2, propList=None):
+  Place one elbow at the intersection of thing1 and thing2.
+  Things can be any combination of intersecting beams, pipes or edges.
+  If nothing is passed as argument, the function attempts to take the
+  first two edges selected in the view.
+  propList is one optional list with 5 elements:
     DN (string): nominal diameter
-    FlangeType (string): type of Flange
-    D (float): flange diameter
-    d (float): bore diameter
-    df (float): bolts holes distance
-    f (float): bolts holes diameter
-    t (float): flange thickness
-    n (int): nr. of bolts
-  Default is "DN50 (PN16)"
-  pos (vector): position of insertion; default = 0,0,0
-  Z (vector): orientation: default = 0,0,1
+    OD (float): outside diameter
+    thk (float): shell thickness
+    BA (float): bend angle - that will be recalculated! -
+    BR (float): bend radius
+  Default is "DN50 (SCH-STD)"
+  Remember: property PRating must be defined afterwards
+  '''
+  from math import degrees
+  if not (thing1 and thing2):
+    thing1,thing2=frameCmd.edges()[:2]
+  P=frameCmd.intersectionCLines(thing1,thing2)
+  directions=list()
+  for thing in [thing1,thing2]:
+    if frameCmd.beams([thing]):
+      directions.append(rounded((frameCmd.beamAx(thing).multiply(thing.Height/2)+thing.Placement.Base)-P))
+    elif hasattr(thing,'ShapeType') and thing.ShapeType=='Edge':
+      directions.append(rounded(thing.CenterOfMass-P))
+  ang=180-degrees(directions[0].getAngle(directions[1]))
+  if not propList:
+    propList=["DN50",60.3,3.91,ang,45.24]
+  else:
+    #DN,OD,thk=propList[:3]
+    #BR=propList[4]
+    #propList=[DN,OD,thk,ang,BR]
+    propList[3]=ang
+  elb=makeElbow(propList,P,directions[0].negative().cross(directions[1].negative()))
+  ## elb.PRating=PRating
+  # mate the elbow ends with the pipes or edges
+  b=frameCmd.bisect(directions[0],directions[1])
+  elbBisect=frameCmd.beamAx(elb,FreeCAD.Vector(1,1,0))
+  rot=FreeCAD.Rotation(elbBisect,b)
+  elb.Placement.Rotation=rot.multiply(elb.Placement.Rotation)
+  # trim automatically the adjacent tubes
+  FreeCAD.activeDocument().recompute()
+  portA=elb.Placement.multVec(elb.Ports[0])
+  portB=elb.Placement.multVec(elb.Ports[1])
+  for tube in [t for t in [thing1,thing2] if frameCmd.beams([t])]:
+    vectA=tube.Shape.Solids[0].CenterOfMass-portA
+    vectB=tube.Shape.Solids[0].CenterOfMass-portB
+    if frameCmd.isParallel(vectA,frameCmd.beamAx(tube)):
+      frameCmd.extendTheBeam(tube,portA)
+    else:
+      frameCmd.extendTheBeam(tube,portB)
+  #FreeCAD.activeDocument().recompute()
+  return elb
+
+def makeFlange(propList=[], pos=None, Z=None):
+  '''Adds a Flange object
+  makeFlange(propList,pos,Z);
+    propList is one optional list with 8 elements:
+      DN (string): nominal diameter
+      FlangeType (string): type of Flange
+      D (float): flange diameter
+      d (float): bore diameter
+      df (float): bolts holes distance
+      f (float): bolts holes diameter
+      t (float): flange thickness
+      n (int): nr. of bolts
+    Default is "DN50 (PN16)"
+    pos (vector): position of insertion; default = 0,0,0
+    Z (vector): orientation: default = 0,0,1
+  Remember: property PRating must be defined afterwards
   '''
   if pos==None:
     pos=FreeCAD.Vector(0,0,0)
@@ -151,6 +208,18 @@ def makeFlange(propList=[], pos=None, Z=None):
   return a
 
 def makeUbolt(propList=[], pos=None, Z=None):
+  '''Adds a Ubolt object:
+  makeUbolt(propList,pos,Z);
+    propList is one optional list with 5 elements:
+      PSize (string): nominal diameter
+      ClampType (string): the clamp type or standard
+      C (float): the diameter of the U-bolt
+      H (float): the total height of the U-bolt
+      d (float): the rod diameter
+    pos (vector): position of insertion; default = 0,0,0
+    Z (vector): orientation: default = 0,0,1
+  Remember: property PRating must be defined afterwards
+  '''
   if pos==None:
     pos=FreeCAD.Vector(0,0,0)
   if Z==None:
@@ -167,8 +236,28 @@ def makeUbolt(propList=[], pos=None, Z=None):
   return a
 
 def makeShell(L=800,W=400,H=500,thk=6):
+  '''
+  makeShell(L,W,H,thk)
+  Adds the shell of a tank, given
+    L(ength):        default=800
+    W(idth):         default=400
+    H(eight):        default=500
+    thk (thickness): default=6
+  '''
   a=FreeCAD.ActiveDocument.addObject("Part::FeaturePython","Serbatoio")
-  pipeFeatures.Shell(a)
+  pipeFeatures.Shell(a,L,W,H,thk)
+  a.ViewObject.Proxy=0
+  a.Placement.Base=FreeCAD.Vector(0,0,0)
+  return a
+
+def makePypeLine(DN="DN50",PRating="SCH-STD",OD=60.3,thk=3,lab=None):
+  '''
+  makePypeLine(DN="DN50",PRating="SCH-STD",OD=60.3,thk=3,lab=None)
+  Adds a pypeLine object creating pipes over the selected edges.
+  Default tube is "DN50", "SCH-STD".
+  '''
+  a=FreeCAD.ActiveDocument.addObject("Part::FeaturePython","Tubatura")
+  pipeFeatures.PypeLine(a,DN,PRating,OD,thk,lab)
   a.ViewObject.Proxy=0
   a.Placement.Base=FreeCAD.Vector(0,0,0)
   return a

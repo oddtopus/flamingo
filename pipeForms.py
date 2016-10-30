@@ -223,9 +223,9 @@ class insertElbowForm(protopypeForm):
           e.Placement.move(P-Port0)
         FreeCAD.activeDocument().commitTransaction()
     else:    
-      ## insert one elbow at intersection of two edges or "beams" ##
+      ## insert one elbow at intersection of two edges or beams or pipes ##
       # selection of axes
-      axes=[]
+      things=[]
       for objEx in selex:
         # if the profile is not defined and the selection is one piping object, take its profile for elbow
         if OD==thk==None and hasattr(objEx.Object,'PType') and objEx.Object.PType in ['Pipe','Elbow']: 
@@ -233,70 +233,33 @@ class insertElbowForm(protopypeForm):
           OD=objEx.Object.OD
           thk=objEx.Object.thk
           PRating=objEx.Object.PRating
-        # if the object is a beam or pipe, append it to the axes..
+        # if the object is a beam or pipe, append it to the "things"..
         if len(frameCmd.beams([objEx.Object]))==1:
-          axes.append(objEx.Object.Placement.Base)
-          axes.append(frameCmd.beamAx(objEx.Object))
+          things.append(objEx.Object)
         else:
-          # ..else append its edges to axes
+          # ..else append its edges
           for edge in frameCmd.edges([objEx]):
-            axes.append(edge.CenterOfMass)
-            axes.append(edge.tangentAt(0))
-        if len(axes)>=4:
+            things.append(edge)
+        if len(things)>=2:
           break
       FreeCAD.activeDocument().openTransaction('Insert elbow on intersection')
       try:
-        # get the position
-        p1,v1,p2,v2=axes[:4]
-        P=frameCmd.intersectionLines(p1,v1,p2,v2)
-        if P!=None:
-          if P!=p1:
-            w1=P-p1  # weak patch, but it works!
-          else:
-            w1=P-(p1+v1)
-          w1.normalize()
-          if P!=p2:
-            w2=P-p2
-          else:
-            w2=P-(p2+v2)
-          w2.normalize()
-        else:
-          FreeCAD.Console.PrintError('frameCmd.intersectionLines() has failed!\n')
-          return None
-        # calculate the bending angle and the plane of the elbow
-        ang=180-degrees(w1.getAngle(w2))
         #create the feature
         if None in [DN,OD,thk,PRating]:
           propList=[d['PSize'],float(d['OD']),float(d['thk']),ang,float(d['BendRadius'])]
-          elb=pipeCmd.makeElbow(propList,P,axes[1].cross(axes[3]))
+          elb=pipeCmd.makeElbowBetweenThings(*things[:2],propList=propList)
           elb.PRating=self.ratingList.item(self.ratingList.currentRow()).text()
         else:
-          BR=None
+          #BR=None
           for prop in self.pipeDictList:
             if prop['PSize']==DN:
               BR=float(prop['BendRadius'])
           if BR==None:
             BR=1.5*OD/2
           propList=[DN,OD,thk,ang,BR]
-          elb=pipeCmd.makeElbow(propList,P,axes[1].cross(axes[3]))
+          elb=pipeCmd.makeElbowBetweenThings(*things[:2],propList=propList)
           elb.PRating=PRating
-        # mate the elbow ends with the pipes or edges
-        b=frameCmd.bisect(w1.negative(),w2.negative())
-        elbBisect=frameCmd.beamAx(elb,FreeCAD.Vector(1,1,0))
-        rot=FreeCAD.Rotation(elbBisect,b)
-        elb.Placement.Rotation=rot.multiply(elb.Placement.Rotation)
-        # trim automatically the adjacent tubes
-        FreeCAD.activeDocument().recompute()
-        portA=elb.Placement.multVec(elb.Ports[0])
-        portB=elb.Placement.multVec(elb.Ports[1])
-        for tube in frameCmd.beams():
-          vectA=tube.Shape.Solids[0].CenterOfMass-portA
-          vectB=tube.Shape.Solids[0].CenterOfMass-portB
-          if frameCmd.isParallel(vectA,frameCmd.beamAx(tube)):
-            frameCmd.extendTheBeam(tube,portA)
-          else:
-            frameCmd.extendTheBeam(tube,portB)
-          FreeCAD.activeDocument().recompute()
+        #FreeCAD.activeDocument().recompute()
       except:
         FreeCAD.Console.PrintError('Creation of elbow is failed\n')
       FreeCAD.activeDocument().commitTransaction()

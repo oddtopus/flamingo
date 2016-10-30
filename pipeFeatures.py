@@ -143,6 +143,43 @@ class Flange(pypeType):
         base=base.cut(hole)
         hole.rotate(FreeCAD.Vector(0,0,0),FreeCAD.Vector(0,0,1),360/fp.n)
     fp.Shape = base.extrude(FreeCAD.Vector(0,0,fp.t))
+
+class PypeLine(pypeType):
+  '''Class for object PType="PypeLine"
+      *** prototype object ***
+  This aims to be a collection objects "PType" that move and rotate together
+  with the methods of Proxy.
+  At present time it creates pipes over the selected edges and collect them
+  in a group.  
+  '''
+  def __init__(self, obj,DN="DN50",PRating="SCH-STD",OD=60.3,thk=3,lab=None):
+    import pipeCmd
+    # initialize the parent class
+    super(PypeLine,self).__init__(obj)
+    # define common properties
+    obj.PType="PypeLine"
+    obj.PSize=DN
+    obj.PRating=PRating
+    if lab:
+      obj.Label=lab
+    # define specific properties
+    self.Components=FreeCAD.activeDocument().addObject("App::DocumentObjectGroup",obj.Label+"-pieces")
+    self.Components.addObject(obj)
+    pipes=list()
+    for e in frameCmd.edges():
+      p=pipeCmd.makePipe([obj.PSize,OD,thk,e.Length],pos=e.valueAt(0),Z=e.tangentAt(0))
+      pipes.append(p.Label)
+      self.Components.addObject(p)
+    obj.addProperty("App::PropertyStringList","Pipes","PypeLine","The pipes.").Pipes=pipes
+  def onChanged(self, fp, prop):
+    if prop=="Placement":
+      print "PypeLine ",fp.Label," moved."
+    if prop=='Label':
+      fp.InList[0].Label=fp.Label+"_pieces"
+  def execute(self, fp):
+    return None
+  def updateEdges(self):
+    self.listOfEdges=frameCmd.edges()
     
 class Ubolt():
   '''Class for object PType="Clamp"
@@ -177,6 +214,7 @@ class Ubolt():
 class Shell():
   '''
   Class for a lateral-shell-of-tank object
+      *** prototype object ***
   Shell(obj[,L=800,W=400,H=500,thk=6])
     obj: the "App::FeaturePython" object
     L (float): the length

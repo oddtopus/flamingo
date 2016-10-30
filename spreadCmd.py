@@ -1,4 +1,4 @@
-# FreeCAD Frame Tools module  
+# Utilities for spreadsheets  
 # (c) 2016 Riccardo Treu LGPL
 
 global alpha
