@@ -1,7 +1,7 @@
 #pipeTools scripted objects
 #(c) 2016 Riccardo Treu LGPL
 
-import FreeCAD, Part, frameCmd
+import FreeCAD, Part
 
 ################ CLASSES ###########################
 
@@ -33,19 +33,14 @@ class Pipe(pypeType):
     obj.addProperty("App::PropertyLength","ID","Pipe","Inside diameter").ID=obj.OD-2*obj.thk
     obj.addProperty("App::PropertyLength","Height","Pipe","Length of tube").Height=H
     obj.addProperty("App::PropertyString","Profile","Pipe","Section dim.").Profile=str(obj.OD)+"x"+str(obj.thk)
-    
-
   def onChanged(self, fp, prop):
-    #FreeCAD.Console.PrintMessage("Changed Pipe feature\n")
     return None
-
   def execute(self, fp):
     if fp.thk>fp.OD/2:
       fp.thk=fp.OD/2.1
     fp.ID=fp.OD-2*fp.thk
     fp.Profile=str(fp.OD)+"x"+str(fp.thk)
     fp.Shape = Part.makeCylinder(fp.OD/2,fp.Height).cut(Part.makeCylinder(fp.ID/2,fp.Height))
-    #FreeCAD.Console.PrintMessage("Executed Pipe feature\n")
     
 class Elbow(pypeType):
   '''Class for object PType="Elbow"
@@ -130,7 +125,6 @@ class Flange(pypeType):
     obj.addProperty("App::PropertyLength","t","Flange","Thickness of flange").t=t
     obj.addProperty("App::PropertyInteger","n","Flange","Nr. of bolts").n=n
   def onChanged(self, fp, prop):
-    #FreeCAD.Console.PrintMessage("Changed Pipe feature\n")
     return None
   def execute(self, fp):
     base=Part.Face(Part.Wire(Part.makeCircle(fp.D/2)))
@@ -152,8 +146,7 @@ class PypeLine(pypeType):
   At present time it creates pipes over the selected edges and collect them
   in a group.  
   '''
-  def __init__(self, obj,DN="DN50",PRating="SCH-STD",OD=60.3,thk=3,lab=None):
-    import pipeCmd
+  def __init__(self, obj,DN="DN50",PRating="SCH-STD",OD=60.3,thk=3,BR=None, lab=None):
     # initialize the parent class
     super(PypeLine,self).__init__(obj)
     # define common properties
@@ -163,23 +156,13 @@ class PypeLine(pypeType):
     if lab:
       obj.Label=lab
     # define specific properties
-    self.Components=FreeCAD.activeDocument().addObject("App::DocumentObjectGroup",obj.Label+"-pieces")
-    self.Components.addObject(obj)
-    pipes=list()
-    for e in frameCmd.edges():
-      p=pipeCmd.makePipe([obj.PSize,OD,thk,e.Length],pos=e.valueAt(0),Z=e.tangentAt(0))
-      pipes.append(p.Label)
-      self.Components.addObject(p)
-    obj.addProperty("App::PropertyStringList","Pipes","PypeLine","The pipes.").Pipes=pipes
+    obj.addProperty("App::PropertyString","Group","PypeLine","The group.").Group=obj.Label+"_pieces"
   def onChanged(self, fp, prop):
-    if prop=="Placement":
-      print "PypeLine ",fp.Label," moved."
-    if prop=='Label':
+    if prop=='Label' and len(fp.InList):
       fp.InList[0].Label=fp.Label+"_pieces"
+      fp.Group=fp.Label+"_pieces"
   def execute(self, fp):
     return None
-  def updateEdges(self):
-    self.listOfEdges=frameCmd.edges()
     
 class Ubolt():
   '''Class for object PType="Clamp"

@@ -28,7 +28,7 @@ class prototypeForm(QWidget):
     self.radio2=QRadioButton()
     self.radios=QWidget()
     self.radios.setLayout(QFormLayout())
-    self.radios.layout().setAlignment(Qt.AlignJustify)
+    self.radios.layout().setAlignment(Qt.AlignHCenter)
     self.radios.layout().addRow('move',self.radio1)
     self.radios.layout().addRow('copy',self.radio2)
     self.mainVL.addWidget(self.radios)

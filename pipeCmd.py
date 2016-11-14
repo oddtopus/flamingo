@@ -250,16 +250,44 @@ def makeShell(L=800,W=400,H=500,thk=6):
   a.Placement.Base=FreeCAD.Vector(0,0,0)
   return a
 
-def makePypeLine(DN="DN50",PRating="SCH-STD",OD=60.3,thk=3,lab=None):
+def makePypeLine(DN="DN50",PRating="SCH-STD",OD=60.3,thk=3,BR=None, lab=None, pl=None):
   '''
-  makePypeLine(DN="DN50",PRating="SCH-STD",OD=60.3,thk=3,lab=None)
+  makePypeLine(DN="DN50",PRating="SCH-STD",OD=60.3,thk=3,BR=None, lab=None)
   Adds a pypeLine object creating pipes over the selected edges.
-  Default tube is "DN50", "SCH-STD".
+  Default tube is "DN50", "SCH-STD" and BR=1.5*OD.
   '''
-  a=FreeCAD.ActiveDocument.addObject("Part::FeaturePython","Tubatura")
-  pipeFeatures.PypeLine(a,DN,PRating,OD,thk,lab)
-  a.ViewObject.Proxy=0
-  a.Placement.Base=FreeCAD.Vector(0,0,0)
+  if not BR:
+    BR=1.5*OD
+  # create the pypeLine group
+  if not pl:
+    a=FreeCAD.ActiveDocument.addObject("Part::FeaturePython","Tubatura")
+    pipeFeatures.PypeLine(a,DN,PRating,OD,thk,BR, lab)
+    a.ViewObject.Proxy=0
+    a.Placement.Base=FreeCAD.Vector(0,0,0)
+    group=FreeCAD.activeDocument().addObject("App::DocumentObjectGroup",a.Group)
+    group.addObject(a)
+  else:
+    a=FreeCAD.ActiveDocument.getObjectsByLabel(pl)[0]
+    FreeCAD.Console.PrintWarning("Objects added to pypeline's group "+a.Group+"\n")
+    group=FreeCAD.ActiveDocument.getObjectsByLabel(a.Group)[0]
+  # create tubes and fittings
+  pipes=list()
+  for e in frameCmd.edges():
+    p=makePipe([a.PSize,OD,thk,e.Length],pos=e.valueAt(0),Z=e.tangentAt(0))
+    p.PRating=PRating
+    p.PSize=DN
+    pipes.append(p.Label)
+    group.addObject(p)
+  n=len(pipes)
+  objPipes=list()
+  if not BR:
+    BR=0.75*OD
+  for p in pipes:
+    objPipes.append(FreeCAD.ActiveDocument.getObjectsByLabel(p)[0])
+  for i in range(n-1):
+    c=makeElbowBetweenThings(objPipes[i],objPipes[i+1],[DN,OD,thk,0,BR])
+    group.addObject(c)
+  objPipes=[]
   return a
 
 def alignTheTube():

@@ -53,6 +53,13 @@ class insertUbolt:
   def GetResources(self):
     return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","clamp.svg"),'MenuText':'Insert a U-bolt','ToolTip':'Insert a U-bolt'}
 
+class insertPypeLine:
+  def Activated (self):
+    import pipeForms
+    pipeFormObj=pipeForms.insertPypeLineForm()
+  def GetResources(self):
+    return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","pypeline.svg"),'MenuText':'Insert a pype-line','ToolTip':'Insert a pype-line'}
+
 class rotateAx:
   def Activated (self):
     import pipeForms
@@ -144,6 +151,7 @@ addCommand('insertPipe',insertPipe())
 addCommand('insertElbow',insertElbow())
 addCommand('insertFlange',insertFlange())
 addCommand('insertUbolt',insertUbolt())
+addCommand('insertPypeLine',insertPypeLine())
 addCommand('mateEdges',mateEdges())
 addCommand('rotateAx',rotateAx())
 addCommand('rotateEdge',rotateEdge())
