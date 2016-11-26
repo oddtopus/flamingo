@@ -1,4 +1,4 @@
-# Dialo for query  
+# Dialog for query  
 # (c) 2016 Riccardo Treu LGPL
 
 from PySide import QtGui, QtCore
@@ -73,7 +73,10 @@ class QueryForm(QtGui.QWidget):
       if len(shapes)==1:
         sub=shapes[0]
         if sub.ShapeType=='Edge':
-          self.labSubObj.setText(sub.ShapeType+': L = %.1f mm' %sub.Length)
+          if sub.curvatureAt(0)==0:
+            self.labSubObj.setText(sub.ShapeType+': L = %.1f mm' %sub.Length)
+          else:
+            self.labSubObj.setText(sub.ShapeType+': D = %.1f mm' %(2/sub.curvatureAt(0)))
         elif sub.ShapeType=='Face':
           self.labSubObj.setText(sub.ShapeType+': A = %.1f mm2' %sub.Area)
         elif sub.ShapeType=='Vertex':

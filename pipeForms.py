@@ -60,6 +60,13 @@ class protopypeForm(QWidget):
     self.btn1=QPushButton('Insert')
     self.secondCol.layout().addWidget(self.btn1)
     self.mainHL.addWidget(self.secondCol)
+    self.combo.currentIndexChanged.connect(self.setCurrent)
+    self.current=None
+  def setCurrent(self):
+    if self.combo.currentText() not in ['<none>','<new>']:
+      self.current=FreeCAD.ActiveDocument.getObjectsByLabel(self.combo.currentText())[0]
+    else:
+      self.current=None
   def fillSizes(self):
     self.sizeList.clear()
     for fileName in self.fileList:
@@ -480,13 +487,9 @@ class insertPypeLineForm(protopypeForm):
     self.secondCol.layout().addWidget(self.btn2)
     self.btn2.clicked.connect(self.partList)
     self.combo.setItemText(0,'<new>')
-    self.combo.currentIndexChanged.connect(self.setCurrent)
     self.btn1.setDefault(True)
     self.btn1.setFocus()
     self.show()
-    self.current=None
-  def setCurrent(self):
-    self.current=FreeCAD.ActiveDocument.getObjectsByLabel(self.combo.currentText())[0]
   def insert(self):
     d=self.pipeDictList[self.sizeList.currentRow()]
     FreeCAD.activeDocument().openTransaction('Insert pype-line')
