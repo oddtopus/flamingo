@@ -138,6 +138,57 @@ class Flange(pypeType):
         hole.rotate(FreeCAD.Vector(0,0,0),FreeCAD.Vector(0,0,1),360/fp.n)
     fp.Shape = base.extrude(FreeCAD.Vector(0,0,fp.t))
 
+class Reduct(pypeType):
+  '''Class for object PType="Reduct"
+  Reduct(obj,[PSize="DN50",OD=60.3, OD2= 48.3, thk=3, thk2=None, H=None])
+    obj: the "App::FeaturePython object"
+    PSize (string): nominal diameter (major)
+    OD (float): major outside diameter
+    OD2 (float): minor outside diameter
+    thk (float): major shell thickness
+    thk2 (float): minor shell thickness
+    H (float): length of reduction
+  If thk2 is None or 0, the same thickness is used at both ends.
+  If H is None or 0, the length of the reduction is calculated as 3x(OD-OD2).
+    '''
+  def __init__(self, obj,DN="DN50",OD=60.3,OD2=48.3,thk=3, thk2=None, H=None):
+    # initialize the parent class
+    super(Reduct,self).__init__(obj)
+    # define common properties
+    obj.PType="Reduct"
+    obj.PRating="SCH-STD"
+    obj.PSize=DN
+    # define specific properties
+    obj.addProperty("App::PropertyLength","OD","Reduct","Major diameter").OD=OD
+    obj.addProperty("App::PropertyLength","OD2","Reduct","Minor diameter").OD2=OD2
+    obj.addProperty("App::PropertyLength","thk","Reduct","Wall thickness").thk=thk
+    obj.addProperty("App::PropertyLength","thk2","Reduct","Wall thickness")
+    if not thk2:
+      obj.thk2=thk
+    else:
+      obj.thk2=thk2
+    obj.addProperty("App::PropertyBool","calcH","Reduct","Make the lenght variable")
+    obj.addProperty("App::PropertyLength","Height","Reduct","Length of reduct")
+    if not H:
+      obj.calcH=True
+      obj.Height=3*(obj.OD-obj.OD2)
+    else:
+      obj.calcH=False
+      obj.Height=H
+    obj.addProperty("App::PropertyString","Profile","Reduct","Section dim.").Profile=str(obj.OD)+"x"+str(obj.OD2)
+  def onChanged(self, fp, prop):
+    return None
+  def execute(self, fp):
+    if fp.OD>fp.OD2:
+      if fp.thk>fp.OD/2:
+        fp.thk=fp.OD/2.1
+      if fp.thk2>fp.OD2/2:
+        fp.thk2=fp.OD2/2.1
+      if fp.calcH:
+        fp.Height=3*(fp.OD-fp.OD2)
+      fp.Profile=str(fp.OD)+"x"+str(fp.OD2)
+      fp.Shape = Part.makeCone(fp.OD/2,fp.OD2/2,fp.Height).cut(Part.makeCone(fp.OD/2-fp.thk,fp.OD2/2-fp.thk2,fp.Height))
+    
 class PypeLine(pypeType):
   '''Class for object PType="PypeLine"
       *** prototype object ***

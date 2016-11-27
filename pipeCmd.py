@@ -207,6 +207,24 @@ def makeFlange(propList=[], pos=None, Z=None):
   a.Placement.Rotation=rot.multiply(a.Placement.Rotation)
   return a
 
+def makeReduct(propList=[], pos=None, Z=None):
+  '''add a Reduct object
+  '''
+  if pos==None:
+    pos=FreeCAD.Vector(0,0,0)
+  if Z==None:
+    Z=FreeCAD.Vector(0,0,1)
+  a=FreeCAD.ActiveDocument.addObject("Part::FeaturePython","Riduz")
+  if len(propList)==6:
+    pipeFeatures.Reduct(a,*propList)
+  else:
+    pipeFeatures.Reduct(a)
+  a.ViewObject.Proxy=0
+  a.Placement.Base=pos
+  rot=FreeCAD.Rotation(FreeCAD.Vector(0,0,1),Z)
+  a.Placement.Rotation=rot.multiply(a.Placement.Rotation)
+  return a
+
 def makeUbolt(propList=[], pos=None, Z=None):
   '''Adds a Ubolt object:
   makeUbolt(propList,pos,Z);
@@ -356,7 +374,7 @@ def flattenTheTube(obj=None,v1=None,v2=None):
   rot=FreeCAD.Rotation(frameCmd.beamAx(obj),planeNorm)
   obj.Placement.Rotation=rot.multiply(obj.Placement.Rotation)
     
-def extendTheTubes2intersection(pipe1=None,pipe2=None):
+def extendTheTubes2intersection(pipe1=None,pipe2=None,both=True):
   '''
   Does what it says; also with beams.
   If arguments are None, it picks the first 2 selected beams().
@@ -369,7 +387,8 @@ def extendTheTubes2intersection(pipe1=None,pipe2=None):
   P=frameCmd.intersectionCLines(pipe1,pipe2)
   if P!=None:
     frameCmd.extendTheBeam(pipe1,P)
-    frameCmd.extendTheBeam(pipe2,P)
+    if both:
+      frameCmd.extendTheBeam(pipe2,P)
 
 def laydownTheTube(pipe=None, refFace=None, support=None):
   '''

@@ -39,6 +39,13 @@ class insertElbow:
   def GetResources(self):
     return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","elbow.svg"),'MenuText':'Insert a curve','ToolTip':'Insert a curve'}
 
+class insertReduct: 
+  def Activated (self):
+    import pipeForms
+    pipeFormObj=pipeForms.insertReductForm()
+  def GetResources(self):
+    return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","reduct.svg"),'MenuText':'Insert a reduction','ToolTip':'Insert a reduction'}
+
 class insertFlange:
   def Activated (self):
     import pipeForms
@@ -110,6 +117,16 @@ class extend2intersection:
   def GetResources(self):
     return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","intersect.svg"),'MenuText':'Extends pipes to intersection','ToolTip':'Extends pipes to intersection'}
 
+class extend1intersection:
+  def Activated (self):
+    import pipeCmd
+    FreeCAD.activeDocument().openTransaction('Xtend1int')
+    pipeCmd.extendTheTubes2intersection(both=False)
+    FreeCAD.activeDocument().recompute()
+    FreeCAD.activeDocument().commitTransaction()
+  def GetResources(self):
+    return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","intersect1.svg"),'MenuText':'Extends pipe to intersection','ToolTip':'Extends pipe to intersection'}
+
 class laydown:
   def Activated (self):
     import pipeCmd, frameCmd
@@ -149,6 +166,7 @@ class raiseup:
 #---------------------------------------------------------------------------
 addCommand('insertPipe',insertPipe()) 
 addCommand('insertElbow',insertElbow())
+addCommand('insertReduct',insertReduct())
 addCommand('insertFlange',insertFlange())
 addCommand('insertUbolt',insertUbolt())
 addCommand('insertPypeLine',insertPypeLine())
@@ -157,6 +175,7 @@ addCommand('rotateAx',rotateAx())
 addCommand('rotateEdge',rotateEdge())
 addCommand('flat',flat())
 addCommand('extend2intersection',extend2intersection())
+addCommand('extend1intersection',extend1intersection())
 addCommand('laydown',laydown())
 addCommand('raiseup',raiseup())
 

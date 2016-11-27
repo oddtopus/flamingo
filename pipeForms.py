@@ -35,7 +35,6 @@ class protopypeForm(QWidget):
     self.setLayout(self.mainHL)
     self.sizeList=QListWidget()
     self.sizeList.setMaximumWidth(120)
-    self.sizeList.setCurrentRow(0)
     self.mainHL.addWidget(self.sizeList)
     self.pipeDictList=[]
     self.fileList=listdir(join(dirname(abspath(__file__)),"tables"))
@@ -98,8 +97,8 @@ class insertPipeForm(protopypeForm):
   '''
   def __init__(self):
     super(insertPipeForm,self).__init__("Insert pipes","Pipe","SCH-STD")
-    self.sizeList.item(0).setSelected(True)
-    self.ratingList.item(0).setSelected(True)
+    self.sizeList.setCurrentRow(0)
+    self.ratingList.setCurrentRow(0)
     self.btn1.clicked.connect(self.insert)
     self.edit1=QLineEdit(' <insert lenght>')
     self.edit1.setAlignment(Qt.AlignHCenter)
@@ -181,8 +180,8 @@ class insertElbowForm(protopypeForm):
   '''
   def __init__(self):
     super(insertElbowForm,self).__init__("Insert elbows","Elbow","SCH-STD")
-    self.sizeList.item(0).setSelected(True)
-    self.ratingList.item(0).setSelected(True)
+    self.sizeList.setCurrentRow(0)
+    self.ratingList.setCurrentRow(0)
     self.btn1.clicked.connect(self.insert)
     self.edit1=QLineEdit('<insert angle>')
     self.edit1.setAlignment(Qt.AlignHCenter)
@@ -334,8 +333,8 @@ class insertFlangeForm(protopypeForm):
   '''
   def __init__(self):
     super(insertFlangeForm,self).__init__("Insert flanges","Flange","DIN-PN16")
-    self.sizeList.item(0).setSelected(True)
-    self.ratingList.item(0).setSelected(True)
+    self.sizeList.setCurrentRow(0)
+    self.ratingList.setCurrentRow(0)
     self.btn1.clicked.connect(self.insert)
     self.btn2=QPushButton('Reverse')
     self.secondCol.layout().addWidget(self.btn2)
@@ -405,8 +404,8 @@ class insertUboltForm(protopypeForm):
   '''
   def __init__(self):
     super(insertUboltForm,self).__init__("Insert U-bolt","Clamp","DIN-UBolt")
-    self.sizeList.item(0).setSelected(True)
-    self.ratingList.item(0).setSelected(True)
+    self.sizeList.setCurrentRow(0)
+    self.ratingList.setCurrentRow(0)
     self.btn1.clicked.connect(self.insert)
     self.btn2=QPushButton('Ref. face')
     self.secondCol.layout().addWidget(self.btn2)
@@ -468,14 +467,64 @@ class insertUboltForm(protopypeForm):
           FreeCAD.activeDocument().commitTransaction()
     FreeCAD.activeDocument().recompute()
 
+class insertReductForm(protopypeForm):
+  '''
+  Dialog to insert concentric reductions.
+  '''
+  def __init__(self):
+    super(insertReductForm,self).__init__("Insert concentric reductions","Reduct","SCH-STD")
+    self.sizeList.setCurrentRow(0)
+    self.ratingList.setCurrentRow(0)
+    self.sizeList.currentItemChanged.connect(self.fillOD2)
+    self.ratingList.item(0).setSelected(True)
+    self.ratingList.setMaximumHeight(50)
+    self.btn2=QPushButton('Reverse')
+    self.secondCol.layout().addWidget(self.btn2)
+    self.OD2list=QListWidget()
+    self.OD2list.setMaximumWidth(120)
+    self.OD2list.setMaximumHeight(80)
+    self.secondCol.layout().addWidget(self.OD2list)
+    self.btn1.clicked.connect(self.insert)
+    self.btn2.clicked.connect(self.reverse)
+    self.btn1.setDefault(True)
+    self.btn1.setFocus()
+    self.fillOD2()
+    self.show()
+    self.lastReduct=None
+  def fillOD2(self):
+    self.OD2list.clear()
+    self.OD2list.addItems(self.pipeDictList[self.sizeList.currentRow()]['OD2'].split('>'))
+    self.OD2list.setCurrentRow(0)
+  def reverse(self):
+    selRed=[r for r in FreeCADGui.Selection.getSelection() if hasattr(r,'PType') and r. PType=='Reduct']
+    if len(selRed):
+      for r in selRed:
+        pipeCmd.rotateTheTubeAx(r,FreeCAD.Vector(1,0,0),180)
+    elif self.lastReduct:
+      pipeCmd.rotateTheTubeAx(self.lastReduct,FreeCAD.Vector(1,0,0),180)
+  def insert(self):
+    edges=[e for e in frameCmd.edges() if e.curvatureAt(0)>0]
+    r=self.pipeDictList[self.sizeList.currentRow()]
+    propList=[r['PSize'],float(r['OD']),float(self.OD2list.currentItem().text()),float(r['thk']),float(r['thk2'].split('>')[self.OD2list.currentRow()]),r['H']]
+    FreeCAD.activeDocument().openTransaction('Insert reduction')
+    if len(edges):
+      for edge in edges:
+        self.lastReduct=pipeCmd.makeReduct(propList,edge.centerOfCurvatureAt(0),edge.tangentAt(0).cross(edge.normalAt(0)))
+    else:
+      self.lastReduct=pipeCmd.makeReduct(propList)
+    FreeCAD.activeDocument().commitTransaction()
+    FreeCAD.activeDocument().recompute()
+    if self.combo.currentText()!='<none>':
+      FreeCAD.ActiveDocument.getObjectsByLabel(self.combo.currentText()+"_pieces")[0].addObject(self.lastReduct)
+
 class insertPypeLineForm(protopypeForm):
   '''
   Dialog to insert pypelines.
   '''
   def __init__(self):
     super(insertPypeLineForm,self).__init__("Insert pypelines","Pipe","SCH-STD")
-    self.sizeList.item(0).setSelected(True)
-    self.ratingList.item(0).setSelected(True)
+    self.sizeList.setCurrentRow(0)
+    self.ratingList.setCurrentRow(0)
     self.btn1.clicked.connect(self.insert)
     self.edit1=QLineEdit('<name>')
     self.edit1.setAlignment(Qt.AlignHCenter)
