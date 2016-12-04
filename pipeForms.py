@@ -13,7 +13,7 @@ from DraftVecUtils import rounded
 
 class protopypeForm(QWidget):
   'prototype dialog for insert pipeFeatures'
-  def __init__(self,winTitle='Title', PType='Pipe', PRating='SCH-STD'):
+  def __init__(self,winTitle='Title', PType='Pipe', PRating='SCH-STD', icon='flamingo.svg'):
     '''
     __init__(self,winTitle='Title', PType='Pipe', PRating='SCH-STD')
       winTitle: the window's title
@@ -31,11 +31,21 @@ class protopypeForm(QWidget):
     self.PRating=PRating
     self.setWindowFlags(Qt.WindowStaysOnTopHint)
     self.setWindowTitle(winTitle)
+    iconPath=join(dirname(abspath(__file__)),"icons",icon)
+    from PySide.QtGui import QIcon
+    Icon=QIcon()
+    Icon.addFile(iconPath)
+    self.setWindowIcon(Icon) 
     self.mainHL=QHBoxLayout()
     self.setLayout(self.mainHL)
+    self.firstCol=QWidget()
+    self.firstCol.setLayout(QVBoxLayout())
+    self.mainHL.addWidget(self.firstCol)
+    self.currentRatingLab=QLabel(self.PRating+':')
+    self.firstCol.layout().addWidget(self.currentRatingLab)
     self.sizeList=QListWidget()
     self.sizeList.setMaximumWidth(120)
-    self.mainHL.addWidget(self.sizeList)
+    self.firstCol.layout().addWidget(self.sizeList)
     self.pipeDictList=[]
     self.fileList=listdir(join(dirname(abspath(__file__)),"tables"))
     self.fillSizes()
@@ -48,22 +58,24 @@ class protopypeForm(QWidget):
       self.combo.addItems([o.Label for o in FreeCAD.activeDocument().Objects if hasattr(o,'PType') and o.PType=='PypeLine'])
     except:
       None
+    self.combo.setMaximumWidth(100)
     self.secondCol.layout().addWidget(self.combo)
     self.ratingList=QListWidget()
-    self.ratingList.setMaximumWidth(120)
+    self.ratingList.setMaximumWidth(100)
     self.ratingList.addItems(self.PRatingsList)
     self.ratingList.itemClicked.connect(self.changeRating)
     self.ratingList.setCurrentRow(0)
     self.ratingList.setMaximumHeight(100)
     self.secondCol.layout().addWidget(self.ratingList)
     self.btn1=QPushButton('Insert')
+    self.btn1.setMaximumWidth(100)
     self.secondCol.layout().addWidget(self.btn1)
     self.mainHL.addWidget(self.secondCol)
-    self.combo.currentIndexChanged.connect(self.setCurrent)
-    self.current=None
-  def setCurrent(self):
+    self.combo.currentIndexChanged.connect(self.setCurrentPL)
+    self.currentPL=None
+  def setCurrentPL(self):
     if self.combo.currentText() not in ['<none>','<new>']:
-      self.current=FreeCAD.ActiveDocument.getObjectsByLabel(self.combo.currentText())[0]
+      self.currentPL=FreeCAD.ActiveDocument.getObjectsByLabel(self.combo.currentText())[0]
     else:
       self.current=None
   def fillSizes(self):
@@ -84,29 +96,42 @@ class protopypeForm(QWidget):
         break
   def changeRating(self,item):
     self.PRating=item.text()
+    self.currentRatingLab.setText(self.PRating+':')
     self.fillSizes()
+  def findDN(self,DN):
+    result=None
+    for row in self.pipeDictList:
+      if row['PSize']==DN:
+        result=row
+        break
+    return result
     
 class insertPipeForm(protopypeForm):
   '''
   Dialog to insert tubes.
-  If edges are selected, it places the tubes over the straight edges or at the center of the curved edges.
-  If vertexes are selected, it places the tubes at the selected vertexes.
-  If nothing is selected it places one tube in the origin with the selected 
-  size and height, or default = 200 mm.
+  For position and orientation you can select
+    - one or more straight edges (centerlines)
+    - one or more curved edges (axis and origin across the center)
+    - one or more vertexes 
+    - nothing 
+  Default length = 200 mm.
   Available one button to reverse the orientation of the last or selected tubes.
   '''
   def __init__(self):
-    super(insertPipeForm,self).__init__("Insert pipes","Pipe","SCH-STD")
+    super(insertPipeForm,self).__init__("Insert pipes","Pipe","SCH-STD","pipe.svg")
     self.sizeList.setCurrentRow(0)
     self.ratingList.setCurrentRow(0)
     self.btn1.clicked.connect(self.insert)
     self.edit1=QLineEdit(' <insert lenght>')
     self.edit1.setAlignment(Qt.AlignHCenter)
+    self.edit1.setMaximumWidth(100)
     self.secondCol.layout().addWidget(self.edit1)
     self.btn2=QPushButton('Reverse')
+    self.btn2.setMaximumWidth(100)
     self.secondCol.layout().addWidget(self.btn2)
     self.btn2.clicked.connect(self.reverse) #lambda: pipeCmd.rotateTheTubeAx(self.lastPipe,FreeCAD.Vector(1,0,0),180))
     self.btn3=QPushButton('Apply')
+    self.btn3.setMaximumWidth(100)
     self.secondCol.layout().addWidget(self.btn3)
     self.btn3.clicked.connect(self.apply)
     self.btn1.setDefault(True)
@@ -170,26 +195,32 @@ class insertPipeForm(protopypeForm):
 class insertElbowForm(protopypeForm):
   '''
   Dialog to insert one elbow.
-  It allows to select one vertex, one circular edge or a pair of edges or pipes 
-  or beams.
-  If at least one tube is selected it automatically takes its size and apply  
-  it to the elbows created. It also trim or extend automatically the tube.
-  If nothing is selected, it places one elbow in the origin.
-  Available button to trim/extend one selected pipe to the selected edges of 
-  the elbow, after it's modified (for example, changed the bend radius).
+  For position and orientation you can select
+    - one vertex, 
+    - one circular edge 
+    - a pair of edges or pipes or beams
+    - one pipe at one of its ends
+    - nothing.
+  In case one pipe is selected, its properties are applied to the elbow and 
+  the tube or tubes are trimmed or extended automatically.
+  Also available one button to trim/extend one selected pipe to the selected 
+  edges, if necessary.
   '''
   def __init__(self):
-    super(insertElbowForm,self).__init__("Insert elbows","Elbow","SCH-STD")
+    super(insertElbowForm,self).__init__("Insert elbows","Elbow","SCH-STD","elbow.svg")
     self.sizeList.setCurrentRow(0)
     self.ratingList.setCurrentRow(0)
     self.btn1.clicked.connect(self.insert)
     self.edit1=QLineEdit('<insert angle>')
     self.edit1.setAlignment(Qt.AlignHCenter)
+    self.edit1.setMaximumWidth(100)
     self.secondCol.layout().addWidget(self.edit1)
     self.btn2=QPushButton('Trim/Extend')
     self.btn2.clicked.connect(self.trim)
+    self.btn2.setMaximumWidth(100)
     self.secondCol.layout().addWidget(self.btn2)
     self.btn3=QPushButton('Apply')
+    self.btn3.setMaximumWidth(100)
     self.secondCol.layout().addWidget(self.btn3)
     self.btn3.clicked.connect(self.apply)
     self.btn1.setDefault(True)
@@ -321,18 +352,16 @@ class insertElbowForm(protopypeForm):
 class insertFlangeForm(protopypeForm):
   '''
   Dialog to insert flanges.
-  If edges are selected, it places the flange over the selected circular edges.
-  If at least one tube is selected it automatically takes its Nominal Size and 
-  apply it to the flange created, if it is included in the Nominal Size list of 
-  the flange.
-  If vertexes are selected, it places the flange at the selected vertexes.
-  If nothing is selected it places one flange in the origin with the selected 
-  size.
+  For position and orientation you can select
+    - one or more circular edges,
+    - one or more vertexes,
+    - nothing.
+  In case one pipe is selected, its properties are applied to the flange.
   Available one button to reverse the orientation of the last or selected 
   flanges.
   '''
   def __init__(self):
-    super(insertFlangeForm,self).__init__("Insert flanges","Flange","DIN-PN16")
+    super(insertFlangeForm,self).__init__("Insert flanges","Flange","DIN-PN16","flange.svg")
     self.sizeList.setCurrentRow(0)
     self.ratingList.setCurrentRow(0)
     self.btn1.clicked.connect(self.insert)
@@ -398,25 +427,182 @@ class insertFlangeForm(protopypeForm):
         obj.PRating=self.PRating
         FreeCAD.activeDocument().recompute()
 
+class insertReductForm(protopypeForm):
+  '''
+  Dialog to insert concentric reductions.
+  For position and orientation you can select
+    - two pipes parallel (possibly co-linear)
+    - one pipe at one of its ends
+    - one pipe
+    - one circular edge
+    - one straight edge
+    - one vertex
+    - nothing (created at origin)
+  In case one pipe is selected, its properties are applied to the reduction.
+  Available one button to reverse the orientation of the last or selected 
+  reductions.
+  '''
+  def __init__(self):
+    super(insertReductForm,self).__init__("Insert concentric reductions","Reduct","SCH-STD","reduct.svg")
+    self.sizeList.setCurrentRow(0)
+    self.ratingList.setCurrentRow(0)
+    self.ratingList.itemClicked.connect(self.changeRating2)
+    self.sizeList.currentItemChanged.connect(self.fillOD2)
+    self.ratingList.setCurrentRow(0)
+    self.ratingList.setMaximumHeight(50)
+    self.OD2list=QListWidget()
+    self.OD2list.setMaximumWidth(100)
+    self.OD2list.setMaximumHeight(80)
+    self.secondCol.layout().addWidget(self.OD2list)
+    self.btn2=QPushButton('Reverse')
+    self.btn2.setMaximumWidth(100)
+    self.secondCol.layout().addWidget(self.btn2)
+    self.btn3=QPushButton('Apply')
+    self.btn3.setMaximumWidth(100)
+    self.secondCol.layout().addWidget(self.btn3)
+    self.btn1.clicked.connect(self.insert)
+    self.btn2.clicked.connect(self.reverse)
+    self.btn3.clicked.connect(self.applyProp)
+    self.btn1.setDefault(True)
+    self.btn1.setFocus()
+    self.fillOD2()
+    self.show()
+    self.lastReduct=None
+  def applyProp(self):
+    r=self.pipeDictList[self.sizeList.currentRow()]
+    DN=r['PSize']
+    OD1=float(r['OD'])
+    OD2=float(self.OD2list.currentItem().text())
+    thk1=float(r['thk'])
+    try:
+      thk2=float(r['thk2'].split('>')[self.OD2list.currentRow()])
+    except:
+      thk2=thk1
+    H=r['H']
+    reductions=[red for red in FreeCADGui.Selection.getSelection() if hasattr(red,'PType') and red.PType=='Reduct']
+    if len(reductions):
+      for reduct in reductions:
+        reduct.PSize=DN
+        reduct.PRating=self.PRating
+        reduct.OD=OD1
+        reduct.OD2=OD2
+        reduct.thk=thk1
+        reduct.thk2=thk2
+        reduct.Height=H
+    elif self.lastReduct:
+      self.lastReduct.PSize=DN
+      self.lastReduct.PRating=self.PRating
+      self.lastReduct.OD=OD1
+      self.lastReduct.OD2=OD2
+      self.lastReduct.thk=thk1
+      self.lastReduct.thk2=thk2
+      self.lastReduct.Height=H
+    FreeCAD.activeDocument().recompute()
+  def fillOD2(self):
+    self.OD2list.clear()
+    self.OD2list.addItems(self.pipeDictList[self.sizeList.currentRow()]['OD2'].split('>'))
+    self.OD2list.setCurrentRow(0)
+  def reverse(self):
+    selRed=[r for r in FreeCADGui.Selection.getSelection() if hasattr(r,'PType') and r. PType=='Reduct']
+    if len(selRed):
+      for r in selRed:
+        pipeCmd.rotateTheTubeAx(r,FreeCAD.Vector(1,0,0),180)
+    elif self.lastReduct:
+      pipeCmd.rotateTheTubeAx(self.lastReduct,FreeCAD.Vector(1,0,0),180)
+  def insert(self):
+    r=self.pipeDictList[self.sizeList.currentRow()]
+    pos=Z=H=None
+    selex=FreeCADGui.Selection.getSelectionEx()
+    pipes=[p.Object for p in selex if hasattr(p.Object,'PType') and p.Object.PType=='Pipe']
+    if len(pipes)>1 and frameCmd.isParallel(frameCmd.beamAx(pipes[0]),frameCmd.beamAx(pipes[1])):                # if at least 2 pipes are selected...
+      if pipes[0].OD>=pipes[1].OD:
+        p1,p2=pipes[:2]
+      else:
+        p2,p1=pipes[:2]
+      DN=p1.PSize
+      OD1=float(p1.OD)
+      OD2=float(p2.OD)
+      thk1=float(p1.thk)
+      thk2=float(p2.thk)
+      H=float(self.findDN(DN)['H'])
+      Z=p2.Shape.Solids[0].CenterOfMass-p1.Shape.Solids[0].CenterOfMass
+      Z.normalize()
+      pos=p1.Shape.Solids[0].CenterOfMass+Z*float(p1.Height/2)
+    elif len(pipes)>0:            # if 1 pipe is selected...
+      DN=pipes[0].PSize
+      OD1=float(pipes[0].OD)
+      OD2=float(self.OD2list.currentItem().text())
+      thk1=float(pipes[0].thk)
+      thk2=float(r['thk2'].split('>')[self.OD2list.currentRow()])
+      H=float(self.findDN(DN)['H'])
+      curves=[e for e in frameCmd.edges() if e.curvatureAt(0)>0]
+      if len(curves): #...and 1 curve is selected...
+        pos=curves[0].centerOfCurvatureAt(0)
+      else: #...or no curve is selected...
+        pos=pipes[0].Placement.Base
+      Z= pos-pipes[0].Shape.Solids[0].CenterOfMass
+    else:                         # if no pipe is selected...
+      DN=r['PSize']
+      OD1=float(r['OD'])
+      OD2=float(self.OD2list.currentItem().text())
+      thk1=float(r['thk'])
+      try:
+        thk2=float(r['thk2'].split('>')[self.OD2list.currentRow()])
+      except:
+        thk2=thk1
+      H=r['H']
+      if frameCmd.edges():    #...but 1 curve is selected...
+        edge=frameCmd.edges()[0]
+        if edge.curvatureAt(0)>0:
+          pos=edge.centerOfCurvatureAt(0)
+          Z=edge.tangentAt(0).cross(edge.normalAt(0))
+        else:
+          pos=edge.valueAt(0)
+          Z=edge.tangentAt(0)
+      elif selex and selex[0].SubObjects[0].ShapeType=="Vertex": #...or 1 vertex..
+        pos=selex[0].SubObjects[0].Point
+    if not H: # calculate length if it's not defined
+      H=float(3*(OD1-OD2))
+    propList=[DN,OD1,OD2,thk1,thk2,H]
+    FreeCAD.activeDocument().openTransaction('Insert reduction')
+    self.lastReduct=pipeCmd.makeReduct(propList,pos,Z)
+    FreeCAD.activeDocument().commitTransaction()
+    FreeCAD.activeDocument().recompute()
+    if self.combo.currentText()!='<none>':
+      FreeCAD.ActiveDocument.getObjectsByLabel(self.combo.currentText()+"_pieces")[0].addObject(self.lastReduct)
+  def changeRating2(self,item):
+    self.PRating=item.text()
+    self.fillSizes()
+    self.sizeList.setCurrentRow(0)
+    self.fillOD2()
+
 class insertUboltForm(protopypeForm):
   '''
   Dialog to insert U-bolts.
+  For position and orientation you can select
+    - one or more circular edges,
+    - nothing.
+  In case one pipe is selected, its properties are aplied to the flange.
+  Available one button to reverse the orientation of the last or selected tubes.
   '''
   def __init__(self):
-    super(insertUboltForm,self).__init__("Insert U-bolt","Clamp","DIN-UBolt")
+    super(insertUboltForm,self).__init__("Insert U-bolt","Clamp","DIN-UBolt","clamp.svg")
     self.sizeList.setCurrentRow(0)
     self.ratingList.setCurrentRow(0)
     self.btn1.clicked.connect(self.insert)
     self.btn2=QPushButton('Ref. face')
+    self.btn2.setMaximumWidth(100)
     self.secondCol.layout().addWidget(self.btn2)
     self.btn2.clicked.connect(self.getReference)
     self.lab1=QLabel('- no ref. face -')
     self.lab1.setAlignment(Qt.AlignHCenter)
+    self.lab1.setMaximumWidth(100)
     self.secondCol.layout().addWidget(self.lab1)
     self.btn2.setDefault(True)
     self.btn2.setFocus()
     self.edit1=QLineEdit('1')
     self.edit1.setAlignment(Qt.AlignHCenter)
+    self.edit1.setMaximumWidth(100)
     self.secondCol.layout().addWidget(self.edit1)
     self.show()
     self.refNorm=None
@@ -467,72 +653,25 @@ class insertUboltForm(protopypeForm):
           FreeCAD.activeDocument().commitTransaction()
     FreeCAD.activeDocument().recompute()
 
-class insertReductForm(protopypeForm):
-  '''
-  Dialog to insert concentric reductions.
-  '''
-  def __init__(self):
-    super(insertReductForm,self).__init__("Insert concentric reductions","Reduct","SCH-STD")
-    self.sizeList.setCurrentRow(0)
-    self.ratingList.setCurrentRow(0)
-    self.sizeList.currentItemChanged.connect(self.fillOD2)
-    self.ratingList.item(0).setSelected(True)
-    self.ratingList.setMaximumHeight(50)
-    self.btn2=QPushButton('Reverse')
-    self.secondCol.layout().addWidget(self.btn2)
-    self.OD2list=QListWidget()
-    self.OD2list.setMaximumWidth(120)
-    self.OD2list.setMaximumHeight(80)
-    self.secondCol.layout().addWidget(self.OD2list)
-    self.btn1.clicked.connect(self.insert)
-    self.btn2.clicked.connect(self.reverse)
-    self.btn1.setDefault(True)
-    self.btn1.setFocus()
-    self.fillOD2()
-    self.show()
-    self.lastReduct=None
-  def fillOD2(self):
-    self.OD2list.clear()
-    self.OD2list.addItems(self.pipeDictList[self.sizeList.currentRow()]['OD2'].split('>'))
-    self.OD2list.setCurrentRow(0)
-  def reverse(self):
-    selRed=[r for r in FreeCADGui.Selection.getSelection() if hasattr(r,'PType') and r. PType=='Reduct']
-    if len(selRed):
-      for r in selRed:
-        pipeCmd.rotateTheTubeAx(r,FreeCAD.Vector(1,0,0),180)
-    elif self.lastReduct:
-      pipeCmd.rotateTheTubeAx(self.lastReduct,FreeCAD.Vector(1,0,0),180)
-  def insert(self):
-    edges=[e for e in frameCmd.edges() if e.curvatureAt(0)>0]
-    r=self.pipeDictList[self.sizeList.currentRow()]
-    propList=[r['PSize'],float(r['OD']),float(self.OD2list.currentItem().text()),float(r['thk']),float(r['thk2'].split('>')[self.OD2list.currentRow()]),r['H']]
-    FreeCAD.activeDocument().openTransaction('Insert reduction')
-    if len(edges):
-      for edge in edges:
-        self.lastReduct=pipeCmd.makeReduct(propList,edge.centerOfCurvatureAt(0),edge.tangentAt(0).cross(edge.normalAt(0)))
-    else:
-      self.lastReduct=pipeCmd.makeReduct(propList)
-    FreeCAD.activeDocument().commitTransaction()
-    FreeCAD.activeDocument().recompute()
-    if self.combo.currentText()!='<none>':
-      FreeCAD.ActiveDocument.getObjectsByLabel(self.combo.currentText()+"_pieces")[0].addObject(self.lastReduct)
-
 class insertPypeLineForm(protopypeForm):
   '''
   Dialog to insert pypelines.
   '''
   def __init__(self):
-    super(insertPypeLineForm,self).__init__("Insert pypelines","Pipe","SCH-STD")
+    super(insertPypeLineForm,self).__init__("Insert pypelines","Pipe","SCH-STD","pypeline.svg")
     self.sizeList.setCurrentRow(0)
     self.ratingList.setCurrentRow(0)
     self.btn1.clicked.connect(self.insert)
     self.edit1=QLineEdit('<name>')
     self.edit1.setAlignment(Qt.AlignHCenter)
+    self.edit1.setMaximumWidth(100)
     self.secondCol.layout().addWidget(self.edit1)
     self.edit2=QLineEdit('<bend radius>')
     self.edit2.setAlignment(Qt.AlignHCenter)
+    self.edit2.setMaximumWidth(100)
     self.secondCol.layout().addWidget(self.edit2)
     self.btn2=QPushButton('Part list')
+    self.btn2.setMaximumWidth(100)
     self.secondCol.layout().addWidget(self.btn2)
     self.btn2.clicked.connect(self.partList)
     self.combo.setItemText(0,'<new>')
@@ -558,7 +697,7 @@ class insertPypeLineForm(protopypeForm):
     f=qfd.getSaveFileName()[0]
     if f:
       if self.combo.currentText()!='<new>':
-        group=FreeCAD.activeDocument().getObjectsByLabel(self.current.Group)[0]
+        group=FreeCAD.activeDocument().getObjectsByLabel(self.currentPL.Group)[0]
         fields=['Label','PType','PSize','Volume','Height']
         rows=list()
         for o in group.OutList:
@@ -578,6 +717,8 @@ class rotateForm(prototypeForm):
   '''
   Dialog for rotateTheTubeAx().
   It allows to rotate one object respect to the axis of its shape.
+  It's possible to get the rotation axis from one existing edge: select the
+  reference edge and the object, then push [Get]
   '''
   def __init__(self):
     super(rotateForm,self).__init__('rotateForm','Rotate','Reverse','90','Angle - deg:')
@@ -672,14 +813,15 @@ class rotateForm(prototypeForm):
     coord=[]
     selex=FreeCADGui.Selection.getSelectionEx()
     if len(selex)==2 and len(selex[1].SubObjects)>0:
-      sub=selex[1].SubObjects[0]
+      sub=selex[0].SubObjects[0]
       if sub.ShapeType=='Edge':
         axObj=sub.tangentAt(0)
-        obj=selex[0].Object
+        obj=selex[1].Object
         coord=rounded(pipeCmd.shapeReferenceAxis(obj,axObj))
         self.xval.setText(str(coord[0]))
         self.yval.setText(str(coord[1]))
         self.zval.setText(str(coord[2]))
+    FreeCADGui.Selection.removeSelection(selex[0].Object)
 
 class rotateEdgeForm(prototypeForm):
   '''

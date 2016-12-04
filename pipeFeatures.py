@@ -184,7 +184,7 @@ class Reduct(pypeType):
         fp.thk=fp.OD/2.1
       if fp.thk2>fp.OD2/2:
         fp.thk2=fp.OD2/2.1
-      if fp.calcH:
+      if fp.calcH or fp.Height==0:
         fp.Height=3*(fp.OD-fp.OD2)
       fp.Profile=str(fp.OD)+"x"+str(fp.OD2)
       fp.Shape = Part.makeCone(fp.OD/2,fp.OD2/2,fp.Height).cut(Part.makeCone(fp.OD/2-fp.thk,fp.OD2/2-fp.thk2,fp.Height))
@@ -208,6 +208,9 @@ class PypeLine(pypeType):
       obj.Label=lab
     # define specific properties
     obj.addProperty("App::PropertyString","Group","PypeLine","The group.").Group=obj.Label+"_pieces"
+    obj.addProperty("App::PropertyFloat","Flow","PypeLine","Flow in m3ph")
+    obj.addProperty("App::PropertyFloat","DP","PypeLine","Pressure loss in bar")
+    obj.addProperty("App::PropertyFloat","Roughness","PypeLine","Roughness of the pipe wall")
   def onChanged(self, fp, prop):
     if prop=='Label' and len(fp.InList):
       fp.InList[0].Label=fp.Label+"_pieces"

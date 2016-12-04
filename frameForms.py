@@ -5,13 +5,19 @@ import FreeCAD,FreeCADGui
 import frameCmd
 from PySide.QtCore import *
 from PySide.QtGui import *
+from os.path import join, dirname, abspath
 
 class prototypeForm(QWidget):
   'prototype dialog for frame tools workbench'
-  def __init__(self,winTitle='Title',btn1Text='Button1',btn2Text='Button2',initVal='someVal',units='someUnit'):
+  def __init__(self,winTitle='Title',btn1Text='Button1',btn2Text='Button2',initVal='someVal',units='someUnit', icon='flamingo.svg'):
     super(prototypeForm,self).__init__()
     self.setWindowFlags(Qt.WindowStaysOnTopHint)
     self.setWindowTitle(winTitle)
+    iconPath=join(dirname(abspath(__file__)),"icons",icon)
+    from PySide.QtGui import QIcon
+    Icon=QIcon()
+    Icon.addFile(iconPath)
+    self.setWindowIcon(Icon) 
     self.move(QPoint(100,250))
     self.mainVL=QVBoxLayout()
     self.setLayout(self.mainVL)
@@ -44,7 +50,7 @@ class prototypeForm(QWidget):
 class pivotForm(prototypeForm):
   'dialog for pivotTheBeam()'
   def __init__(self):
-    super(pivotForm,self).__init__('pivotForm','Rotate','Reverse','90','Angle - deg:')
+    super(pivotForm,self).__init__('pivotForm','Rotate','Reverse','90','Angle - deg:','pivot.svg')
     self.btn1.clicked.connect(self.rotate)
     self.btn2.clicked.connect(self.reverse)
     self.show()
@@ -65,7 +71,7 @@ class pivotForm(prototypeForm):
 class fillForm(prototypeForm):
   'dialog for fillFrame()'
   def __init__(self):
-    super(fillForm,self).__init__('fillForm','Select','Fill','<select a beam>','')
+    super(fillForm,self).__init__('fillForm','Select','Fill','<select a beam>','','fillFrame.svg')
     self.beam=None
     self.edit1.setMinimumWidth(150)
     self.btn1.clicked.connect(self.select)
@@ -93,7 +99,7 @@ class fillForm(prototypeForm):
 class extendForm(prototypeForm):
   'dialog for frameCmd.extendTheBeam()'
   def __init__(self):
-    super(extendForm,self).__init__('extendForm','Target','Extend','<select a target shape>','')
+    super(extendForm,self).__init__('extendForm','Target','Extend','<select a target shape>','','extend.svg')
     self.target=None
     self.edit1.setMinimumWidth(150)
     self.btn1.clicked.connect(self.getTarget)
@@ -121,7 +127,7 @@ class stretchForm(prototypeForm):
     [ Stretch ] changes the Height of the selected beams
   '''
   def __init__(self):
-    super(stretchForm,self).__init__('stretchForm','Get Length','Stretch','1000','mm')
+    super(stretchForm,self).__init__('stretchForm','Get Length','Stretch','1000','mm','beamStretch.svg')
     self.edit1.setMaximumWidth(150)
     self.edit1.setMinimumWidth(40)
     self.btn1.clicked.connect(self.getL)
@@ -145,7 +151,7 @@ class stretchForm(prototypeForm):
 class translateForm(prototypeForm):   #add selection options in getDisp()
   'dialog for moving blocks'
   def __init__(self):
-    super(translateForm,self).__init__('translateForm','Displacement','Vector','0','x - mm')
+    super(translateForm,self).__init__('translateForm','Displacement','Vector','0','x - mm','beamShift.svg')
     self.btn1.clicked.connect(self.getDisp)
     self.btn1.setFocus()
     self.btn2.clicked.connect(self.getVect)

@@ -208,7 +208,18 @@ def makeFlange(propList=[], pos=None, Z=None):
   return a
 
 def makeReduct(propList=[], pos=None, Z=None):
-  '''add a Reduct object
+  '''Adds a Reduct object
+  makeReduct(propList=[], pos=None, Z=None)
+    propList is one optional list with 6 elements:
+      PSize (string): nominal diameter
+      OD (float): major diameter
+      OD2 (float): minor diameter
+      thk (float): major thickness
+      thk2 (float): minor thickness
+      H (float): length of reduction      
+    pos (vector): position of insertion; default = 0,0,0
+    Z (vector): orientation: default = 0,0,1
+  Remember: property PRating must be defined afterwards
   '''
   if pos==None:
     pos=FreeCAD.Vector(0,0,0)
