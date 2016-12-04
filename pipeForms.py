@@ -821,7 +821,7 @@ class rotateForm(prototypeForm):
         self.xval.setText(str(coord[0]))
         self.yval.setText(str(coord[1]))
         self.zval.setText(str(coord[2]))
-    FreeCADGui.Selection.removeSelection(selex[0].Object)
+        FreeCADGui.Selection.removeSelection(selex[0].Object)
 
 class rotateEdgeForm(prototypeForm):
   '''
