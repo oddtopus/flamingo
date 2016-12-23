@@ -1,8 +1,13 @@
-#pipeTools functions
-#(c) 2016 Riccardo Treu LGPL
+#(c) 2016 R. T. LGPL: part of Flamingo tools w.b. for FreeCAD
+
+__title__="pypeTools functions"
+__author__="oddtopus"
+__url__="github.com/oddtopus/flamingo"
+__license__="LGPL 3"
 
 import FreeCAD, FreeCADGui, Part, frameCmd, pipeFeatures
 from DraftVecUtils import rounded
+objToPaint=['Pipe','Elbow','Reduct','Flange']
 
 ############### AUX FUNCTIONS ###################### 
 
@@ -52,6 +57,13 @@ def isPipe(obj):
 def isElbow(obj):
   'True if obj is a tube'
   return hasattr(obj,'PType') and obj.PType=='Elbow'
+  
+def moveToPyLi(obj,plName):
+  pl=FreeCAD.ActiveDocument.getObjectsByLabel(plName)[0]
+  group=FreeCAD.ActiveDocument.getObjectsByLabel(pl.Group)[0]
+  group.addObject(obj)
+  if hasattr(obj,'PType') and obj.PType in objToPaint:
+    obj.ViewObject.ShapeColor=pl.ViewObject.ShapeColor
 
 ################## COMMANDS ########################
 
@@ -279,7 +291,7 @@ def makeShell(L=800,W=400,H=500,thk=6):
   a.Placement.Base=FreeCAD.Vector(0,0,0)
   return a
 
-def makePypeLine(DN="DN50",PRating="SCH-STD",OD=60.3,thk=3,BR=None, lab=None, pl=None):
+def makePypeLine(DN="DN50",PRating="SCH-STD",OD=60.3,thk=3,BR=None, lab=None, pl=None, color=(0.8,0.8,0.8)):
   '''
   makePypeLine(DN="DN50",PRating="SCH-STD",OD=60.3,thk=3,BR=None, lab=None)
   Adds a pypeLine object creating pipes over the selected edges.
@@ -292,32 +304,46 @@ def makePypeLine(DN="DN50",PRating="SCH-STD",OD=60.3,thk=3,BR=None, lab=None, pl
     a=FreeCAD.ActiveDocument.addObject("Part::FeaturePython","Tubatura")
     pipeFeatures.PypeLine(a,DN,PRating,OD,thk,BR, lab)
     a.ViewObject.Proxy=0
-    a.Placement.Base=FreeCAD.Vector(0,0,0)
+    a.ViewObject.ShapeColor=color
     group=FreeCAD.activeDocument().addObject("App::DocumentObjectGroup",a.Group)
     group.addObject(a)
+    FreeCAD.Console.PrintWarning("Created group "+a.Group+"\n")
   else:
     a=FreeCAD.ActiveDocument.getObjectsByLabel(pl)[0]
-    FreeCAD.Console.PrintWarning("Objects added to pypeline's group "+a.Group+"\n")
     group=FreeCAD.ActiveDocument.getObjectsByLabel(a.Group)[0]
-  # create tubes and fittings
+    FreeCAD.Console.PrintWarning("Objects added to pypeline's group "+a.Group+"\n")
+  # create tubes and elbows
   pipes=list()
   for e in frameCmd.edges():
     p=makePipe([a.PSize,OD,thk,e.Length],pos=e.valueAt(0),Z=e.tangentAt(0))
     p.PRating=PRating
     p.PSize=DN
-    pipes.append(p.Label)
+    pipes.append(p)
     group.addObject(p)
   n=len(pipes)
-  objPipes=list()
   if not BR:
     BR=0.75*OD
-  for p in pipes:
-    objPipes.append(FreeCAD.ActiveDocument.getObjectsByLabel(p)[0])
+  elbows=list()
   for i in range(n-1):
-    c=makeElbowBetweenThings(objPipes[i],objPipes[i+1],[DN,OD,thk,0,BR])
+    c=makeElbowBetweenThings(pipes[i],pipes[i+1],[DN,OD,thk,0,BR])
+    elbows.append(c)
     group.addObject(c)
-  objPipes=[]
+  for o in pipes+elbows:
+    o.ViewObject.ShapeColor=color
+  pipes=elbows=[]
   return a
+
+def updatePLColor(color=None):
+  pl=FreeCADGui.Selection.getSelection()[0]
+  if hasattr(pl,'PType') and pl.PType=='PypeLine':
+    if not color:
+      color=pl.ViewObject.ShapeColor
+    group=FreeCAD.activeDocument().getObjectsByLabel(pl.Group)[0]
+    for o in group.OutList:
+      if hasattr(o,'PType') and o.PType in objToPaint:
+        o.ViewObject.ShapeColor=color
+  else:
+    FreeCAD.Console.PrintError('Select first one pype line\n')
 
 def alignTheTube():
   '''

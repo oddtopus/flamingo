@@ -1,5 +1,9 @@
-# FreeCAD EagleTools module  
-# (c) 2016 Riccardo Treu LGPL
+#(c) 2016 R. T. LGPL: part of Flamingo tools w.b. for FreeCAD
+
+__title__="eagleTools toolbar"
+__author__="oddtopus"
+__url__="github.com/oddtopus/flamingo"
+__license__="LGPL 3"
 
 # import FreeCAD modules
 import FreeCAD, FreeCADGui,inspect

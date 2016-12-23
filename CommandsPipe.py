@@ -1,7 +1,9 @@
-"""
-pipeTools workbench
-(c) 2016 Riccardo Treu LGPL
-"""
+#(c) 2016 R. T. LGPL: part of Flamingo tools w.b. for FreeCAD
+
+__title__="pypeTools toolbar"
+__author__="oddtopus"
+__url__="github.com/oddtopus/flamingo"
+__license__="LGPL 3"
 
 # import FreeCAD modules
 import FreeCAD, FreeCADGui,inspect, os
@@ -66,6 +68,15 @@ class insertPypeLine:
     pipeFormObj=pipeForms.insertPypeLineForm()
   def GetResources(self):
     return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","pypeline.svg"),'MenuText':'Insert a pype-line','ToolTip':'Insert a pype-line'}
+
+class paintPypeLine:
+  def Activated (self):
+    import pipeCmd
+    FreeCAD.activeDocument().openTransaction('Paint')
+    pipeCmd.updatePLColor()
+    FreeCAD.activeDocument().commitTransaction()
+  def GetResources(self):
+    return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","paint.svg"),'MenuText':'Paint pypeline','ToolTip':'Updates the color of pypes belonging to one pype-line'}
 
 class rotateAx:
   def Activated (self):
@@ -170,6 +181,7 @@ addCommand('insertReduct',insertReduct())
 addCommand('insertFlange',insertFlange())
 addCommand('insertUbolt',insertUbolt())
 addCommand('insertPypeLine',insertPypeLine())
+addCommand('paintPypeLine',paintPypeLine())
 addCommand('mateEdges',mateEdges())
 addCommand('rotateAx',rotateAx())
 addCommand('rotateEdge',rotateEdge())

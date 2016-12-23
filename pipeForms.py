@@ -1,5 +1,9 @@
-#pipeTools dialogs
-#(c) 2016 Riccardo Treu LGPL
+#(c) 2016 R. T. LGPL: part of Flamingo tools w.b. for FreeCAD
+
+__title__="pypeTools dialogs"
+__author__="oddtopus"
+__url__="github.com/oddtopus/flamingo"
+__license__="LGPL 3"
 
 import FreeCAD,FreeCADGui,Part, csv
 import frameCmd, pipeCmd
@@ -156,14 +160,14 @@ class insertPipeForm(protopypeForm):
       propList=[d['PSize'],float(d['OD']),float(d['thk']),H]
       vs=[v for sx in FreeCADGui.Selection.getSelectionEx() for so in sx.SubObjects for v in so.Vertexes]
       if len(vs)==0:
-        pipeCmd.makePipe(propList)
+        self.lastPipe=pipeCmd.makePipe(propList)
         if self.combo.currentText()!='<none>':
-          FreeCAD.ActiveDocument.getObjectsByLabel(self.combo.currentText()+"_pieces")[0].addObject(self.lastPipe)
+          pipeCmd.moveToPyLi(self.lastPipe,self.combo.currentText())
       else:
         for v in vs:
-          pipeCmd.makePipe(propList,v.Point)
+          self.lastPipe=pipeCmd.makePipe(propList,v.Point)
         if self.combo.currentText()!='<none>':
-          FreeCAD.ActiveDocument.getObjectsByLabel(self.combo.currentText()+"_pieces")[0].addObject(self.lastPipe)
+          pipeCmd.moveToPyLi(self.lastPipe,self.combo.currentText())
     else:
       for edge in frameCmd.edges():
         if edge.curvatureAt(0)==0:
@@ -177,7 +181,7 @@ class insertPipeForm(protopypeForm):
             propList=[d['PSize'],float(d['OD']),float(d['thk']),H]
           self.lastPipe=pipeCmd.makePipe(propList,edge.centerOfCurvatureAt(0),edge.tangentAt(0).cross(edge.normalAt(0)))
         if self.combo.currentText()!='<none>':
-          FreeCAD.ActiveDocument.getObjectsByLabel(self.combo.currentText()+"_pieces")[0].addObject(self.lastPipe)
+          pipeCmd.moveToPyLi(self.lastPipe,self.combo.currentText())
     FreeCAD.activeDocument().commitTransaction()
     FreeCAD.activeDocument().recompute()
   def apply(self):
@@ -242,7 +246,7 @@ class insertElbowForm(protopypeForm):
       FreeCAD.activeDocument().openTransaction('Insert elbow in (0,0,0)')
       self.lastElbow=pipeCmd.makeElbow(propList)
       if self.combo.currentText()!='<none>':
-        FreeCAD.ActiveDocument.getObjectsByLabel(self.combo.currentText()+"_pieces")[0].addObject(self.lastElbow)
+        pipeCmd.moveToPyLi(self.lastElbow,self.combo.currentText())
       FreeCAD.activeDocument().commitTransaction()
     elif len(selex)==1 and len(selex[0].SubObjects)==1:  #one selection -> ...
       if pipeCmd.isPipe(selex[0].Object):
@@ -262,7 +266,7 @@ class insertElbowForm(protopypeForm):
         FreeCAD.activeDocument().openTransaction('Insert elbow on vertex')
         self.lastElbow=pipeCmd.makeElbow(propList,selex[0].SubObjects[0].Point)
         if self.combo.currentText()!='<none>':
-          FreeCAD.ActiveDocument.getObjectsByLabel(self.combo.currentText()+"_pieces")[0].addObject(self.lastElbow)
+          pipeCmd.moveToPyLi(self.lastElbow,self.combo.currentText())
         FreeCAD.activeDocument().commitTransaction()
       elif selex[0].SubObjects[0].ShapeType=="Edge" and  selex[0].SubObjects[0].curvatureAt(0)!=0: # ...on center of curved edge
         P=selex[0].SubObjects[0].centerOfCurvatureAt(0)
@@ -270,7 +274,7 @@ class insertElbowForm(protopypeForm):
         FreeCAD.activeDocument().openTransaction('Insert elbow on curved edge')
         self.lastElbow=pipeCmd.makeElbow(propList,P,Z)
         if self.combo.currentText()!='<none>':
-          FreeCAD.ActiveDocument.getObjectsByLabel(self.combo.currentText()+"_pieces")[0].addObject(self.lastElbow)
+          pipeCmd.moveToPyLi(self.lastElbow,self.combo.currentText())
         FreeCAD.activeDocument().recompute()
         if pipeCmd.isPipe(selex[0].Object):
           Port0=self.lastElbow.Placement.Rotation.multVec(self.lastElbow.Ports[0])
@@ -315,7 +319,7 @@ class insertElbowForm(protopypeForm):
           self.lastElbow=pipeCmd.makeElbowBetweenThings(*things[:2],propList=propList)
           self.lastElbow.PRating=PRating
         if self.combo.currentText()!='<none>':
-          FreeCAD.ActiveDocument.getObjectsByLabel(self.combo.currentText()+"_pieces")[0].addObject(self.lastElbow)
+          pipeCmd.moveToPyLi(self.lastElbow,self.combo.currentText())
       except:
         FreeCAD.Console.PrintError('Creation of elbow is failed\n')
       FreeCAD.activeDocument().commitTransaction()
@@ -398,18 +402,19 @@ class insertFlangeForm(protopypeForm):
       if len(vs)==0:
         self.lastFlange=pipeCmd.makeFlange(propList)
         if self.combo.currentText()!='<none>':
-          FreeCAD.ActiveDocument.getObjectsByLabel(self.combo.currentText()+"_pieces")[0].addObject(self.lastFlange)
+          pipeCmd.moveToPyLi(self.lastFlange,self.combo.currentText())
       else:
         for v in vs:
           self.lastFlange=pipeCmd.makeFlange(propList,v.Point)
           if self.combo.currentText()!='<none>':
-            FreeCAD.ActiveDocument.getObjectsByLabel(self.combo.currentText()+"_pieces")[0].addObject(self.lastFlange)
+            pipeCmd.moveToPyLi(self.lastFlange,self.combo.currentText())
     else:
       for edge in frameCmd.edges():
         if edge.curvatureAt(0)!=0:
           self.lastFlange=pipeCmd.makeFlange(propList,edge.centerOfCurvatureAt(0),edge.tangentAt(0).cross(edge.normalAt(0)))
+          pipeCmd.moveToPyLi(self.lastFlange,self.combo.currentText())
           if self.combo.currentText()!='<none>':
-            FreeCAD.ActiveDocument.getObjectsByLabel(self.combo.currentText()+"_pieces")[0].addObject(self.lastFlange)
+            pipeCmd.moveToPyLi(self.lastFlange,self.combo.currentText())
     FreeCAD.activeDocument().commitTransaction()
     FreeCAD.activeDocument().recompute()
   def apply(self):
@@ -569,7 +574,7 @@ class insertReductForm(protopypeForm):
     FreeCAD.activeDocument().commitTransaction()
     FreeCAD.activeDocument().recompute()
     if self.combo.currentText()!='<none>':
-      FreeCAD.ActiveDocument.getObjectsByLabel(self.combo.currentText()+"_pieces")[0].addObject(self.lastReduct)
+      pipeCmd.moveToPyLi(self.lastReduct,self.combo.currentText())
   def changeRating2(self,item):
     self.PRating=item.text()
     self.fillSizes()
@@ -621,7 +626,9 @@ class insertUboltForm(protopypeForm):
       d=self.pipeDictList[self.sizeList.currentRow()]
       propList=[d['PSize'],self.PRating,float(d['C']),float(d['H']),float(d['d'])]
       FreeCAD.activeDocument().openTransaction('Insert clamp in (0,0,0)')
-      pipeCmd.makeUbolt(propList)
+      ub=pipeCmd.makeUbolt(propList)
+      if self.combo.currentText()!='<none>':
+        pipeCmd.moveToPyLi(ub,self.combo.currentText())
       FreeCAD.activeDocument().commitTransaction()
       FreeCAD.activeDocument().recompute()
     else:
@@ -629,6 +636,7 @@ class insertUboltForm(protopypeForm):
         n=int(self.edit1.text())
       except:
         n=1
+      FreeCAD.activeDocument().openTransaction('Insert clamp on tube')
       for objex in selex:
         if hasattr(objex.Object,'PType') and objex.Object.PType=='Pipe':
           d=[typ for typ in self.pipeDictList if typ['PSize']==objex.Object.PSize]
@@ -641,16 +649,14 @@ class insertUboltForm(protopypeForm):
             step=(float(objex.Object.Height)-float(d['C']))/(n-1)
           else:
             step=(float(objex.Object.Height)-float(d['C']))
-          FreeCAD.activeDocument().openTransaction('Insert clamp on tube')
           for i in range(n):
             ub=pipeCmd.makeUbolt(propList,pos=objex.Object.Placement.Base, Z=frameCmd.beamAx(objex.Object))
             ub.Placement.move(frameCmd.beamAx(objex.Object).multiply(float(d['C'])/2+i*step))
             if self.refNorm:
-              print self.refNorm
-              print frameCmd.beamAx(ub,FreeCAD.Vector(0,1,0))
-              print degrees(self.refNorm.getAngle((frameCmd.beamAx(ub,FreeCAD.Vector(0,1,0)))))
               pipeCmd.rotateTheTubeAx(obj=ub,angle=degrees(self.refNorm.getAngle((frameCmd.beamAx(ub,FreeCAD.Vector(0,1,0))))))
-          FreeCAD.activeDocument().commitTransaction()
+            if self.combo.currentText()!='<none>':
+              pipeCmd.moveToPyLi(ub,self.combo.currentText())
+      FreeCAD.activeDocument().commitTransaction()
     FreeCAD.activeDocument().recompute()
 
 class insertPypeLineForm(protopypeForm):
@@ -674,6 +680,11 @@ class insertPypeLineForm(protopypeForm):
     self.btn2.setMaximumWidth(100)
     self.secondCol.layout().addWidget(self.btn2)
     self.btn2.clicked.connect(self.partList)
+    self.btn3=QPushButton('Color')
+    self.btn3.setMaximumWidth(100)
+    self.secondCol.layout().addWidget(self.btn3)
+    self.btn3.clicked.connect(self.changeColor)
+    self.color=0.8,0.8,0.8
     self.combo.setItemText(0,'<new>')
     self.btn1.setDefault(True)
     self.btn1.setFocus()
@@ -685,12 +696,19 @@ class insertPypeLineForm(protopypeForm):
       plLabel=self.edit1.text()
       if plLabel=="<name>" or plLabel.strip()=="":
         plLabel="Tubatura"
-      a=pipeCmd.makePypeLine(DN=d["PSize"],PRating=self.PRating,OD=float(d["OD"]),thk=float(d["thk"]), lab=plLabel)
+      a=pipeCmd.makePypeLine(DN=d["PSize"],PRating=self.PRating,OD=float(d["OD"]),thk=float(d["thk"]), lab=plLabel, color=self.color)
       self.combo.addItem(a.Label)
     else:
-      pipeCmd.makePypeLine(DN=d["PSize"],PRating=self.PRating,OD=float(d["OD"]),thk=float(d["thk"]), pl=self.combo.currentText())
+      plname=self.combo.currentText()
+      plcolor=FreeCAD.activeDocument().getObjectsByLabel(plname)[0].ViewObject.ShapeColor
+      pipeCmd.makePypeLine(DN=d["PSize"],PRating=self.PRating,OD=float(d["OD"]),thk=float(d["thk"]), pl=plname, color=plcolor)
     FreeCAD.ActiveDocument.recompute()
     FreeCAD.activeDocument().commitTransaction()
+  def changeColor(self):
+    self.hide()
+    col=QColorDialog.getColor().toTuple()[:3]
+    self.color=tuple([c/255.0 for c in col])
+    self.show()
   def partList(self):
     from PySide.QtGui import QFileDialog as qfd
     f=None
@@ -771,6 +789,8 @@ class rotateForm(prototypeForm):
     self.btnZ.setMaximumWidth(30)
     self.btn1.setMaximumWidth(70)
     self.btn2.setMaximumWidth(70)
+    self.btn1.setDefault(True)
+    self.btn1.setFocus()
     self.show()
   def rotate(self):
     if len(FreeCADGui.Selection.getSelection())>0:
@@ -832,6 +852,8 @@ class rotateEdgeForm(prototypeForm):
     super(rotateEdgeForm,self).__init__('rotateEdgeForm','Rotate','Reverse','90','Angle - deg:')
     self.btn1.clicked.connect(self.rotate)
     self.btn2.clicked.connect(self.reverse)
+    self.btn1.setDefault(True)
+    self.btn1.setFocus()
     self.show()
   def rotate(self):
     if len(FreeCADGui.Selection.getSelection())>0:

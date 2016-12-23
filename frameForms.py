@@ -1,5 +1,9 @@
-# FreeCAD Frame Tools module  
-# (c) 2016 Riccardo Treu LGPL
+#(c) 2016 R. T. LGPL: part of Flamingo tools w.b. for FreeCAD
+
+__title__="frameTools forms"
+__author__="oddtopus"
+__url__="github.com/oddtopus/flamingo"
+__license__="LGPL 3"
 
 import FreeCAD,FreeCADGui
 import frameCmd
@@ -40,6 +44,7 @@ class prototypeForm(QWidget):
     self.mainVL.addWidget(self.radios)
     self.btn1=QPushButton(btn1Text)
     self.btn1.setDefault(True)
+    self.btn1.setFocus()
     self.btn2=QPushButton(btn2Text)
     self.buttons=QWidget()
     self.buttons.setLayout(QHBoxLayout())
@@ -91,20 +96,26 @@ class fillForm(prototypeForm):
         FreeCAD.activeDocument().recompute()
       FreeCAD.activeDocument().commitTransaction()
   def select(self):
-    if frameCmd.beams()>0:
+    if len(frameCmd.beams())>0:
       self.beam=frameCmd.beams()[0]
       self.edit1.setText(self.beam.Label+':'+self.beam.Profile)
-      self.btn2.setFocus()    
+      FreeCADGui.Selection.removeSelection(self.beam)
 
 class extendForm(prototypeForm):
   'dialog for frameCmd.extendTheBeam()'
   def __init__(self):
-    super(extendForm,self).__init__('extendForm','Target','Extend','<select a target shape>','','extend.svg')
-    self.target=None
+    super(extendForm,self).__init__('extendForm','Extend','Target','<select target>','','extend.svg')
     self.edit1.setMinimumWidth(150)
-    self.btn1.clicked.connect(self.getTarget)
-    self.btn1.setFocus()
-    self.btn2.clicked.connect(self.extend)
+    selex = FreeCADGui.Selection.getSelectionEx()
+    self.btn1.clicked.connect(self.extend)
+    self.btn2.clicked.connect(self.getTarget)
+    if len(selex):
+      self.target=selex[0].SubObjects[0]
+      self.edit1.setText(selex[0].Object.Label+':'+self.target.ShapeType)
+      self.btn1.setFocus()
+      FreeCADGui.Selection.removeSelection(selex[0].Object)
+    else:
+      self.target=None
     self.radios.hide()
     self.show()
   def getTarget(self):
@@ -112,6 +123,7 @@ class extendForm(prototypeForm):
     if len(selex[0].SubObjects)>0 and hasattr(selex[0].SubObjects[0],'ShapeType'):
       self.target=selex[0].SubObjects[0]
       self.edit1.setText(selex[0].Object.Label+':'+self.target.ShapeType)
+      FreeCADGui.Selection.clearSelection()
   def extend(self):
     if self.target!=None and len(frameCmd.beams())>0:
       FreeCAD.activeDocument().openTransaction('Extend beam')
@@ -153,7 +165,6 @@ class translateForm(prototypeForm):   #add selection options in getDisp()
   def __init__(self):
     super(translateForm,self).__init__('translateForm','Displacement','Vector','0','x - mm','beamShift.svg')
     self.btn1.clicked.connect(self.getDisp)
-    self.btn1.setFocus()
     self.btn2.clicked.connect(self.getVect)
     self.edit1.setMaximumWidth(120)
     self.edit2=QLineEdit('0')
@@ -182,7 +193,14 @@ class translateForm(prototypeForm):   #add selection options in getDisp()
     self.buttons2.setLayout(QHBoxLayout())
     self.buttons2.layout().addWidget(self.btn3)
     self.mainVL.addWidget(self.buttons2)
+    self.btn1.setDefault(False)
+    self.btn3.setDefault(True)
+    self.btn3.setFocus()
     self.show()
+    if len(frameCmd.edges())==1:
+      self.getVect()
+    else:
+      self.getDisp()
   def getDisp(self):
     roundDigits=3
     shapes=[y for x in FreeCADGui.Selection.getSelectionEx() for y in x.SubObjects if hasattr(y,'ShapeType')][:2]
