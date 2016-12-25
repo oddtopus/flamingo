@@ -334,14 +334,16 @@ def makePypeLine(DN="DN50",PRating="SCH-STD",OD=60.3,thk=3,BR=None, lab=None, pl
   return a
 
 def updatePLColor(color=None):
-  pl=FreeCADGui.Selection.getSelection()[0]
-  if hasattr(pl,'PType') and pl.PType=='PypeLine':
-    if not color:
-      color=pl.ViewObject.ShapeColor
-    group=FreeCAD.activeDocument().getObjectsByLabel(pl.Group)[0]
-    for o in group.OutList:
-      if hasattr(o,'PType') and o.PType in objToPaint:
-        o.ViewObject.ShapeColor=color
+  sel=FreeCADGui.Selection.getSelection()
+  if sel:
+    pl=sel[0]
+    if hasattr(pl,'PType') and pl.PType=='PypeLine':
+      if not color:
+        color=pl.ViewObject.ShapeColor
+      group=FreeCAD.activeDocument().getObjectsByLabel(pl.Group)[0]
+      for o in group.OutList:
+        if hasattr(o,'PType') and o.PType in objToPaint:
+          o.ViewObject.ShapeColor=color
   else:
     FreeCAD.Console.PrintError('Select first one pype line\n')
 

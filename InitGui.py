@@ -132,9 +132,11 @@ static char * image[] =
   def Activated(self):
     if hasattr(FreeCADGui,"draftToolBar"):
       FreeCADGui.draftToolBar.Activated()
-    Msg("flamingoTools::Activated()\n")
+    FreeCAD.__activePypeLine__=None
+    Msg("flamingoTools activated\n")
 
   def Deactivated(self):
-		Msg("flamingoTools::Deactivated()\n")
+    del FreeCAD.__activePypeLine__
+    Msg("flamingoTools deactivated()\n")
 
 Gui.addWorkbench(flamingoToolsWorkbench)

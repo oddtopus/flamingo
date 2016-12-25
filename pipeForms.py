@@ -63,6 +63,8 @@ class protopypeForm(QWidget):
     except:
       None
     self.combo.setMaximumWidth(100)
+    if FreeCAD.__activePypeLine__ and FreeCAD.__activePypeLine__ in [self.combo.itemText(i) for i in range(self.combo.count())]:
+      self.combo.setCurrentIndex(self.combo.findText(FreeCAD.__activePypeLine__))
     self.secondCol.layout().addWidget(self.combo)
     self.ratingList=QListWidget()
     self.ratingList.setMaximumWidth(100)
@@ -80,8 +82,10 @@ class protopypeForm(QWidget):
   def setCurrentPL(self):
     if self.combo.currentText() not in ['<none>','<new>']:
       self.currentPL=FreeCAD.ActiveDocument.getObjectsByLabel(self.combo.currentText())[0]
+      FreeCAD.__activePypeLine__= self.combo.currentText()
     else:
-      self.current=None
+      self.currentPL=None
+      FreeCAD.__activePypeLine__=None
   def fillSizes(self):
     self.sizeList.clear()
     for fileName in self.fileList:
@@ -412,7 +416,6 @@ class insertFlangeForm(protopypeForm):
       for edge in frameCmd.edges():
         if edge.curvatureAt(0)!=0:
           self.lastFlange=pipeCmd.makeFlange(propList,edge.centerOfCurvatureAt(0),edge.tangentAt(0).cross(edge.normalAt(0)))
-          pipeCmd.moveToPyLi(self.lastFlange,self.combo.currentText())
           if self.combo.currentText()!='<none>':
             pipeCmd.moveToPyLi(self.lastFlange,self.combo.currentText())
     FreeCAD.activeDocument().commitTransaction()
@@ -603,8 +606,8 @@ class insertUboltForm(protopypeForm):
     self.lab1.setAlignment(Qt.AlignHCenter)
     self.lab1.setMaximumWidth(100)
     self.secondCol.layout().addWidget(self.lab1)
-    self.btn2.setDefault(True)
-    self.btn2.setFocus()
+    self.btn1.setDefault(True)
+    self.btn1.setFocus()
     self.edit1=QLineEdit('1')
     self.edit1.setAlignment(Qt.AlignHCenter)
     self.edit1.setMaximumWidth(100)
