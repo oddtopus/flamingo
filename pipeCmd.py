@@ -55,7 +55,7 @@ def isPipe(obj):
   return hasattr(obj,'PType') and obj.PType=='Pipe'
 
 def isElbow(obj):
-  'True if obj is a tube'
+  'True if obj is an elbow'
   return hasattr(obj,'PType') and obj.PType=='Elbow'
   
 def moveToPyLi(obj,plName):
@@ -396,22 +396,32 @@ def rotateTheTubeEdge(ang=45):
     newPos=frameCmd.edges()[0].centerOfCurvatureAt(0)
     obj.Placement.move(originalPos-newPos)
 
-def flattenTheTube(obj=None,v1=None,v2=None):
+def flattenTheTube(obj=None,v1=None,v2=None,X=None):
   '''
-  flattenTheTube(obj=None,v1=None,v2=None)
-  Put obj in the same plane defined by vectors v1 and v2.
+  flattenTheTube(obj=None,v1=None,v2=None, X=None)
+  Put obj in the same plane defined by vectors v1 and v2 and move it to X.
     obj: the object to be rotated
     v1, v2: the vectors of the plane
+    X: the Placement.Base
   If no parameter is defined: v1, v2 are the axis of the first two beams 
-  in the selections set and obj is the 3rd selection. 
+  in the selections set, X is their intersection and obj is the first other
+  object in the selection set. 
   '''
-  if obj==v1==v2==None:
-    t1,t2,obj=FreeCADGui.Selection.getSelection()
-    v1=frameCmd.beamAx(t1)
-    v2=frameCmd.beamAx(t2)
-  planeNorm=v1.cross(v2)
-  rot=FreeCAD.Rotation(frameCmd.beamAx(obj),planeNorm)
-  obj.Placement.Rotation=rot.multiply(obj.Placement.Rotation)
+  if None in [obj,v1,v2]:
+    try:
+      sel=FreeCADGui.Selection.getSelection()
+      t1,t2=frameCmd.beams()[:2]
+      v1=frameCmd.beamAx(t1)
+      v2=frameCmd.beamAx(t2)
+      sel.remove(t1)
+      sel.remove(t2)
+      obj=sel[0]
+      X = frameCmd.intersectionCLines(t1,t2)
+    except:
+      FreeCAD.Console.PrintError('Not enough arguments\n')
+      return
+  obj.Placement.Rotation = FreeCAD.Rotation(frameCmd.beamAx(obj),v1.cross(v2)).multiply(obj.Placement.Rotation)
+  obj.Placement.Base = X
     
 def extendTheTubes2intersection(pipe1=None,pipe2=None,both=True):
   '''

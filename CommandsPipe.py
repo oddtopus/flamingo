@@ -105,18 +105,13 @@ class mateEdges:
 class flat:
   def Activated (self):
     import pipeCmd, frameCmd
+    FreeCAD.activeDocument().openTransaction('Flatten')
     if len(frameCmd.beams())>=2:
-      p1,p2=[b.Placement.Base for b in frameCmd.beams()[:2]]
-      v1,v2=[frameCmd.beamAx(b) for b in frameCmd.beams()[:2]]
-      fittings=[o for o in FreeCADGui.Selection.getSelection() if hasattr(o,'PType') and (o.PType=='Elbow' or o.PType=='Flange')]
-      if len(fittings)>0:
-        FreeCAD.activeDocument().openTransaction('Flatten')
-        pipeCmd.flattenTheTube(fittings[0],v1,v2)
-        fittings[0].Placement.Base=frameCmd.intersectionLines2(p1,v1,p2,v2)
-        FreeCAD.activeDocument().recompute()
-        FreeCAD.activeDocument().commitTransaction()
+      pipeCmd.flattenTheTube()
+    FreeCAD.activeDocument().recompute()
+    FreeCAD.activeDocument().commitTransaction()
   def GetResources(self):
-    return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","flat.svg"),'MenuText':'Put in the plane','ToolTip':'Put the selected component in the plane defined by 2 axis'}
+    return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","flat.svg"),'MenuText':'Put in the plane','ToolTip':'Put the selected component in the plane defined by the axis of two pipes or beams'}
 
 class extend2intersection:
   def Activated (self):
