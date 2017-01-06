@@ -48,6 +48,13 @@ class insertReduct:
   def GetResources(self):
     return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","reduct.svg"),'MenuText':'Insert a reduction','ToolTip':'Insert a reduction'}
 
+class insertCap: 
+  def Activated (self):
+    import pipeForms
+    pipeFormObj=pipeForms.insertCapForm()
+  def GetResources(self):
+    return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","cap.svg"),'MenuText':'Insert a cap','ToolTip':'Insert a cap'}
+
 class insertFlange:
   def Activated (self):
     import pipeForms
@@ -173,6 +180,7 @@ class raiseup:
 addCommand('insertPipe',insertPipe()) 
 addCommand('insertElbow',insertElbow())
 addCommand('insertReduct',insertReduct())
+addCommand('insertCap',insertCap())
 addCommand('insertFlange',insertFlange())
 addCommand('insertUbolt',insertUbolt())
 addCommand('insertPypeLine',insertPypeLine())

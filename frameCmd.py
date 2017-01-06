@@ -53,14 +53,19 @@ def intersectionLines2(p1=None,v1=None,p2=None,v2=None):   # TODO!
     p1,v1: the reference point and direction of first line
     p2,v2: the reference point and direction of second line
   '''
+  if None in [p1,p2,v1,v2]:
+    p1=edges()[0].valueAt(0)
+    v1=edges()[0].tangentAt(0)
+    p2=edges()[1].valueAt(0)
+    v2=edges()[1].tangentAt(0)
   if isParallel(v1,v2):
     FreeCAD.Console.PrintError("Directions are pallel\n")
     return None
   else:
     dist=p1-p2
-    norm=dist.cross(v2).cross(v2)
-    P1=FreeCAD.Vector(p1.x,p1.y,p1.z)
-    return P1.projectToPlane(p2,norm)
+    norm=v2.cross(dist).cross(v1)
+    #P1=FreeCAD.Vector(p1.x,p1.y,p1.z)
+    return p1.projectToPlane(p2,norm)
 
 def intersectionCLines(thing1=None, thing2=None):
   '''
@@ -90,7 +95,7 @@ def intersectionCLines(thing1=None, thing2=None):
     return None
   
 
-def intersectionLines(p1=None,v1=None,p2=None,v2=None):
+def intersectionLines(p1=None,v1=None,p2=None,v2=None): # OBSOLETE: replaced with intersectionCLines
   '''
   intersectionLines(p1,v1,p2,v2)
   If exist, returns the intersection (vector) between two lines 

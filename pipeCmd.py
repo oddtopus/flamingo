@@ -7,7 +7,7 @@ __license__="LGPL 3"
 
 import FreeCAD, FreeCADGui, Part, frameCmd, pipeFeatures
 from DraftVecUtils import rounded
-objToPaint=['Pipe','Elbow','Reduct','Flange']
+objToPaint=['Pipe','Elbow','Reduct','Flange','Cap']
 
 ############### AUX FUNCTIONS ###################### 
 
@@ -289,6 +289,33 @@ def makeShell(L=800,W=400,H=500,thk=6):
   pipeFeatures.Shell(a,L,W,H,thk)
   a.ViewObject.Proxy=0
   a.Placement.Base=FreeCAD.Vector(0,0,0)
+  return a
+
+def makeCap(propList=[], pos=None, Z=None):
+  '''add a Cap object
+  makeCap(propList,pos,Z);
+  propList is one optional list with 4 elements:
+    DN (string): nominal diameter
+    OD (float): outside diameter
+    thk (float): shell thickness
+  Default is "DN50 (SCH-STD)"
+  pos (vector): position of insertion; default = 0,0,0
+  Z (vector): orientation: default = 0,0,1
+  Remember: property PRating must be defined afterwards
+  '''
+  if pos==None:
+    pos=FreeCAD.Vector(0,0,0)
+  if Z==None:
+    Z=FreeCAD.Vector(-1,0,0)
+  a=FreeCAD.ActiveDocument.addObject("Part::FeaturePython","Fondo")
+  if len(propList)==3:
+    pipeFeatures.Cap(a,*propList)
+  else:
+    pipeFeatures.Cap(a)
+  a.ViewObject.Proxy=0
+  a.Placement.Base=pos
+  rot=FreeCAD.Rotation(FreeCAD.Vector(-1,0,0),Z)
+  a.Placement.Rotation=rot.multiply(a.Placement.Rotation)
   return a
 
 def makePypeLine(DN="DN50",PRating="SCH-STD",OD=60.3,thk=3,BR=None, lab=None, pl=None, color=(0.8,0.8,0.8)):

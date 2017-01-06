@@ -170,10 +170,13 @@ class adjustFrameAngle:
 class rotJoin:
   def Activated(self):
     import FreeCAD, frameCmd
-    FreeCAD.activeDocument().openTransaction('rotJoin')
-    frameCmd.rotjoinTheBeam()
-    FreeCAD.activeDocument().recompute()
-    FreeCAD.activeDocument().commitTransaction()
+    if len(frameCmd.beams())>1:
+      FreeCAD.activeDocument().openTransaction('rotJoin')
+      frameCmd.rotjoinTheBeam()
+      FreeCAD.activeDocument().recompute()
+      FreeCAD.activeDocument().commitTransaction()
+    else:
+      FreeCAD.Console.PrintError('Please select two edges of beams before\n')
 
   def GetResources(self):
     return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","rotjoin.svg"),'MenuText':'rotJoinEdge','ToolTip':'Rotates and align the beam according another edge'}

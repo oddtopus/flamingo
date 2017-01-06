@@ -63,6 +63,7 @@ class protopypeForm(QWidget):
     except:
       None
     self.combo.setMaximumWidth(100)
+    self.combo.currentIndexChanged.connect(self.setCurrentPL)
     if FreeCAD.__activePypeLine__ and FreeCAD.__activePypeLine__ in [self.combo.itemText(i) for i in range(self.combo.count())]:
       self.combo.setCurrentIndex(self.combo.findText(FreeCAD.__activePypeLine__))
     self.secondCol.layout().addWidget(self.combo)
@@ -77,14 +78,13 @@ class protopypeForm(QWidget):
     self.btn1.setMaximumWidth(100)
     self.secondCol.layout().addWidget(self.btn1)
     self.mainHL.addWidget(self.secondCol)
-    self.combo.currentIndexChanged.connect(self.setCurrentPL)
-    self.currentPL=None
-  def setCurrentPL(self):
+    #self.currentPL=None
+  def setCurrentPL(self,PLName=None):
     if self.combo.currentText() not in ['<none>','<new>']:
-      self.currentPL=FreeCAD.ActiveDocument.getObjectsByLabel(self.combo.currentText())[0]
+      #self.currentPL=FreeCAD.ActiveDocument.getObjectsByLabel(self.combo.currentText())[0]
       FreeCAD.__activePypeLine__= self.combo.currentText()
     else:
-      self.currentPL=None
+      #self.currentPL=None
       FreeCAD.__activePypeLine__=None
   def fillSizes(self):
     self.sizeList.clear()
@@ -198,6 +198,8 @@ class insertPipeForm(protopypeForm):
         obj.OD=d['OD']
         obj.thk=d['thk']
         obj.PRating=self.PRating
+        if self.edit1.text().isnumeric():
+          obj.Height=float(self.edit1.text())
         FreeCAD.activeDocument().recompute()
 
 class insertElbowForm(protopypeForm):
@@ -662,6 +664,77 @@ class insertUboltForm(protopypeForm):
       FreeCAD.activeDocument().commitTransaction()
     FreeCAD.activeDocument().recompute()
 
+class insertCapForm(protopypeForm):
+  '''
+  Dialog to insert caps.
+  For position and orientation you can select
+    - one or more curved edges (axis and origin across the center)
+    - one or more vertexes 
+    - nothing 
+  Available one button to reverse the orientation of the last or selected tubes.
+  '''
+  def __init__(self):
+    super(insertCapForm,self).__init__("Insert caps","Cap","SCH-STD","cap.svg")
+    self.sizeList.setCurrentRow(0)
+    self.ratingList.setCurrentRow(0)
+    self.btn1.clicked.connect(self.insert)
+    self.btn2=QPushButton('Reverse')
+    self.btn2.setMaximumWidth(100)
+    self.secondCol.layout().addWidget(self.btn2)
+    self.btn2.clicked.connect(self.reverse)
+    self.btn3=QPushButton('Apply')
+    self.btn3.setMaximumWidth(100)
+    self.secondCol.layout().addWidget(self.btn3)
+    self.btn3.clicked.connect(self.apply)
+    self.btn1.setDefault(True)
+    self.btn1.setFocus()
+    self.show()
+    self.lastPipe=None
+  def reverse(self):
+    selCaps=[p for p in FreeCADGui.Selection.getSelection() if hasattr(p,'PType') and p.PType=='Cap']
+    if len(selCaps):
+      for p in selCaps:
+        pipeCmd.rotateTheTubeAx(p,FreeCAD.Vector(0,0,1),180)
+    else:
+      pipeCmd.rotateTheTubeAx(self.lastCap,FreeCAD.Vector(0,0,1),180)
+  def insert(self):
+    d=self.pipeDictList[self.sizeList.currentRow()]
+    FreeCAD.activeDocument().openTransaction('Insert cap')
+    if len(frameCmd.edges())==0:
+      propList=[d['PSize'],float(d['OD']),float(d['thk'])]
+      vs=[v for sx in FreeCADGui.Selection.getSelectionEx() for so in sx.SubObjects for v in so.Vertexes]
+      if len(vs)==0:
+        self.lastCap=pipeCmd.makeCap(propList)
+        if self.combo.currentText()!='<none>':
+          pipeCmd.moveToPyLi(self.lastCap,self.combo.currentText())
+      else:
+        for v in vs:
+          self.lastCap=pipeCmd.makeCap(propList,v.Point)
+        if self.combo.currentText()!='<none>':
+          pipeCmd.moveToPyLi(self.lastCap,self.combo.currentText())
+    else:
+      for edge in frameCmd.edges():
+        if edge.curvatureAt(0)!=0:
+          objs=[o for o in FreeCADGui.Selection.getSelection() if hasattr(o,'PSize') and hasattr(o,'OD') and hasattr(o,'thk')]
+          if len(objs)>0:
+            propList=[objs[0].PSize,objs[0].OD,objs[0].thk]
+          else:
+            propList=[d['PSize'],float(d['OD']),float(d['thk'])]
+          self.lastCap=pipeCmd.makeCap(propList,edge.centerOfCurvatureAt(0),edge.tangentAt(0).cross(edge.normalAt(0)))
+        if self.combo.currentText()!='<none>':
+          pipeCmd.moveToPyLi(self.lastCap,self.combo.currentText())
+    FreeCAD.activeDocument().commitTransaction()
+    FreeCAD.activeDocument().recompute()
+  def apply(self):
+    for obj in FreeCADGui.Selection.getSelection():
+      d=self.pipeDictList[self.sizeList.currentRow()]
+      if hasattr(obj,'PType') and obj.PType==self.PType:
+        obj.PSize=d['PSize']
+        obj.OD=d['OD']
+        obj.thk=d['thk']
+        obj.PRating=self.PRating
+        FreeCAD.activeDocument().recompute()
+
 class insertPypeLineForm(protopypeForm):
   '''
   Dialog to insert pypelines.
@@ -718,7 +791,7 @@ class insertPypeLineForm(protopypeForm):
     f=qfd.getSaveFileName()[0]
     if f:
       if self.combo.currentText()!='<new>':
-        group=FreeCAD.activeDocument().getObjectsByLabel(self.currentPL.Group)[0]
+        group=FreeCAD.activeDocument().getObjectsByLabel(FreeCAD.__activePypeLine__+'_pieces')[0]
         fields=['Label','PType','PSize','Volume','Height']
         rows=list()
         for o in group.OutList:

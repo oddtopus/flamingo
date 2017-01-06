@@ -193,6 +193,42 @@ class Reduct(pypeType):
       fp.Profile=str(fp.OD)+"x"+str(fp.OD2)
       fp.Shape = Part.makeCone(fp.OD/2,fp.OD2/2,fp.Height).cut(Part.makeCone(fp.OD/2-fp.thk,fp.OD2/2-fp.thk2,fp.Height))
     
+class Cap(pypeType):
+  '''Class for object PType="Cap"
+  Cap(obj,[PSize="DN50",OD=60.3,thk=3])
+    obj: the "App::FeaturePython object"
+    PSize (string): nominal diameter
+    OD (float): outside diameter
+    thk (float): shell thickness'''
+  def __init__(self, obj,DN="DN50",OD=60.3,thk=3):
+    # initialize the parent class
+    super(Cap,self).__init__(obj)
+    # define common properties
+    obj.PType="Cap"
+    obj.PRating="SCH-STD"
+    obj.PSize=DN
+    # define specific properties
+    obj.addProperty("App::PropertyLength","OD","Cap","Outside diameter").OD=OD
+    obj.addProperty("App::PropertyLength","thk","Cap","Wall thickness").thk=thk
+    obj.addProperty("App::PropertyLength","ID","Cap","Inside diameter").ID=obj.OD-2*obj.thk
+    obj.addProperty("App::PropertyString","Profile","Cap","Section dim.").Profile=str(obj.OD)+"x"+str(obj.thk)
+  def onChanged(self, fp, prop):
+    return None
+  def execute(self, fp):
+    if fp.thk>fp.OD/2:
+      fp.thk=fp.OD/2.1
+    fp.ID=fp.OD-2*fp.thk
+    fp.Profile=str(fp.OD)+"x"+str(fp.thk)
+    D=float(fp.OD)
+    s=float(fp.thk)
+    sfera=Part.makeSphere(0.8*D,FreeCAD.Vector(-(0.55*D-6*s),0,0))
+    cilindro=Part.makeCylinder(D/2,D*1.7,FreeCAD.Vector(-(0.55*D-6*s+1),0,0),FreeCAD.Vector(1,0,0))
+    common=sfera.common(cilindro)
+    fil=common.makeFillet(D/6.5,common.Edges)
+    cut=fil.cut(Part.makeCylinder(D*1.1,D,FreeCAD.Vector(0,0,0),FreeCAD.Vector(-1,0,0)))
+    cap=cut.makeThickness([f for f in cut.Faces if type(f.Surface)==Part.Plane],-s,1.e-3)
+    fp.Shape = cap
+    
 class PypeLine(pypeType):
   '''Class for object PType="PypeLine"
       *** prototype object ***
