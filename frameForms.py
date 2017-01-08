@@ -130,6 +130,7 @@ class extendForm(prototypeForm):
       for beam in frameCmd.beams():
         frameCmd.extendTheBeam(beam,self.target)
       FreeCAD.activeDocument().commitTransaction()
+      FreeCAD.activeDocument().recompute()
       
 class stretchForm(prototypeForm):
   '''dialog for stretchTheBeam()

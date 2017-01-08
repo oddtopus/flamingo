@@ -738,6 +738,10 @@ class insertCapForm(protopypeForm):
 class insertPypeLineForm(protopypeForm):
   '''
   Dialog to insert pypelines.
+  Note: Elbow created within this dialog have a standard bending radius of 
+  3/4 x OD, corresponding to a 3D curve. If you aim to have 5D curve or any
+  other custom bending radius, you shall apply it in the "Insert Elbow"
+  dialog or change it manually. 
   '''
   def __init__(self):
     super(insertPypeLineForm,self).__init__("Insert pypelines","Pipe","SCH-STD","pypeline.svg")
@@ -760,6 +764,10 @@ class insertPypeLineForm(protopypeForm):
     self.btn3.setMaximumWidth(100)
     self.secondCol.layout().addWidget(self.btn3)
     self.btn3.clicked.connect(self.changeColor)
+    self.btn4=QPushButton('Redraw')
+    self.btn4.setMaximumWidth(100)
+    self.secondCol.layout().addWidget(self.btn4)
+    self.btn4.clicked.connect(self.redraw)
     self.color=0.8,0.8,0.8
     self.combo.setItemText(0,'<new>')
     self.btn1.setDefault(True)
@@ -772,13 +780,24 @@ class insertPypeLineForm(protopypeForm):
       plLabel=self.edit1.text()
       if plLabel=="<name>" or plLabel.strip()=="":
         plLabel="Tubatura"
-      a=pipeCmd.makePypeLine(DN=d["PSize"],PRating=self.PRating,OD=float(d["OD"]),thk=float(d["thk"]), lab=plLabel, color=self.color)
+      a=pipeCmd.makePypeLine2(DN=d["PSize"],PRating=self.PRating,OD=float(d["OD"]),thk=float(d["thk"]), lab=plLabel, color=self.color)
       self.combo.addItem(a.Label)
     else:
       plname=self.combo.currentText()
       plcolor=FreeCAD.activeDocument().getObjectsByLabel(plname)[0].ViewObject.ShapeColor
-      pipeCmd.makePypeLine(DN=d["PSize"],PRating=self.PRating,OD=float(d["OD"]),thk=float(d["thk"]), pl=plname, color=plcolor)
+      pipeCmd.makePypeLine2(DN=d["PSize"],PRating=self.PRating,OD=float(d["OD"]),thk=float(d["thk"]), pl=plname, color=plcolor)
     FreeCAD.ActiveDocument.recompute()
+    FreeCAD.activeDocument().commitTransaction()
+  def redraw(self):
+    FreeCAD.activeDocument().openTransaction('Redraw pype-line')
+    if self.combo.currentText()!="<new>":
+      pl=FreeCAD.ActiveDocument.getObjectsByLabel(self.combo.currentText())[0]
+      if pl.Base:
+        pl.Proxy.purge(pl)
+        pl.Proxy.update(pl)
+        FreeCAD.ActiveDocument.recompute()
+      else:
+        FreeCAD.Console.PrintWarning('No Base -> nothing to redraw\n')
     FreeCAD.activeDocument().commitTransaction()
   def changeColor(self):
     self.hide()

@@ -377,7 +377,7 @@ def extendTheBeam(beam,target):
       beam.Height-=FreeCAD.Units.Quantity(str(abs(distBase))+"mm")
       vMove=vBeam.normalize().multiply(-distBase)
       beam.Placement.move(vMove)
-  FreeCAD.activeDocument().recompute()
+  #FreeCAD.activeDocument().recompute()
   
 def rotjoinTheBeam(beam=None,e1=None,e2=None):
   if not (beam and e1 and e2):

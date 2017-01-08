@@ -162,12 +162,8 @@ def makeElbowBetweenThings(thing1=None, thing2=None, propList=None):
   if not propList:
     propList=["DN50",60.3,3.91,ang,45.24]
   else:
-    #DN,OD,thk=propList[:3]
-    #BR=propList[4]
-    #propList=[DN,OD,thk,ang,BR]
     propList[3]=ang
   elb=makeElbow(propList,P,directions[0].negative().cross(directions[1].negative()))
-  ## elb.PRating=PRating
   # mate the elbow ends with the pipes or edges
   b=frameCmd.bisect(directions[0],directions[1])
   elbBisect=frameCmd.beamAx(elb,FreeCAD.Vector(1,1,0))
@@ -318,14 +314,15 @@ def makeCap(propList=[], pos=None, Z=None):
   a.Placement.Rotation=rot.multiply(a.Placement.Rotation)
   return a
 
-def makePypeLine(DN="DN50",PRating="SCH-STD",OD=60.3,thk=3,BR=None, lab=None, pl=None, color=(0.8,0.8,0.8)):
+def makePypeLine(DN="DN50",PRating="SCH-STD",OD=60.3,thk=3,BR=None, lab=None, pl=None, color=(0.8,0.8,0.8)):  #OBSOLETE: replaced by makePypeLine2
   '''
+  *** obsolete function ***
   makePypeLine(DN="DN50",PRating="SCH-STD",OD=60.3,thk=3,BR=None, lab=None)
   Adds a pypeLine object creating pipes over the selected edges.
   Default tube is "DN50", "SCH-STD" and BR=1.5*OD.
   '''
   if not BR:
-    BR=1.5*OD
+    BR=0.75*OD
   # create the pypeLine group
   if not pl:
     a=FreeCAD.ActiveDocument.addObject("Part::FeaturePython","Tubatura")
@@ -360,8 +357,38 @@ def makePypeLine(DN="DN50",PRating="SCH-STD",OD=60.3,thk=3,BR=None, lab=None, pl
   pipes=elbows=[]
   return a
 
-def updatePLColor(color=None):
-  sel=FreeCADGui.Selection.getSelection()
+def makePypeLine2(DN="DN50",PRating="SCH-STD",OD=60.3,thk=3,BR=None, lab="Tubatura", pl=None, color=(0.8,0.8,0.8)):
+  '''
+  makePypeLine(DN="DN50",PRating="SCH-STD",OD=60.3,thk=3,BR=None, lab="Tubatura")
+  Adds a pypeLine object creating pipes over the selected edges.
+  Default tube is "DN50", "SCH-STD" and BR=1.5*OD.
+  '''
+  if not BR:
+    BR=0.75*OD
+  # create the pypeLine group
+  if not pl:
+    a=FreeCAD.ActiveDocument.addObject("Part::FeaturePython",lab)
+    pipeFeatures.PypeLine2(a,DN,PRating,OD,thk,BR, lab)
+    a.ViewObject.Proxy=0
+    a.ViewObject.ShapeColor=color
+    sel=FreeCADGui.Selection.getSelection()
+    if sel:
+      first=sel[0]
+      if hasattr(first,'Shape') and type(first.Shape)==Part.Wire:
+        a.Base=first
+        a.Proxy.update(a)
+      else:
+        a.Proxy.update(a,frameCmd.edges())
+  else:
+    a=FreeCAD.ActiveDocument.getObjectsByLabel(pl)[0]
+    group=FreeCAD.ActiveDocument.getObjectsByLabel(a.Group)[0]
+    FreeCAD.Console.PrintWarning("Objects added to pypeline's group "+a.Group+"\n")
+    a.Proxy.update(a,frameCmd.edges())
+  return a
+
+def updatePLColor(sel=None, color=None):
+  if not sel:
+    sel=FreeCADGui.Selection.getSelection()
   if sel:
     pl=sel[0]
     if hasattr(pl,'PType') and pl.PType=='PypeLine':

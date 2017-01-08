@@ -164,6 +164,7 @@ class adjustAngleObserver(frameObserverPrototype):
         self.edges=[]
         self.beams=[]
         FreeCADGui.Selection.clearSelection()
+        FreeCAD.activeDocument().recompute()
         FreeCAD.Console.PrintWarning("Repeat selection or press [ESC]\n")
 
 class rotjoinObserver(frameObserverPrototype):   # OBSOLETE

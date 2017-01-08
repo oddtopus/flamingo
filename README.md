@@ -15,4 +15,5 @@ CommandsSpSh.py: removed from workbench but code is still available. It was just
     
 CommandsPipe.py: new toolbar under development from September '16. 
 Read tutorialPype.pdf for some anticipations.
+Read tutorialPype2.pdf for more specific features.  
 Read automatic documentation of Python modules for details and latest updates.

@@ -229,13 +229,10 @@ class Cap(pypeType):
     cap=cut.makeThickness([f for f in cut.Faces if type(f.Surface)==Part.Plane],-s,1.e-3)
     fp.Shape = cap
     
-class PypeLine(pypeType):
+class PypeLine(pypeType):  #OBSOLETE: replaced by PypeLine2
   '''Class for object PType="PypeLine"
-      *** prototype object ***
-  This aims to be a collection objects "PType" that move and rotate together
-  with the methods of Proxy.
-  At present time it creates pipes over the selected edges and collect them
-  in a group.  
+      *** obsolete object ***
+  This is held only for reference.  
   '''
   def __init__(self, obj,DN="DN50",PRating="SCH-STD",OD=60.3,thk=3,BR=None, lab=None):
     # initialize the parent class
@@ -255,6 +252,102 @@ class PypeLine(pypeType):
     if prop=='Label' and len(fp.InList):
       fp.InList[0].Label=fp.Label+"_pieces"
       fp.Group=fp.Label+"_pieces"
+  def execute(self, fp):
+    return None
+    
+class PypeLine2(pypeType):
+  '''Class for object PType="PypeLine2"
+      *** prototype object ***
+  This aims to be a collection of objects "PType" that are updated with the 
+  methods defined in the Python class.
+  At present time it creates pipes over the selected edges and collect them
+  in a group.
+  The main difference from PypeLine is that PypeLine2 features the optional 
+  attribute ".Base":
+  - Base can be a Wire or a Sketch or any object which has edges in its Shape.
+  - Running "obj.Proxy.update(obj)" the class attempts to render the pypeline 
+  (Pipe and Elbow objects) on the "obj.Base" edges: for well defined geometries 
+  and open paths, this usually leads to acceptable results.
+  - Running "obj.Proxy.purge(obj)" deletes from the model all Pipes and Elbows 
+  that belongs to the pype-line.  
+  - It's possible to add other objects afterwards (such as Flange, Reduct...) 
+  using the relevant insertion dialogs but remember that these won't be updated 
+  when the .Base is changed and won't be deleted if the pype-line is purged.
+  - If Base is None, PypeLine2 behaves like a bare container of objects, 
+  with possibility to group them automatically and extract the part-list, 
+  similar to the previous version. 
+  '''
+  def __init__(self, obj,DN="DN50",PRating="SCH-STD",OD=60.3,thk=3,BR=None, lab=None):
+    # initialize the parent class
+    super(PypeLine2,self).__init__(obj)
+    # define common properties
+    obj.PType="PypeLine"
+    obj.PSize=DN
+    obj.PRating=PRating
+    if lab:
+      obj.Label=lab
+    # define specific properties
+    if not BR:
+      BR=0.75*OD
+    obj.addProperty("App::PropertyLength","BendRadius","PypeLine2","the radius of bending").BendRadius=BR
+    obj.addProperty("App::PropertyLength","OD","PypeLine2","Outside diameter").OD=OD
+    obj.addProperty("App::PropertyLength","thk","PypeLine2","Wall thickness").thk=thk
+    obj.addProperty("App::PropertyString","Group","PypeLine2","The group.").Group=obj.Label+"_pieces"
+    group=FreeCAD.activeDocument().addObject("App::DocumentObjectGroup",obj.Group)
+    group.addObject(obj)
+    FreeCAD.Console.PrintWarning("Created group "+obj.Group+"\n")
+    obj.addProperty("App::PropertyLink","Base","PypeLine2","the edges")
+  def onChanged(self, fp, prop):
+    if prop=='Label' and len(fp.InList):
+      fp.InList[0].Label=fp.Label+"_pieces"
+      fp.Group=fp.Label+"_pieces"
+    if hasattr(fp,'Base') and prop=='Base' and fp.Base:
+      FreeCAD.Console.PrintWarning('Base has changed: '+fp.Base.Label+'\n')
+    if prop=='OD':
+      fp.BendRadius=0.75*fp.OD
+  def purge(self,fp):
+    group=FreeCAD.activeDocument().getObjectsByLabel(fp.Group)[0]
+    for o in group.OutList:
+      if hasattr(o,'PType') and o.PType in ['Pipe','Elbow']:
+        FreeCAD.activeDocument().removeObject(o.Name)
+  def update(self,fp,edges=None):
+    import pipeCmd, frameCmd
+    from DraftVecUtils import rounded
+    from math import degrees
+    if not edges and hasattr(fp.Base,'Shape'):
+      edges=fp.Base.Shape.Edges
+      if not edges:
+        FreeCAD.Console.PrintError('Base has not valid edges\n')
+        return
+    group=FreeCAD.activeDocument().getObjectsByLabel(fp.Group)[0]
+    pipes=list()
+    for e in edges:
+      p=pipeCmd.makePipe([fp.PSize,fp.OD,fp.thk,e.Length],pos=e.valueAt(0),Z=e.tangentAt(0))
+      p.PRating=fp.PRating
+      p.PSize=fp.PSize
+      pipeCmd.moveToPyLi(p,fp.Name)
+      pipes.append(p)
+      n=len(pipes)-1
+      if n and not frameCmd.isParallel(frameCmd.beamAx(pipes[n]),frameCmd.beamAx(pipes[n-1])):
+        P=frameCmd.intersectionCLines(pipes[n-1],pipes[n])
+        dir1=rounded((frameCmd.beamAx(pipes[n-1]).multiply(pipes[n-1].Height/2)+pipes[n-1].Placement.Base)-P)
+        dir2=rounded((frameCmd.beamAx(pipes[n]).multiply(pipes[n].Height/2)+pipes[n].Placement.Base)-P)
+        ang=180-degrees(dir1.getAngle(dir2))
+        propList=[fp.PSize,fp.OD,fp.thk,ang,fp.BendRadius]
+        c=pipeCmd.makeElbow(propList,P,dir1.negative().cross(dir2.negative()))
+        elbBisect=frameCmd.beamAx(c,FreeCAD.Vector(1,1,0))
+        rot=FreeCAD.Rotation(elbBisect,frameCmd.bisect(dir1,dir2))
+        c.Placement.Rotation=rot.multiply(c.Placement.Rotation)
+        group.addObject(c)
+        portA=c.Placement.multVec(c.Ports[0])
+        portB=c.Placement.multVec(c.Ports[1])
+        for tube in pipes[-2:]:
+          vectA=c.Placement.Rotation.multVec(c.Ports[0])
+          if frameCmd.isParallel(vectA,frameCmd.beamAx(tube)):
+            frameCmd.extendTheBeam(tube,portA)
+          else:
+            frameCmd.extendTheBeam(tube,portB)
+        pipeCmd.moveToPyLi(c,fp.Name)
   def execute(self, fp):
     return None
     
