@@ -748,14 +748,15 @@ class insertPypeLineForm(protopypeForm):
     self.sizeList.setCurrentRow(0)
     self.ratingList.setCurrentRow(0)
     self.btn1.clicked.connect(self.insert)
+    self.combo.activated[str].connect(self.summary)
     self.edit1=QLineEdit('<name>')
     self.edit1.setAlignment(Qt.AlignHCenter)
     self.edit1.setMaximumWidth(100)
     self.secondCol.layout().addWidget(self.edit1)
-    self.edit2=QLineEdit('<bend radius>')
-    self.edit2.setAlignment(Qt.AlignHCenter)
-    self.edit2.setMaximumWidth(100)
-    self.secondCol.layout().addWidget(self.edit2)
+    self.btnX=QPushButton('Apply')
+    self.btnX.setMaximumWidth(100)
+    self.secondCol.layout().addWidget(self.btnX)
+    self.btnX.clicked.connect(self.apply)
     self.btn2=QPushButton('Part list')
     self.btn2.setMaximumWidth(100)
     self.secondCol.layout().addWidget(self.btn2)
@@ -764,15 +765,49 @@ class insertPypeLineForm(protopypeForm):
     self.btn3.setMaximumWidth(100)
     self.secondCol.layout().addWidget(self.btn3)
     self.btn3.clicked.connect(self.changeColor)
+    self.btn6=QPushButton('create Path')
+    #self.btn6.setMaximumWidth(100)
+    self.firstCol.layout().addWidget(self.btn6)
+    self.btn6.clicked.connect(self.createPath)
     self.btn4=QPushButton('Redraw')
-    self.btn4.setMaximumWidth(100)
-    self.secondCol.layout().addWidget(self.btn4)
+    #self.btn4.setMaximumWidth(100)
+    self.firstCol.layout().addWidget(self.btn4)
     self.btn4.clicked.connect(self.redraw)
+    self.btn5=QPushButton('Get Base')
+    #self.btn5.setMaximumWidth(100)
+    self.firstCol.layout().addWidget(self.btn5)
+    self.btn5.clicked.connect(self.getBase)
     self.color=0.8,0.8,0.8
     self.combo.setItemText(0,'<new>')
     self.btn1.setDefault(True)
     self.btn1.setFocus()
+    self.lastPypeLine=None
     self.show()
+  def summary(self,pl=None):
+    if self.combo.currentText()!="<new>":
+      pl=FreeCAD.ActiveDocument.getObjectsByLabel(self.combo.currentText())[0]
+      FreeCAD.Console.PrintMessage("\n%s: %s - %s\nProfile: %.1fx%.1f\nColor: %.3f, %.3f, %.3f\n"%(pl.Label, pl.PSize, pl.PRating, pl.OD, pl.thk, pl.ViewObject.ShapeColor[0], pl.ViewObject.ShapeColor[1], pl.ViewObject.ShapeColor[2]))
+      if pl.Base:
+        FreeCAD.Console.PrintMessage('Base: %s\n'%pl.Base.Label)
+      else:
+        FreeCAD.Console.PrintMessage('Base not defined\n')
+  def createPath(self):
+    p=FreeCAD.activeDocument().addObject('Part::Feature','Path')
+    p.Shape=pipeCmd.makeW()
+    p.ViewObject.LineWidth=6
+    p.ViewObject.LineColor=1.0,0.3,0.0
+    FreeCAD.activeDocument().recompute()    
+  def apply(self):
+    d=self.pipeDictList[self.sizeList.currentRow()]
+    if self.combo.currentText()!="<new>":                                           
+      pl=FreeCAD.ActiveDocument.getObjectsByLabel(self.combo.currentText())[0]
+      pl.PSize=d["PSize"]
+      pl.PRating=self.PRating
+      pl.OD=float(d["OD"])
+      pl.thk=float(d["thk"])
+      self.summary()
+    else:
+      FreeCAD.Console.PrintError('Select a PypeLine to apply first\n')
   def insert(self):
     d=self.pipeDictList[self.sizeList.currentRow()]
     FreeCAD.activeDocument().openTransaction('Insert pype-line')
@@ -788,6 +823,23 @@ class insertPypeLineForm(protopypeForm):
       pipeCmd.makePypeLine2(DN=d["PSize"],PRating=self.PRating,OD=float(d["OD"]),thk=float(d["thk"]), pl=plname, color=plcolor)
     FreeCAD.ActiveDocument.recompute()
     FreeCAD.activeDocument().commitTransaction()
+  def getBase(self):
+    if self.combo.currentText()!="<new>":                                           
+      pl=FreeCAD.ActiveDocument.getObjectsByLabel(self.combo.currentText())[0]    
+      sel=FreeCADGui.Selection.getSelection()
+      if sel:
+        base=sel[0]
+        if (hasattr(base,'Shape') and type(base.Shape)==Part.Wire) or (hasattr(base,'TypeId') and base.TypeId=='Sketcher::SketchObject'):
+          FreeCAD.activeDocument().openTransaction('Assign Base')
+          pl.Base=base
+          FreeCAD.activeDocument().commitTransaction()
+        else:
+          FreeCAD.Console.PrintError('Not valid Base: select a Wire or a Sketch.\n')
+      else:
+        pl.Base=None
+        FreeCAD.Console.PrintWarning(pl.Label+'-> deleted Base\n')
+    else:
+      FreeCAD.Console.PrintError('Please choose or create a PypeLine first\n')
   def redraw(self):
     FreeCAD.activeDocument().openTransaction('Redraw pype-line')
     if self.combo.currentText()!="<new>":
@@ -801,8 +853,13 @@ class insertPypeLineForm(protopypeForm):
     FreeCAD.activeDocument().commitTransaction()
   def changeColor(self):
     self.hide()
-    col=QColorDialog.getColor().toTuple()[:3]
-    self.color=tuple([c/255.0 for c in col])
+    col=QColorDialog.getColor()
+    if col.isValid():
+      self.color=tuple([c/255.0 for c in col.toTuple()[:3]])
+      if self.combo.currentText()!="<new>":
+        pl=FreeCAD.ActiveDocument.getObjectsByLabel(self.combo.currentText())[0]
+        pl.ViewObject.ShapeColor=self.color
+        pipeCmd.updatePLColor([pl])
     self.show()
   def partList(self):
     from PySide.QtGui import QFileDialog as qfd

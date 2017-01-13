@@ -314,54 +314,43 @@ def makeCap(propList=[], pos=None, Z=None):
   a.Placement.Rotation=rot.multiply(a.Placement.Rotation)
   return a
 
-def makePypeLine(DN="DN50",PRating="SCH-STD",OD=60.3,thk=3,BR=None, lab=None, pl=None, color=(0.8,0.8,0.8)):  #OBSOLETE: replaced by makePypeLine2
-  '''
-  *** obsolete function ***
-  makePypeLine(DN="DN50",PRating="SCH-STD",OD=60.3,thk=3,BR=None, lab=None)
-  Adds a pypeLine object creating pipes over the selected edges.
-  Default tube is "DN50", "SCH-STD" and BR=1.5*OD.
-  '''
-  if not BR:
-    BR=0.75*OD
-  # create the pypeLine group
-  if not pl:
-    a=FreeCAD.ActiveDocument.addObject("Part::FeaturePython","Tubatura")
-    pipeFeatures.PypeLine(a,DN,PRating,OD,thk,BR, lab)
-    a.ViewObject.Proxy=0
-    a.ViewObject.ShapeColor=color
-    group=FreeCAD.activeDocument().addObject("App::DocumentObjectGroup",a.Group)
-    group.addObject(a)
-    FreeCAD.Console.PrintWarning("Created group "+a.Group+"\n")
-  else:
-    a=FreeCAD.ActiveDocument.getObjectsByLabel(pl)[0]
-    group=FreeCAD.ActiveDocument.getObjectsByLabel(a.Group)[0]
-    FreeCAD.Console.PrintWarning("Objects added to pypeline's group "+a.Group+"\n")
-  # create tubes and elbows
-  pipes=list()
-  for e in frameCmd.edges():
-    p=makePipe([a.PSize,OD,thk,e.Length],pos=e.valueAt(0),Z=e.tangentAt(0))
-    p.PRating=PRating
-    p.PSize=DN
-    pipes.append(p)
-    group.addObject(p)
-  n=len(pipes)
-  if not BR:
-    BR=0.75*OD
-  elbows=list()
-  for i in range(n-1):
-    c=makeElbowBetweenThings(pipes[i],pipes[i+1],[DN,OD,thk,0,BR])
-    elbows.append(c)
-    group.addObject(c)
-  for o in pipes+elbows:
-    o.ViewObject.ShapeColor=color
-  pipes=elbows=[]
-  return a
+def makeW():
+  edges=frameCmd.edges()
+  if not len(edges):
+    return None
+  elif len(edges)==1:
+    return Part.Wire(edges)
+  elif len(edges)>1:
+    P0=edges[0].valueAt(0)
+    P1=edges[0].valueAt(edges[0].LastParameter)
+    Pint=frameCmd.intersectionCLines(edges[0],edges[1])
+    d0=Pint-P0
+    d1=Pint-P1
+    if d1.Length>d0.Length:
+      P0=P1
+    eds=list()
+    for i in range(len(edges)-1):
+      print P0
+      P1=frameCmd.intersectionCLines(edges[i],edges[i+1])
+      eds.append(Part.Edge(Part.Line(P0,P1)))
+      P0=P1
+    print P0
+    P1=edges[-1].valueAt(edges[-1].LastParameter)
+    P2=edges[-1].valueAt(0)
+    d1=P1-P0
+    d2=P2-P0
+    if d1.Length<d2.Length:
+      P1=P2
+    print P1
+    eds.append(Part.Edge(Part.Line(P0,P1)))
+    return Part.Wire(eds)
 
 def makePypeLine2(DN="DN50",PRating="SCH-STD",OD=60.3,thk=3,BR=None, lab="Tubatura", pl=None, color=(0.8,0.8,0.8)):
   '''
-  makePypeLine(DN="DN50",PRating="SCH-STD",OD=60.3,thk=3,BR=None, lab="Tubatura")
-  Adds a pypeLine object creating pipes over the selected edges.
-  Default tube is "DN50", "SCH-STD" and BR=1.5*OD.
+  makePypeLine2(DN="DN50",PRating="SCH-STD",OD=60.3,thk=3,BR=None, lab="Tubatura")
+  Adds a PypeLine2 object creating pipes over the selected edges.
+  Default tube is "DN50", "SCH-STD"
+  Bending Radius is set to 0.75*OD.
   '''
   if not BR:
     BR=0.75*OD
@@ -371,19 +360,12 @@ def makePypeLine2(DN="DN50",PRating="SCH-STD",OD=60.3,thk=3,BR=None, lab="Tubatu
     pipeFeatures.PypeLine2(a,DN,PRating,OD,thk,BR, lab)
     a.ViewObject.Proxy=0
     a.ViewObject.ShapeColor=color
-    sel=FreeCADGui.Selection.getSelection()
-    if sel:
-      first=sel[0]
-      if hasattr(first,'Shape') and type(first.Shape)==Part.Wire:
-        a.Base=first
-        a.Proxy.update(a)
-      else:
-        a.Proxy.update(a,frameCmd.edges())
+    a.Proxy.update(a,frameCmd.edges())
   else:
     a=FreeCAD.ActiveDocument.getObjectsByLabel(pl)[0]
     group=FreeCAD.ActiveDocument.getObjectsByLabel(a.Group)[0]
-    FreeCAD.Console.PrintWarning("Objects added to pypeline's group "+a.Group+"\n")
     a.Proxy.update(a,frameCmd.edges())
+    FreeCAD.Console.PrintWarning("Objects added to pypeline's group "+a.Group+"\n")
   return a
 
 def updatePLColor(sel=None, color=None):

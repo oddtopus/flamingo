@@ -229,32 +229,6 @@ class Cap(pypeType):
     cap=cut.makeThickness([f for f in cut.Faces if type(f.Surface)==Part.Plane],-s,1.e-3)
     fp.Shape = cap
     
-class PypeLine(pypeType):  #OBSOLETE: replaced by PypeLine2
-  '''Class for object PType="PypeLine"
-      *** obsolete object ***
-  This is held only for reference.  
-  '''
-  def __init__(self, obj,DN="DN50",PRating="SCH-STD",OD=60.3,thk=3,BR=None, lab=None):
-    # initialize the parent class
-    super(PypeLine,self).__init__(obj)
-    # define common properties
-    obj.PType="PypeLine"
-    obj.PSize=DN
-    obj.PRating=PRating
-    if lab:
-      obj.Label=lab
-    # define specific properties
-    obj.addProperty("App::PropertyString","Group","PypeLine","The group.").Group=obj.Label+"_pieces"
-    obj.addProperty("App::PropertyFloat","Flow","PypeLine","Flow in m3ph")
-    obj.addProperty("App::PropertyFloat","DP","PypeLine","Pressure loss in bar")
-    obj.addProperty("App::PropertyFloat","Roughness","PypeLine","Roughness of the pipe wall")
-  def onChanged(self, fp, prop):
-    if prop=='Label' and len(fp.InList):
-      fp.InList[0].Label=fp.Label+"_pieces"
-      fp.Group=fp.Label+"_pieces"
-  def execute(self, fp):
-    return None
-    
 class PypeLine2(pypeType):
   '''Class for object PType="PypeLine2"
       *** prototype object ***
@@ -302,7 +276,7 @@ class PypeLine2(pypeType):
       fp.InList[0].Label=fp.Label+"_pieces"
       fp.Group=fp.Label+"_pieces"
     if hasattr(fp,'Base') and prop=='Base' and fp.Base:
-      FreeCAD.Console.PrintWarning('Base has changed: '+fp.Base.Label+'\n')
+      FreeCAD.Console.PrintWarning(fp.Label+' Base has changed to '+fp.Base.Label+'\n')
     if prop=='OD':
       fp.BendRadius=0.75*fp.OD
   def purge(self,fp):
