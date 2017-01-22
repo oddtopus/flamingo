@@ -8,7 +8,7 @@ __license__="LGPL 3"
 import FreeCAD,FreeCADGui
 import DraftGeomUtils as dgu
 from DraftVecUtils import rounded
-
+import frameFeatures
 
 ############## AUXILIARY FUNCTIONS ###############
 
@@ -388,3 +388,15 @@ def rotjoinTheBeam(beam=None,e1=None,e2=None):
   delta=beam.Placement.Base-e2.CenterOfMass
   beam.Placement.Rotation=rot.multiply(beam.Placement.Rotation)
   beam.Placement.move(rounded(dist+rot.multVec(delta)))
+
+def makeFrameLine(base=None,beam=None,name="Telaio"):
+  '''add a FrameLine object
+  '''
+  a=FreeCAD.ActiveDocument.addObject("Part::FeaturePython",name)
+  frameFeatures.FrameLine(a)
+  a.ViewObject.Proxy=0
+  if base:
+    a.Base=base
+  if beam:
+    a.Beam=beam
+  return a

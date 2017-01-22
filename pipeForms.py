@@ -792,8 +792,15 @@ class insertPypeLineForm(protopypeForm):
       else:
         FreeCAD.Console.PrintMessage('Base not defined\n')
   def createPath(self):
-    p=FreeCAD.activeDocument().addObject('Part::Feature','Path')
-    p.Shape=pipeCmd.makeW()
+    #p=FreeCAD.activeDocument().addObject('Part::Feature','Path')
+    #p.Shape=pipeCmd.makeW()
+    from Draft import makeWire
+    w=pipeCmd.makeW()
+    points=[e.valueAt(0) for e in w.Edges]
+    last=e.Edges[-1]
+    points.append(last.valueAt(last.LastParameter))
+    p=makeWire(points)
+    p.Label='Path'
     p.ViewObject.LineWidth=6
     p.ViewObject.LineColor=1.0,0.3,0.0
     FreeCAD.activeDocument().recompute()    

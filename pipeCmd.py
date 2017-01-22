@@ -330,18 +330,15 @@ def makeW():
       P0=P1
     eds=list()
     for i in range(len(edges)-1):
-      print P0
       P1=frameCmd.intersectionCLines(edges[i],edges[i+1])
       eds.append(Part.Edge(Part.Line(P0,P1)))
       P0=P1
-    print P0
     P1=edges[-1].valueAt(edges[-1].LastParameter)
     P2=edges[-1].valueAt(0)
     d1=P1-P0
     d2=P2-P0
     if d1.Length<d2.Length:
       P1=P2
-    print P1
     eds.append(Part.Edge(Part.Line(P0,P1)))
     return Part.Wire(eds)
 
