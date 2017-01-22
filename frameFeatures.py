@@ -5,7 +5,7 @@ __author__="oddtopus"
 __url__="github.com/oddtopus/flamingo"
 __license__="LGPL 3"
 
-import FreeCAD, FreeCADGui
+import FreeCAD, FreeCADGui, Part
 from PySide.QtCore import *
 from PySide.QtGui import *
 from os import listdir
@@ -17,7 +17,7 @@ class frameLineForm(QWidget):
   '''
   prototype dialog for insert frameFeatures
   '''
-  def __init__(self,winTitle='Title', icon='flamingo.svg'):
+  def __init__(self,winTitle='FrameLine Manager', icon='flamingo.svg'):
     super(frameLineForm,self).__init__()
     self.move(QPoint(100,250))
     self.setWindowFlags(Qt.WindowStaysOnTopHint)
@@ -33,6 +33,7 @@ class frameLineForm(QWidget):
     self.firstCol.setLayout(QVBoxLayout())
     self.sectList=QListWidget()
     self.sectList.setMaximumWidth(120)
+    self.updateSections()
     self.firstCol.layout().addWidget(self.sectList)
     self.mainHL.addWidget(self.firstCol)
     self.secondCol=QWidget()
@@ -60,7 +61,7 @@ class frameLineForm(QWidget):
     self.btn2.clicked.connect(self.getBase)
     self.btn2.setMaximumWidth(100)
     self.secondCol.layout().addWidget(self.btn2)
-    self.btn3=QPushButton('Get Beam')
+    self.btn3=QPushButton('Get Profile')
     self.btn3.clicked.connect(self.getBeam)
     self.btn3.setMaximumWidth(100)
     self.secondCol.layout().addWidget(self.btn3)
@@ -71,6 +72,9 @@ class frameLineForm(QWidget):
     self.mainHL.addWidget(self.secondCol)
     self.show()
     self.current=None
+  def updateSections(self):
+    self.sectList.clear()
+    self.sectList.addItems([o.Label for o in FreeCAD.ActiveDocument.Objects if hasattr(o,'Shape') and ((type(o.Shape)==Part.Wire and o.Shape.isClosed()) or (type(o.Shape)==Part.Face and type(o.Shape.Surface)==Part.Plane))])
   def setCurrent(self,flname):
     if flname!='<new>':
       self.current=FreeCAD.ActiveDocument.getObjectsByLabel(flname)[0]
@@ -84,25 +88,20 @@ class frameLineForm(QWidget):
     if self.combo.currentText()=='<new>':
       a=makeFrameLine()
       self.combo.addItem(a.Label)
-    #s = Arch.makeStructure(length=100.0,width=100.0,height=1000.0)
-    # p = Arch.makeProfile([219, 'UPE', 'UPE100', 'U', 100.0, 55.0, 4.5, 7.5])
-    # s = Arch.makeStructure(p,height=1000.0)
-    # s.Profile = "UPE100"
-    #   Arch.makeStructure(FreeCAD.ActiveDocument.DWire001)
   def update(self):
     if self.current:
       self.current.Proxy.update(self.current)
+      self.updateSections()
   def purge(self):
     if self.current:
       self.current.Proxy.purge(self.current)
+      self.updateSections()
   def getBase(self):
     if self.current:
       sel=FreeCADGui.Selection.getSelection()
-      from Part import Wire
-      from Sketcher import Sketch
       if sel:
         base=sel[0]
-        if type(base.Shape) in [Wire,Sketch]:
+        if base.TypeId in ['Part::Part2DObjectPython','Sketcher::SketchObject']:
           self.current.Base=base
         else:
           FreeCAD.Console.PrintError('Not a Wire nor Sketch\n')
@@ -110,8 +109,9 @@ class frameLineForm(QWidget):
     if self.current:
       from frameCmd import beams
       if beams():
-        self.current.Beam=beams()[0]
-        FreeCAD.Console.PrintMessage('beam type for '+self.current.Label+' = '+self.current.Beam.Label+'\n')
+        self.current.Profile=beams()[0].Base
+      elif self.sectList.selectedItems():
+        self.current.Profile=FreeCAD.ActiveDocument.getObjectsByLabel(self.sectList.selectedItems()[0].text())[0]
     
 ################ CLASSES ###########################
 
@@ -134,20 +134,26 @@ class FrameLine(object):
     group.addObject(obj)
     FreeCAD.Console.PrintWarning("Created group "+obj.Group+"\n")
     obj.addProperty("App::PropertyLink","Base","FrameLine","the edges")
-    obj.addProperty("App::PropertyLink","Beam","FrameLine","the beam")
+    obj.addProperty("App::PropertyLink","Profile","FrameLine","the profile")
   def onChanged(self, fp, prop):
     if prop=='Label' and len(fp.InList):
       fp.InList[0].Label=fp.Label+"_pieces"
       fp.Group=fp.Label+"_pieces"
-    if hasattr(fp,'Base') and prop=='Base' and fp.Base:
+    if prop=='Base' and fp.Base:
       FreeCAD.Console.PrintWarning(fp.Label+' Base has changed to '+fp.Base.Label+'\n')
+    if prop=='Profile' and fp.Profile:
+      fp.Profile.ViewObject.Visibility=False
+      FreeCAD.Console.PrintWarning(fp.Label+' Profile has changed to '+fp.Profile.Label+'\n')
   def purge(self,fp):
     group=FreeCAD.activeDocument().getObjectsByLabel(fp.Group)[0]
     from frameCmd import beams
     beams2purge=beams(group.OutList)
     if beams2purge:
       for b in beams2purge:
+        profiles=b.OutList
         FreeCAD.ActiveDocument.removeObject(b.Name)
+        for p in profiles:
+          FreeCAD.ActiveDocument.removeObject(p.Name)
   def update(self,fp):
     import frameCmd, pipeCmd
     if hasattr(fp.Base,'Shape'):
@@ -156,13 +162,21 @@ class FrameLine(object):
         FreeCAD.Console.PrintError('Base has not valid edges\n')
         return
     group=FreeCAD.activeDocument().getObjectsByLabel(fp.Group)[0]
-    if fp.Beam and fp.Base:
+    if fp.Profile:
       FreeCAD.activeDocument().openTransaction('Update frameLine')
+      from Arch import makeStructure
       for e in edges:
-        beam=FreeCAD.activeDocument().copyObject(fp.Beam,True)
+        p=FreeCAD.activeDocument().copyObject(fp.Profile,True)
+        beam=makeStructure(p)
         frameCmd.placeTheBeam(beam,e)
         pipeCmd.moveToPyLi(beam,fp.Name)
-      FreeCAD.activeDocument().recompute()
       FreeCAD.activeDocument().commitTransaction()
+    FreeCAD.activeDocument().recompute()
   def execute(self, fp):
     return None
+
+#s = Arch.makeStructure(length=100.0,width=100.0,height=1000.0)
+# p = Arch.makeProfile([219, 'UPE', 'UPE100', 'U', 100.0, 55.0, 4.5, 7.5])
+# s = Arch.makeStructure(p,height=1000.0)
+# s.Profile = "UPE100"
+#   Arch.makeStructure(FreeCAD.ActiveDocument.DWire001)

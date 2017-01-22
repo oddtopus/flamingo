@@ -744,7 +744,7 @@ class insertPypeLineForm(protopypeForm):
   dialog or change it manually. 
   '''
   def __init__(self):
-    super(insertPypeLineForm,self).__init__("Insert pypelines","Pipe","SCH-STD","pypeline.svg")
+    super(insertPypeLineForm,self).__init__("PypeLine Manager","Pipe","SCH-STD","pypeline.svg")
     self.sizeList.setCurrentRow(0)
     self.ratingList.setCurrentRow(0)
     self.btn1.clicked.connect(self.insert)
