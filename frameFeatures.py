@@ -17,7 +17,7 @@ class frameLineForm(QWidget):
   '''
   prototype dialog for insert frameFeatures
   '''
-  def __init__(self,winTitle='FrameLine Manager', icon='flamingo.svg'):
+  def __init__(self,winTitle='FrameLine Manager', icon='frameline.svg'):
     super(frameLineForm,self).__init__()
     self.move(QPoint(100,250))
     self.setWindowFlags(Qt.WindowStaysOnTopHint)
@@ -31,10 +31,19 @@ class frameLineForm(QWidget):
     self.setLayout(self.mainHL)
     self.firstCol=QWidget()
     self.firstCol.setLayout(QVBoxLayout())
+    self.lab1=QLabel('  Profiles:')
+    self.firstCol.layout().addWidget(self.lab1)
     self.sectList=QListWidget()
     self.sectList.setMaximumWidth(120)
     self.updateSections()
     self.firstCol.layout().addWidget(self.sectList)
+    self.radio1=QRadioButton()
+    self.radio1.setChecked(True)
+    self.radios=QWidget()
+    self.radios.setLayout(QFormLayout())
+    self.radios.layout().setAlignment(Qt.AlignHCenter)
+    self.radios.layout().addRow('Copy profile ',self.radio1)
+    self.firstCol.layout().addWidget(self.radios)
     self.mainHL.addWidget(self.firstCol)
     self.secondCol=QWidget()
     self.secondCol.setLayout(QVBoxLayout())
@@ -53,20 +62,24 @@ class frameLineForm(QWidget):
     self.btn0.setMaximumWidth(100)
     self.secondCol.layout().addWidget(self.btn0)
     self.btn0.clicked.connect(self.insert)
-    self.btn1=QPushButton('Update')
-    self.btn1.clicked.connect(self.update)
+    self.edit1=QLineEdit('<name>')
+    self.edit1.setAlignment(Qt.AlignHCenter)
+    self.edit1.setMaximumWidth(100)
+    self.secondCol.layout().addWidget(self.edit1)
+    self.btn1=QPushButton('Redraw')
+    self.btn1.clicked.connect(self.redraw)
     self.btn1.setMaximumWidth(100)
     self.secondCol.layout().addWidget(self.btn1)
-    self.btn2=QPushButton('Get Base')
-    self.btn2.clicked.connect(self.getBase)
+    self.btn2=QPushButton('Get Path')
+    self.btn2.clicked.connect(self.getPath)
     self.btn2.setMaximumWidth(100)
     self.secondCol.layout().addWidget(self.btn2)
     self.btn3=QPushButton('Get Profile')
-    self.btn3.clicked.connect(self.getBeam)
+    self.btn3.clicked.connect(self.getProfile)
     self.btn3.setMaximumWidth(100)
     self.secondCol.layout().addWidget(self.btn3)
-    self.btn4=QPushButton('Purge')
-    self.btn4.clicked.connect(self.purge)
+    self.btn4=QPushButton('Clear')
+    self.btn4.clicked.connect(self.clear)
     self.btn4.setMaximumWidth(100)
     self.secondCol.layout().addWidget(self.btn4)
     self.mainHL.addWidget(self.secondCol)
@@ -86,17 +99,24 @@ class frameLineForm(QWidget):
   def insert(self):
     from frameCmd import makeFrameLine
     if self.combo.currentText()=='<new>':
-      a=makeFrameLine()
+      n=self.edit1.text()
+      if n and n!='<name>':
+        a=makeFrameLine(name=n)
+      else:
+        a=makeFrameLine()
       self.combo.addItem(a.Label)
-  def update(self):
+  def redraw(self):
     if self.current:
-      self.current.Proxy.update(self.current)
+      if self.radio1.isChecked():
+        self.current.Proxy.update(self.current)
+      else:
+        self.current.Proxy.update(self.current, copyProfile=False)
       self.updateSections()
-  def purge(self):
+  def clear(self):
     if self.current:
       self.current.Proxy.purge(self.current)
       self.updateSections()
-  def getBase(self):
+  def getPath(self):
     if self.current:
       sel=FreeCADGui.Selection.getSelection()
       if sel:
@@ -105,13 +125,15 @@ class frameLineForm(QWidget):
           self.current.Base=base
         else:
           FreeCAD.Console.PrintError('Not a Wire nor Sketch\n')
-  def getBeam(self):
+  def getProfile(self):
     if self.current:
       from frameCmd import beams
       if beams():
         self.current.Profile=beams()[0].Base
       elif self.sectList.selectedItems():
-        self.current.Profile=FreeCAD.ActiveDocument.getObjectsByLabel(self.sectList.selectedItems()[0].text())[0]
+        prof= FreeCAD.ActiveDocument.getObjectsByLabel(self.sectList.selectedItems()[0].text())[0]
+        prof.Placement.Base=FreeCAD.Vector()
+        self.current.Profile=prof
     
 ################ CLASSES ###########################
 
@@ -143,6 +165,7 @@ class FrameLine(object):
       FreeCAD.Console.PrintWarning(fp.Label+' Base has changed to '+fp.Base.Label+'\n')
     if prop=='Profile' and fp.Profile:
       fp.Profile.ViewObject.Visibility=False
+      #fp.Profile.Placement.Base=FreeCAD.Vector(0,0,0) 
       FreeCAD.Console.PrintWarning(fp.Label+' Profile has changed to '+fp.Profile.Label+'\n')
   def purge(self,fp):
     group=FreeCAD.activeDocument().getObjectsByLabel(fp.Group)[0]
@@ -154,7 +177,7 @@ class FrameLine(object):
         FreeCAD.ActiveDocument.removeObject(b.Name)
         for p in profiles:
           FreeCAD.ActiveDocument.removeObject(p.Name)
-  def update(self,fp):
+  def update(self,fp,copyProfile=True):
     import frameCmd, pipeCmd
     if hasattr(fp.Base,'Shape'):
       edges=fp.Base.Shape.Edges
@@ -166,7 +189,10 @@ class FrameLine(object):
       FreeCAD.activeDocument().openTransaction('Update frameLine')
       from Arch import makeStructure
       for e in edges:
-        p=FreeCAD.activeDocument().copyObject(fp.Profile,True)
+        if copyProfile:
+          p=FreeCAD.activeDocument().copyObject(fp.Profile,True)
+        else:
+          p=fp.Profile
         beam=makeStructure(p)
         frameCmd.placeTheBeam(beam,e)
         pipeCmd.moveToPyLi(beam,fp.Name)

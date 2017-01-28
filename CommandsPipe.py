@@ -74,7 +74,7 @@ class insertPypeLine:
     import pipeForms
     pipeFormObj=pipeForms.insertPypeLineForm()
   def GetResources(self):
-    return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","pypeline.svg"),'MenuText':'Insert a pype-line','ToolTip':'Insert a pype-line'}
+    return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","pypeline.svg"),'MenuText':'PypeLine Manager','ToolTip':'Open PypeLine Manager'}
 
 class paintPypeLine:
   def Activated (self):

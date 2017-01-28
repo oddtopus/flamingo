@@ -340,7 +340,16 @@ def makeW():
     if d1.Length<d2.Length:
       P1=P2
     eds.append(Part.Edge(Part.Line(P0,P1)))
-    return Part.Wire(eds)
+    w=Part.Wire(eds)
+    points=[e.valueAt(0) for e in w.Edges]
+    last=e.Edges[-1]
+    points.append(last.valueAt(last.LastParameter))
+    from Draft import makeWire
+    p=makeWire(points)
+    p.Label='Path'
+    p.ViewObject.LineWidth=6
+    p.ViewObject.LineColor=1.0,0.3,0.0
+    return p    
 
 def makePypeLine2(DN="DN50",PRating="SCH-STD",OD=60.3,thk=3,BR=None, lab="Tubatura", pl=None, color=(0.8,0.8,0.8)):
   '''

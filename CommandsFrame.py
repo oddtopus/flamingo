@@ -181,6 +181,25 @@ class rotJoin:
   def GetResources(self):
     return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","rotjoin.svg"),'MenuText':'rotJoinEdge','ToolTip':'Rotates and align the beam according another edge'}
 
+class insertPath:
+  def Activated(self):
+    import pipeCmd
+    FreeCAD.activeDocument().openTransaction('make Path')
+    pipeCmd.makeW()
+    FreeCAD.activeDocument().recompute()
+    FreeCAD.activeDocument().commitTransaction()
+
+  def GetResources(self):
+    return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","path.svg"),'MenuText':'insert Path','ToolTip':'Creates one path along selected edges'}
+
+class FrameLineManager:
+  def Activated(self):
+    if FreeCAD.ActiveDocument:
+      import frameFeatures
+      frameFormObj=frameFeatures.frameLineForm()
+
+  def GetResources(self):
+    return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","frameline.svg"),'MenuText':'FrameLine Manager','ToolTip':'Open FrameLine Manager'}
 
 #---------------------------------------------------------------------------
 # Adds the commands to the FreeCAD command manager
@@ -197,3 +216,5 @@ addCommand('stretchBeam',stretchBeam())
 addCommand('extend',extend())
 addCommand('adjustFrameAngle',adjustFrameAngle())
 addCommand('rotJoin',rotJoin())
+addCommand('insertPath',insertPath())
+addCommand('FrameLineManager',FrameLineManager())

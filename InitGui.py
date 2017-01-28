@@ -115,7 +115,7 @@ static char * image[] =
     self.appendToolbar("polarTools",list3)
     Log ('Loading Polar tools: done\n')
     import CommandsFrame
-    list4=["frameIt","fillFrame","alignFlange","spinSect","pivotBeam","levelBeam","alignEdge","rotJoin","shiftBeam","stretchBeam","extend","adjustFrameAngle"]
+    list4=["frameIt","fillFrame","alignFlange","spinSect","pivotBeam","levelBeam","alignEdge","rotJoin","shiftBeam","stretchBeam","extend","adjustFrameAngle","insertPath","FrameLineManager"]
     self.appendToolbar("frameTools",list4)
     Log ('Loading Frame tools: done\n')
     import CommandsPipe

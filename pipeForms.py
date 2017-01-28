@@ -753,10 +753,10 @@ class insertPypeLineForm(protopypeForm):
     self.edit1.setAlignment(Qt.AlignHCenter)
     self.edit1.setMaximumWidth(100)
     self.secondCol.layout().addWidget(self.edit1)
-    self.btnX=QPushButton('Apply')
-    self.btnX.setMaximumWidth(100)
-    self.secondCol.layout().addWidget(self.btnX)
-    self.btnX.clicked.connect(self.apply)
+    self.btn4=QPushButton('Redraw')
+    self.btn4.setMaximumWidth(100)
+    self.secondCol.layout().addWidget(self.btn4)
+    self.btn4.clicked.connect(self.redraw)
     self.btn2=QPushButton('Part list')
     self.btn2.setMaximumWidth(100)
     self.secondCol.layout().addWidget(self.btn2)
@@ -765,18 +765,18 @@ class insertPypeLineForm(protopypeForm):
     self.btn3.setMaximumWidth(100)
     self.secondCol.layout().addWidget(self.btn3)
     self.btn3.clicked.connect(self.changeColor)
-    self.btn6=QPushButton('create Path')
+    #self.btn6=QPushButton('create Path')
     #self.btn6.setMaximumWidth(100)
-    self.firstCol.layout().addWidget(self.btn6)
-    self.btn6.clicked.connect(self.createPath)
-    self.btn4=QPushButton('Redraw')
-    #self.btn4.setMaximumWidth(100)
-    self.firstCol.layout().addWidget(self.btn4)
-    self.btn4.clicked.connect(self.redraw)
-    self.btn5=QPushButton('Get Base')
+    #self.firstCol.layout().addWidget(self.btn6)
+    #self.btn6.clicked.connect(self.createPath)
+    self.btn5=QPushButton('Get Path')
     #self.btn5.setMaximumWidth(100)
     self.firstCol.layout().addWidget(self.btn5)
     self.btn5.clicked.connect(self.getBase)
+    self.btnX=QPushButton('Get Profile')
+    #self.btnX.setMaximumWidth(100)
+    self.firstCol.layout().addWidget(self.btnX)
+    self.btnX.clicked.connect(self.apply)
     self.color=0.8,0.8,0.8
     self.combo.setItemText(0,'<new>')
     self.btn1.setDefault(True)
@@ -791,19 +791,6 @@ class insertPypeLineForm(protopypeForm):
         FreeCAD.Console.PrintMessage('Base: %s\n'%pl.Base.Label)
       else:
         FreeCAD.Console.PrintMessage('Base not defined\n')
-  def createPath(self):
-    #p=FreeCAD.activeDocument().addObject('Part::Feature','Path')
-    #p.Shape=pipeCmd.makeW()
-    from Draft import makeWire
-    w=pipeCmd.makeW()
-    points=[e.valueAt(0) for e in w.Edges]
-    last=e.Edges[-1]
-    points.append(last.valueAt(last.LastParameter))
-    p=makeWire(points)
-    p.Label='Path'
-    p.ViewObject.LineWidth=6
-    p.ViewObject.LineColor=1.0,0.3,0.0
-    FreeCAD.activeDocument().recompute()    
   def apply(self):
     d=self.pipeDictList[self.sizeList.currentRow()]
     if self.combo.currentText()!="<new>":                                           
