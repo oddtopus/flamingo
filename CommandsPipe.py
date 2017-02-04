@@ -36,7 +36,7 @@ class insertPipe:
 
 class insertElbow: 
   def Activated (self):
-    import pipeForms
+    import pipeForms,FreeCAD
     pipeFormObj=pipeForms.insertElbowForm()
   def GetResources(self):
     return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","elbow.svg"),'MenuText':'Insert a curve','ToolTip':'Insert a curve'}
@@ -84,6 +84,13 @@ class paintPypeLine:
     FreeCAD.activeDocument().commitTransaction()
   def GetResources(self):
     return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","paint.svg"),'MenuText':'Paint pypeline','ToolTip':'Updates the color of pypes belonging to one pype-line'}
+
+class breakPipe:
+  def Activated (self):
+    import pipeForms
+    pipeFormObj=pipeForms.breakForm()
+  def GetResources(self):
+    return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","break.svg"),'MenuText':'Break the pipe','ToolTip':'Break one pipe at point and insert gap'}
 
 class rotateAx:
   def Activated (self):
@@ -184,7 +191,7 @@ addCommand('insertCap',insertCap())
 addCommand('insertFlange',insertFlange())
 addCommand('insertUbolt',insertUbolt())
 addCommand('insertPypeLine',insertPypeLine())
-addCommand('paintPypeLine',paintPypeLine())
+addCommand('breakPipe',breakPipe())
 addCommand('mateEdges',mateEdges())
 addCommand('rotateAx',rotateAx())
 addCommand('rotateEdge',rotateEdge())

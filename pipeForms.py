@@ -1013,3 +1013,142 @@ class rotateEdgeForm(prototypeForm):
     pipeCmd.rotateTheTubeEdge(-2*float(self.edit1.text()))
     self.edit1.setText(str(-1*float(self.edit1.text())))
     FreeCAD.activeDocument().commitTransaction()
+
+class breakForm(QWidget):
+  '''
+  Dialog to break one pipe and create a gap.
+  '''
+  def __init__(self,winTitle='Break the pipes', PType='Pipe', PRating='SCH-STD', icon='break.svg'):
+    self.refL=0.0
+    super(breakForm,self).__init__()
+    self.move(QPoint(100,250))
+    self.PType=PType
+    self.PRating=PRating
+    self.setWindowFlags(Qt.WindowStaysOnTopHint)
+    self.setWindowTitle(winTitle)
+    iconPath=join(dirname(abspath(__file__)),"icons",icon)
+    from PySide.QtGui import QIcon
+    Icon=QIcon()
+    Icon.addFile(iconPath)
+    self.setWindowIcon(Icon) 
+    self.grid=QGridLayout()
+    self.setLayout(self.grid)
+    self.btn0=QPushButton('Length')
+    self.btn0.setMaximumWidth(100)
+    self.btn0.clicked.connect(self.getL)
+    self.lab0=QLabel('<reference>')
+    self.lab1=QLabel('PypeLine:')
+    self.lab1.setMaximumWidth(100)
+    self.combo=QComboBox()
+    self.combo.addItem('<none>')
+    try:
+      self.combo.addItems([o.Label for o in FreeCAD.activeDocument().Objects if hasattr(o,'PType') and o.PType=='PypeLine'])
+    except:
+      None
+    self.combo.setMaximumWidth(100)
+    self.combo.currentIndexChanged.connect(self.setCurrentPL)
+    if FreeCAD.__activePypeLine__ and FreeCAD.__activePypeLine__ in [self.combo.itemText(i) for i in range(self.combo.count())]:
+      self.combo.setCurrentIndex(self.combo.findText(FreeCAD.__activePypeLine__))
+    self.combo.setMinimumWidth(100)
+    self.edit1=QLineEdit('0')
+    self.edit1.setAlignment(Qt.AlignCenter)
+    self.edit1.setMaximumWidth(100)
+    self.edit1.textChanged.connect(self.updateSlider)
+    self.edit2=QLineEdit('0')
+    self.edit2.setAlignment(Qt.AlignCenter)
+    self.edit2.setMaximumWidth(100)
+    self.edit2.textChanged.connect(self.calcGapPercent)
+    self.lab2=QLabel('Point:')
+    self.lab2.setMaximumWidth(100)
+    self.btn1=QPushButton('Break')
+    self.btn1.setMaximumWidth(100)
+    self.btn1.clicked.connect(self.breakPipe)
+    self.btn1.setDefault(True)
+    self.btn1.setFocus()
+    self.lab3=QLabel('Gap:')
+    self.lab3.setMaximumWidth(100)
+    self.btn2=QPushButton('Get gap')
+    self.btn2.setMaximumWidth(100)
+    self.btn2.clicked.connect(self.changeGap)
+    self.slider=QSlider(Qt.Horizontal)
+    self.slider.valueChanged.connect(self.changePoint)
+    self.slider.setMaximum(100)
+    self.grid.addWidget(self.btn0,0,0)
+    self.grid.addWidget(self.lab0,0,1,1,1,Qt.AlignCenter)
+    self.grid.addWidget(self.lab1,1,0,1,1,Qt.AlignCenter)
+    self.grid.addWidget(self.combo,1,1,1,1,Qt.AlignCenter)
+    self.grid.addWidget(self.lab2,2,0,1,1,Qt.AlignCenter)
+    self.grid.addWidget(self.edit1,2,1)
+    self.grid.addWidget(self.lab3,3,0,1,1,Qt.AlignCenter)
+    self.grid.addWidget(self.edit2,3,1)
+    self.grid.addWidget(self.btn1,4,0)
+    self.grid.addWidget(self.btn2,4,1)
+    self.grid.addWidget(self.slider,5,0,1,2)
+    self.show()
+  def setCurrentPL(self,PLName=None):
+    if self.combo.currentText() not in ['<none>','<new>']:
+      FreeCAD.__activePypeLine__= self.combo.currentText()
+    else:
+      FreeCAD.__activePypeLine__=None
+  def getL(self):
+    l=[p.Height for p in frameCmd.beams() if pipeCmd.isPipe(p)]
+    if l:
+      refL=min(l)
+      self.lab0.setText(str(refL))
+      self.refL=float(refL)
+      self.edit1.setText("%.2f" %(self.refL*self.slider.value()/100.0))
+    else:
+      self.lab0.setText('<reference>')
+      self.refL=0.0
+      self.edit1.setText(str(self.slider.value())+'%')
+  def changePoint(self):
+    if self.refL:
+      self.edit1.setText("%.2f" %(self.refL*self.slider.value()/100.0))
+    else:
+      self.edit1.setText(str(self.slider.value())+'%')
+  def changeGap(self):
+    shapes=[y for x in FreeCADGui.Selection.getSelectionEx() for y in x.SubObjects if hasattr(y,'ShapeType')]
+    if len(shapes)==1:
+      sub=shapes[0]
+      if sub.ShapeType=='Edge':
+        if sub.curvatureAt(0)==0:
+          gapL=float(sub.Length)
+      else:
+        gapL=0
+    elif len(shapes)>1:
+      gapL=shapes[0].distToShape(shapes[1])[0]
+    else:
+      gapL=0
+    self.edit2.setText("%.2f" %gapL)
+  def updateSlider(self):
+    if self.isValidEntry(self.edit1): 
+      if self.edit1.text() and self.edit1.text()[-1]=='%':
+        self.slider.setValue(int(float(self.edit1.text().rstrip('%').strip())))
+      #elif self.edit1.text() and float(self.edit1.text().strip())<self.refL:
+      #  self.slider.setValue(int(float(self.edit1.text().strip())/self.refL*100))
+  def calcGapPercent(self):
+    if self.edit2.text() and self.edit2.text()[-1]=='%':
+      if self.refL:
+        self.edit2.setText('%.2f' %(float(self.edit2.text().rstrip('%').strip())/100*self.refL))
+      else:
+        self.edit2.setText('0')
+        FreeCAD.Console.PrintError('No reference length defined yet\n')
+  def isValidEntry(self,editBox):
+    valids=set('1234567890.,%')
+    entrySet=set(editBox.text().strip())
+    return entrySet.issubset(valids)
+  def breakPipe(self):
+    p2nd=None
+    FreeCAD.activeDocument().openTransaction('Break pipes')
+    if self.edit1.text()[-1]=='%':
+      pipes=[p for p in frameCmd.beams() if pipeCmd.isPipe(p)]
+      for p in pipes:
+        p2nd=pipeCmd.breakTheTubes(float(p.Height)*float(self.edit1.text().rstrip('%').strip())/100,pipes=[p],gap=float(self.edit2.text()))
+        if p2nd and self.combo.currentText()!='<none>':
+          pipeCmd.moveToPyLi(p2nd[0],self.combo.currentText())
+    else:
+      p2nd=pipeCmd.breakTheTubes(float(self.edit1.text()),gap=float(self.edit2.text()))
+      if p2nd and self.combo.currentText()!='<none>':
+        pipeCmd.moveToPyLi(p2nd[0],self.combo.currentText())
+    FreeCAD.activeDocument().commitTransaction()
+    FreeCAD.activeDocument().recompute()

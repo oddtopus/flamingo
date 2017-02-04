@@ -501,3 +501,26 @@ def laydownTheTube(pipe=None, refFace=None, support=None):
       FreeCAD.Console.PrintError('Face is not flat or not parallel to axis of pipe\n')
   except:
     FreeCAD.Console.PrintError('Wrong selection\n')
+    
+def breakTheTubes(point,pipes=[],gap=0):
+  '''
+  breakTheTube(point,pipes=[],gap=0)
+  Breaks the "pipes" at "point" leaving a "gap".
+  '''
+  pipes2nd=list()
+  if not pipes:
+    pipes=[p for p in frameCmd.beams() if isPipe(p)]
+  if pipes:
+    for pipe in pipes:
+      if point<float(pipe.Height) and gap<(float(pipe.Height)-point):
+        propList=[pipe.PSize,float(pipe.OD),float(pipe.thk),float(pipe.Height)-point-gap]
+        pipe.Height=point
+        Z=frameCmd.beamAx(pipe)
+        pos=pipe.Placement.Base+Z*(float(pipe.Height)+gap)
+        pipe2nd=makePipe(propList,pos,Z)
+        pipes2nd.append(pipe2nd)
+    FreeCAD.activeDocument().recompute()
+  return pipes2nd
+    
+    
+    

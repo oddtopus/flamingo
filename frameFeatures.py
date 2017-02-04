@@ -106,12 +106,14 @@ class frameLineForm(QWidget):
         a=makeFrameLine()
       self.combo.addItem(a.Label)
   def redraw(self):
-    if self.current:
+    if self.current and self.current.Profile and self.current.Base:
       if self.radio1.isChecked():
         self.current.Proxy.update(self.current)
       else:
         self.current.Proxy.update(self.current, copyProfile=False)
       self.updateSections()
+    else:
+      FreeCAD.Console.PrintError('Select a Path and a Profile before\n')
   def clear(self):
     if self.current:
       self.current.Proxy.purge(self.current)
