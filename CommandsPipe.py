@@ -97,14 +97,14 @@ class rotateAx:
     import pipeForms
     pipeFormObj=pipeForms.rotateForm()
   def GetResources(self):
-    return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","rotateAx.svg"),'MenuText':'Rotate through axis','ToolTip':'Rotate an object around an axis of its Shape'}
+    return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","rotateAx.svg"),'MenuText':'Rotate by axis','ToolTip':'Rotate an object around an axis of existing geometry'}
 
 class rotateEdge:
   def Activated (self):
     import pipeForms
     pipeFormObj=pipeForms.rotateEdgeForm()
   def GetResources(self):
-    return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","rotateEdge.svg"),'MenuText':'Rotate through edge','ToolTip':'Rotate an object around the axis of a circular edge'}
+    return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","rotateEdge.svg"),'MenuText':'Rotate by edge','ToolTip':'Rotate an object around the axis of a circular edge'}
 
 class mateEdges:
   def Activated (self):

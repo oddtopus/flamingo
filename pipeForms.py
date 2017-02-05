@@ -78,13 +78,10 @@ class protopypeForm(QWidget):
     self.btn1.setMaximumWidth(100)
     self.secondCol.layout().addWidget(self.btn1)
     self.mainHL.addWidget(self.secondCol)
-    #self.currentPL=None
   def setCurrentPL(self,PLName=None):
     if self.combo.currentText() not in ['<none>','<new>']:
-      #self.currentPL=FreeCAD.ActiveDocument.getObjectsByLabel(self.combo.currentText())[0]
       FreeCAD.__activePypeLine__= self.combo.currentText()
     else:
-      #self.currentPL=None
       FreeCAD.__activePypeLine__=None
   def fillSizes(self):
     self.sizeList.clear()
@@ -130,7 +127,7 @@ class insertPipeForm(protopypeForm):
     self.sizeList.setCurrentRow(0)
     self.ratingList.setCurrentRow(0)
     self.btn1.clicked.connect(self.insert)
-    self.edit1=QLineEdit(' <insert lenght>')
+    self.edit1=QLineEdit('<lenght>')
     self.edit1.setAlignment(Qt.AlignHCenter)
     self.edit1.setMaximumWidth(100)
     self.secondCol.layout().addWidget(self.edit1)
@@ -221,7 +218,7 @@ class insertElbowForm(protopypeForm):
     self.sizeList.setCurrentRow(0)
     self.ratingList.setCurrentRow(0)
     self.btn1.clicked.connect(self.insert)
-    self.edit1=QLineEdit('<insert angle>')
+    self.edit1=QLineEdit('<angle>')
     self.edit1.setAlignment(Qt.AlignHCenter)
     self.edit1.setMaximumWidth(100)
     self.secondCol.layout().addWidget(self.edit1)
@@ -907,6 +904,8 @@ class rotateForm(prototypeForm):
     self.zval.setAlignment(Qt.AlignHCenter)
     self.zval.setMaximumWidth(60)
     self.shapeAxis.layout().addRow("Shape ref. axis - z",self.zval)    
+    for e in [self.edit1,self.xval,self.yval,self.zval]:
+      e.setValidator(QDoubleValidator())
     self.mainVL.addWidget(self.shapeAxis)
     self.btnGet=QPushButton("Get")
     self.btnX=QPushButton("-X-")
@@ -996,6 +995,7 @@ class rotateEdgeForm(prototypeForm):
   '''
   def __init__(self):
     super(rotateEdgeForm,self).__init__('rotateEdgeForm','Rotate','Reverse','90','Angle - deg:')
+    self.edit1.setValidator(QDoubleValidator())
     self.btn1.clicked.connect(self.rotate)
     self.btn2.clicked.connect(self.reverse)
     self.btn1.setDefault(True)
@@ -1053,11 +1053,15 @@ class breakForm(QWidget):
     self.edit1=QLineEdit('0')
     self.edit1.setAlignment(Qt.AlignCenter)
     self.edit1.setMaximumWidth(100)
-    self.edit1.textChanged.connect(self.updateSlider)
+    self.edit1.editingFinished.connect(self.updateSlider)
     self.edit2=QLineEdit('0')
     self.edit2.setAlignment(Qt.AlignCenter)
     self.edit2.setMaximumWidth(100)
-    self.edit2.textChanged.connect(self.calcGapPercent)
+    self.edit2.editingFinished.connect(self.calcGapPercent)
+    rx=QRegExp('[0-9,.%]*')
+    val=QRegExpValidator(rx)
+    self.edit1.setValidator(val)
+    self.edit2.setValidator(val)
     self.lab2=QLabel('Point:')
     self.lab2.setMaximumWidth(100)
     self.btn1=QPushButton('Break')
@@ -1121,11 +1125,10 @@ class breakForm(QWidget):
       gapL=0
     self.edit2.setText("%.2f" %gapL)
   def updateSlider(self):
-    if self.isValidEntry(self.edit1): 
-      if self.edit1.text() and self.edit1.text()[-1]=='%':
-        self.slider.setValue(int(float(self.edit1.text().rstrip('%').strip())))
-      #elif self.edit1.text() and float(self.edit1.text().strip())<self.refL:
-      #  self.slider.setValue(int(float(self.edit1.text().strip())/self.refL*100))
+    if self.edit1.text() and self.edit1.text()[-1]=='%':
+      self.slider.setValue(int(float(self.edit1.text().rstrip('%').strip())))
+    elif self.edit1.text() and float(self.edit1.text().strip())<self.refL:
+      self.slider.setValue(int(float(self.edit1.text().strip())/self.refL*100))
   def calcGapPercent(self):
     if self.edit2.text() and self.edit2.text()[-1]=='%':
       if self.refL:
@@ -1133,10 +1136,6 @@ class breakForm(QWidget):
       else:
         self.edit2.setText('0')
         FreeCAD.Console.PrintError('No reference length defined yet\n')
-  def isValidEntry(self,editBox):
-    valids=set('1234567890.,%')
-    entrySet=set(editBox.text().strip())
-    return entrySet.issubset(valids)
   def breakPipe(self):
     p2nd=None
     FreeCAD.activeDocument().openTransaction('Break pipes')
@@ -1145,10 +1144,12 @@ class breakForm(QWidget):
       for p in pipes:
         p2nd=pipeCmd.breakTheTubes(float(p.Height)*float(self.edit1.text().rstrip('%').strip())/100,pipes=[p],gap=float(self.edit2.text()))
         if p2nd and self.combo.currentText()!='<none>':
-          pipeCmd.moveToPyLi(p2nd[0],self.combo.currentText())
+          for p in p2nd:
+            pipeCmd.moveToPyLi(p,self.combo.currentText())
     else:
       p2nd=pipeCmd.breakTheTubes(float(self.edit1.text()),gap=float(self.edit2.text()))
       if p2nd and self.combo.currentText()!='<none>':
-        pipeCmd.moveToPyLi(p2nd[0],self.combo.currentText())
+        for p in p2nd:
+          pipeCmd.moveToPyLi(p,self.combo.currentText())
     FreeCAD.activeDocument().commitTransaction()
     FreeCAD.activeDocument().recompute()

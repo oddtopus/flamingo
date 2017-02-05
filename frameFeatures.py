@@ -55,8 +55,9 @@ class frameLineForm(QWidget):
     except:
       None
     self.combo.setMaximumWidth(100)
-    #if FreeCAD.__activeFrameLine__ and FreeCAD.__activeFrameLine__ in [self.combo.itemText(i) for i in range(self.combo.count())]:
-    #  self.combo.setCurrentIndex(self.combo.findText(FreeCAD.__activeFrameLine__))
+    if FreeCAD.__activeFrameLine__ and FreeCAD.__activeFrameLine__ in [self.combo.itemText(i) for i in range(self.combo.count())]:
+      self.combo.setCurrentIndex(self.combo.findText(FreeCAD.__activeFrameLine__))
+    self.combo.currentIndexChanged.connect(self.setCurrentFL)
     self.secondCol.layout().addWidget(self.combo)
     self.btn0=QPushButton('Insert')
     self.btn0.setMaximumWidth(100)
@@ -85,6 +86,11 @@ class frameLineForm(QWidget):
     self.mainHL.addWidget(self.secondCol)
     self.show()
     self.current=None
+  def setCurrentFL(self,FLName=None):
+    if self.combo.currentText() not in ['<none>','<new>']:
+      FreeCAD.__activeFrameLine__= self.combo.currentText()
+    else:
+      FreeCAD.__activeFrameLine__=None
   def updateSections(self):
     self.sectList.clear()
     self.sectList.addItems([o.Label for o in FreeCAD.ActiveDocument.Objects if hasattr(o,'Shape') and ((type(o.Shape)==Part.Wire and o.Shape.isClosed()) or (type(o.Shape)==Part.Face and type(o.Shape.Surface)==Part.Plane))])

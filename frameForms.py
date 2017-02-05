@@ -56,6 +56,7 @@ class pivotForm(prototypeForm):
   'dialog for pivotTheBeam()'
   def __init__(self):
     super(pivotForm,self).__init__('pivotForm','Rotate','Reverse','90','Angle - deg:','pivot.svg')
+    self.edit1.setValidator(QDoubleValidator())
     self.btn1.clicked.connect(self.rotate)
     self.btn2.clicked.connect(self.reverse)
     self.show()
@@ -143,6 +144,7 @@ class stretchForm(prototypeForm):
     super(stretchForm,self).__init__('stretchForm','Get Length','Stretch','1000','mm','beamStretch.svg')
     self.edit1.setMaximumWidth(150)
     self.edit1.setMinimumWidth(40)
+    self.edit1.setValidator(QDoubleValidator())
     self.btn1.clicked.connect(self.getL)
     self.btn2.clicked.connect(self.stretch)
     self.btn1.setFocus()
@@ -187,6 +189,8 @@ class translateForm(prototypeForm):   #add selection options in getDisp()
     self.edit5.setMinimumWidth(40)
     self.edit5.setAlignment(Qt.AlignHCenter)
     self.edit5.setMaximumWidth(120)
+    for e in [self.edit1,self.edit3,self.edit3,self.edit4,self.edit5]:
+      e.setValidator(QDoubleValidator())
     self.inputs.layout().addRow('Steps',self.edit5)
     self.btn3=QPushButton('Translate')
     self.btn3.clicked.connect(self.translateTheBeams)
