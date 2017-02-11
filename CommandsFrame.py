@@ -34,7 +34,7 @@ class frameIt:
     FreeCADGui.Selection.addObserver(s)
     
   def GetResources(self):
-    return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","beamFit.svg"),'MenuText':'Beam-fit','ToolTip':'Place one beam over the sketch of a frame'}
+    return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","beamFit.svg"),'MenuText':'Place one-beam over one-edge','ToolTip':'Place one beam after the other over the edges'}
 
 class spinSect:
   def Activated(self):
@@ -48,7 +48,7 @@ class spinSect:
     FreeCAD.activeDocument().commitTransaction()
         
   def GetResources(self):
-    return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","beamRot.svg"),'MenuText':'SpinTheBeam','ToolTip':'Rotates the section of the beam by 45 degrees'}
+    return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","beamRot.svg"),'MenuText':'Spin beams by 45 deg.','ToolTip':'Rotates the section of the beam by 45 degrees'}
 
 class fillFrame:
   def Activated(self):
@@ -56,7 +56,7 @@ class fillFrame:
     frameFormObj=frameForms.fillForm()
       
   def GetResources(self):
-    return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","fillFrame.svg"),'MenuText':'fillTheFrame','ToolTip':'Fill the sketch of the frame with the selected beam'}
+    return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","fillFrame.svg"),'MenuText':'Fill the frame','ToolTip':'Fill the sketch of the frame with the selected beam'}
 
 class alignFlange:
   def Activated(self):
@@ -86,7 +86,7 @@ class shiftBeam:
     frameFormObj=frameForms.translateForm()
 
   def GetResources(self):
-    return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","beamShift.svg"),'MenuText':'shiftTheBeam','ToolTip':'Move one beam along one edge'}
+    return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","beamShift.svg"),'MenuText':'shiftTheBeam','ToolTip':'Translate objects by vectors defined on existing geometry'}
 
 class levelBeam:
   def Activated(self):
@@ -109,7 +109,7 @@ class levelBeam:
       FreeCADGui.Selection.addObserver(s)
 
   def GetResources(self):
-    return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","beamLevel.svg"),'MenuText':'levelTheBeam','ToolTip':'Shift the beams to line-up the faces to the first selection (faces must be //)'}
+    return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","beamLevel.svg"),'MenuText':'Flush the surfaces','ToolTip':'Shift the beams to line-up the faces to the first selection (faces must be //)'}
 
 class alignEdge:
   def Activated(self):
@@ -130,7 +130,7 @@ class alignEdge:
       FreeCADGui.Selection.addObserver(s)
     
   def GetResources(self):
-    return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","edgeAlign.svg"),'MenuText':'alignEdge','ToolTip':'Align two edges: select two or pre-select several'}
+    return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","edgeAlign.svg"),'MenuText':'Mate the edges','ToolTip':'Join two edges: select two or pre-select several'}
 
 class pivotBeam:
   def Activated(self):

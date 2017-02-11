@@ -37,27 +37,31 @@ class frameLineForm(QWidget):
     self.sectList.setMaximumWidth(120)
     self.updateSections()
     self.firstCol.layout().addWidget(self.sectList)
-    self.radio1=QRadioButton()
-    self.radio1.setChecked(True)
+    self.cb1=QCheckBox(' Copy profile')
+    self.cb1.setChecked(True)
+    self.cb2=QCheckBox(' Move to origin')
+    self.cb2.setChecked(True)
     self.radios=QWidget()
     self.radios.setLayout(QFormLayout())
     self.radios.layout().setAlignment(Qt.AlignHCenter)
-    self.radios.layout().addRow('Copy profile ',self.radio1)
+    self.radios.layout().addRow(self.cb1)
+    self.radios.layout().addRow(self.cb2)
     self.firstCol.layout().addWidget(self.radios)
     self.mainHL.addWidget(self.firstCol)
     self.secondCol=QWidget()
     self.secondCol.setLayout(QVBoxLayout())
+    self.current=None    
     self.combo=QComboBox()
     self.combo.addItem('<new>')
-    self.combo.activated[str].connect(self.setCurrent)
+    #self.combo.activated[str].connect(self.setCurrent)
     try:
       self.combo.addItems([o.Label for o in FreeCAD.activeDocument().Objects if hasattr(o,'FType') and o.FType=='FrameLine'])
     except:
       None
     self.combo.setMaximumWidth(100)
+    self.combo.currentIndexChanged.connect(self.setCurrentFL)
     if FreeCAD.__activeFrameLine__ and FreeCAD.__activeFrameLine__ in [self.combo.itemText(i) for i in range(self.combo.count())]:
       self.combo.setCurrentIndex(self.combo.findText(FreeCAD.__activeFrameLine__))
-    self.combo.currentIndexChanged.connect(self.setCurrentFL)
     self.secondCol.layout().addWidget(self.combo)
     self.btn0=QPushButton('Insert')
     self.btn0.setMaximumWidth(100)
@@ -85,12 +89,23 @@ class frameLineForm(QWidget):
     self.secondCol.layout().addWidget(self.btn4)
     self.mainHL.addWidget(self.secondCol)
     self.show()
-    self.current=None
   def setCurrentFL(self,FLName=None):
     if self.combo.currentText() not in ['<none>','<new>']:
       FreeCAD.__activeFrameLine__= self.combo.currentText()
+      self.current=FreeCAD.ActiveDocument.getObjectsByLabel(self.combo.currentText())[0]
+      FreeCAD.Console.PrintMessage('current FrameLine = '+self.current.Label+'\n')
+      if self.current.Profile:
+        FreeCAD.Console.PrintMessage('Profile: %s\n'%self.current.Profile.Label)
+      else:
+        FreeCAD.Console.PrintMessage('Profile not defined\n')
+      if self.current.Base:
+        FreeCAD.Console.PrintMessage('Path: %s\n'%self.current.Base.Label)
+      else:
+        FreeCAD.Console.PrintMessage('Path not defined\n')
     else:
       FreeCAD.__activeFrameLine__=None
+      self.current=None
+      FreeCAD.Console.PrintMessage('current FrameLine = None\n')
   def updateSections(self):
     self.sectList.clear()
     self.sectList.addItems([o.Label for o in FreeCAD.ActiveDocument.Objects if hasattr(o,'Shape') and ((type(o.Shape)==Part.Wire and o.Shape.isClosed()) or (type(o.Shape)==Part.Face and type(o.Shape.Surface)==Part.Plane))])
@@ -101,7 +116,6 @@ class frameLineForm(QWidget):
     else:
       self.current=None
       FreeCAD.Console.PrintMessage('current FrameLine = None\n')
-    return
   def insert(self):
     from frameCmd import makeFrameLine
     if self.combo.currentText()=='<new>':
@@ -113,7 +127,7 @@ class frameLineForm(QWidget):
       self.combo.addItem(a.Label)
   def redraw(self):
     if self.current and self.current.Profile and self.current.Base:
-      if self.radio1.isChecked():
+      if self.cb1.isChecked():
         self.current.Proxy.update(self.current)
       else:
         self.current.Proxy.update(self.current, copyProfile=False)
@@ -140,7 +154,9 @@ class frameLineForm(QWidget):
         self.current.Profile=beams()[0].Base
       elif self.sectList.selectedItems():
         prof= FreeCAD.ActiveDocument.getObjectsByLabel(self.sectList.selectedItems()[0].text())[0]
-        prof.Placement.Base=FreeCAD.Vector()
+        if prof.Shape.ShapeType=='Wire' and self.cb2.isChecked():
+          prof.Placement.move(FreeCAD.Vector(0,0,0)-prof.Shape.CenterOfMass)
+        prof.Placement.Rotation=FreeCAD.Base.Rotation()
         self.current.Profile=prof
     
 ################ CLASSES ###########################

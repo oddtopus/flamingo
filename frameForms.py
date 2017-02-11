@@ -163,7 +163,7 @@ class stretchForm(prototypeForm):
     FreeCAD.activeDocument().recompute()
     FreeCAD.activeDocument().commitTransaction()
     
-class translateForm(prototypeForm):   #add selection options in getDisp()
+class translateForm(prototypeForm):   
   'dialog for moving blocks'
   def __init__(self):
     super(translateForm,self).__init__('translateForm','Displacement','Vector','0','x - mm','beamShift.svg')
@@ -202,10 +202,10 @@ class translateForm(prototypeForm):   #add selection options in getDisp()
     self.btn3.setDefault(True)
     self.btn3.setFocus()
     self.show()
-    if len(frameCmd.edges())==1:
-      self.getVect()
-    else:
-      self.getDisp()
+    #if len(frameCmd.edges())==1:
+    #  self.getVect()
+    #else:
+    #  self.getDisp()
   def getDisp(self):
     roundDigits=3
     shapes=[y for x in FreeCADGui.Selection.getSelectionEx() for y in x.SubObjects if hasattr(y,'ShapeType')][:2]
@@ -214,12 +214,33 @@ class translateForm(prototypeForm):   #add selection options in getDisp()
       disp=None
       if base.ShapeType==target.ShapeType=='Vertex':
         disp=target.Point-base.Point
-      if base.ShapeType==target.ShapeType=='Edge':
-        disp=target.CenterOfMass-base.CenterOfMass
-      if base.ShapeType=='Vertex' and target.ShapeType=='Face':
+      elif base.ShapeType==target.ShapeType=='Edge':
+        if base.curvatureAt(0):
+          P1=base.centerOfCurvatureAt(0)
+        else:
+          P1=base.CenterOfMass
+        if target.curvatureAt(0):
+          P2=target.centerOfCurvatureAt(0)
+        else:
+          P2=target.CenterOfMass
+        disp=P2-P1
+      elif set([base.ShapeType,target.ShapeType])=={'Vertex','Edge'}:
+        P=list()
+        i=0
+        for o in [base,target]:
+          if o.ShapeType=='Vertex':
+            P.append(o.Point)
+          elif o.curvatureAt(0):
+            P.append(o.centerOfCurvatureAt(0))
+          else:
+            return
+          i+=1
+        disp=P[1]-P[0]
+      elif base.ShapeType=='Vertex' and target.ShapeType=='Face':
         disp=frameCmd.intersectionPlane(base.Point,target.normalAt(0,0),target)-base.Point
-      if base.ShapeType=='Face' and target.ShapeType=='Vertex':
+      elif base.ShapeType=='Face' and target.ShapeType=='Vertex':
         disp=target.Point-frameCmd.intersectionPlane(target.Point,base.normalAt(0,0),base)
+        disp=P[1]-P[0]
       if disp!=None:
         self.edit4.setText(str(disp.Length))
         self.edit5.setText('1')
@@ -228,6 +249,7 @@ class translateForm(prototypeForm):   #add selection options in getDisp()
         self.edit1.setText(str(round(dx,roundDigits)))
         self.edit2.setText(str(round(dy,roundDigits)))
         self.edit3.setText(str(round(dz,roundDigits)))
+        FreeCADGui.Selection.clearSelection()
   def getVect(self):
     roundDigits=3
     if len(frameCmd.edges())>0:
@@ -238,6 +260,7 @@ class translateForm(prototypeForm):   #add selection options in getDisp()
       self.edit1.setText(str(round(dx,roundDigits)))
       self.edit2.setText(str(round(dy,roundDigits)))
       self.edit3.setText(str(round(dz,roundDigits)))
+      FreeCADGui.Selection.clearSelection()
   def translateTheBeams(self):
     scale=float(self.edit4.text())/float(self.edit5.text())
     disp=FreeCAD.Vector(float(self.edit1.text()),float(self.edit2.text()),float(self.edit3.text())).scale(scale,scale,scale)

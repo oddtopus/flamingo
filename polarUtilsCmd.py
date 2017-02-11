@@ -41,3 +41,37 @@ def disegna(sk, pos):
   sk.addConstraint(Sketcher.Constraint('Coincident',lines[len(lines)-1],2,lines[0],1))
   FreeCAD.activeDocument().recompute()
   return lines
+
+def setWP():
+  import FreeCAD, FreeCADGui, frameCmd
+  normal=point=None
+  curves=[]
+  straight=[]
+  for edge in frameCmd.edges():
+    if edge.curvatureAt(0)!=0:
+      curves.append(edge)
+    else:
+      straight.append(edge)
+  #curves=[edge for edge in frameCmd.edges() if edge.curvatureAt(0)!=0]
+  # define normal
+  if frameCmd.faces():
+    normal=frameCmd.faces()[0].normalAt(0,0)
+  elif curves:
+    normal=curves[0].tangentAt(0).cross(curves[0].normalAt(0))
+  elif straight>1:
+    if straight and not frameCmd.isParallel(straight[0].tangentAt(0),straight[1].tangentAt(0)):
+      normal=straight[0].tangentAt(0).cross(straight[1].tangentAt(0))
+  # define point
+  points=[edge.centerOfCurvatureAt(0) for edge in curves]
+  if not points:
+    points=[v.Point for sx in FreeCADGui.Selection.getSelectionEx() for so in sx.SubObjects for v in so.Vertexes]
+  if not points and straight>1:
+    if straight and not frameCmd.isParallel(straight[0].tangentAt(0),straight[1].tangentAt(0)):
+      points.append(frameCmd.intersectionCLines(straight[0],straight[1]))
+  if points:
+    point=points[0]
+  # move the draft WP
+  if point and normal:
+    FreeCAD.DraftWorkingPlane.alignToPointAndAxis(point,normal)
+    FreeCADGui.Snapper.setGrid()
+        

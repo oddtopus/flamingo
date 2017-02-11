@@ -111,7 +111,7 @@ static char * image[] =
     #self.appendToolbar("spreadsheetTools",list2)
     #Log ('Loading Spreadsheet tools: done\n')
     import CommandsPolar
-    list3=["drawPolygon","drawFromFile","queryModel"]
+    list3=["drawPolygon","drawFromFile","queryModel","moveWorkPlane"]
     self.appendToolbar("polarTools",list3)
     Log ('Loading Polar tools: done\n')
     import CommandsFrame
@@ -122,12 +122,15 @@ static char * image[] =
     list5=["insertPipe","insertElbow","insertReduct","insertCap","insertFlange","insertUbolt","insertPypeLine","breakPipe","rotateAx","rotateEdge","mateEdges","flat","extend2intersection","extend1intersection","laydown","raiseup"]
     self.appendToolbar("pipeTools",list5)
     Log ('Loading Pipe tools: done\n')
-    menu = ["Flamingo tools"]
-    self.appendMenu(menu,list4)
-    self.appendMenu(menu,list5)    
+    menu1 = ["Frame tools"]
+    menu2 = ["Pype tools"]
+    menu3 = ["Eagle tools"]
+    menu4 = ["Utils"]
+    self.appendMenu(menu1,list4)
+    self.appendMenu(menu2,list5)    
     #self.appendMenu(menu,list2)
-    self.appendMenu(menu,list3)
-    self.appendMenu(menu,list1)
+    self.appendMenu(menu3,list1)
+    self.appendMenu(menu4,list3)
 
   def Activated(self):
     if hasattr(FreeCADGui,"draftToolBar"):

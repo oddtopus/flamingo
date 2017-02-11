@@ -285,6 +285,8 @@ def makeShell(L=800,W=400,H=500,thk=6):
   pipeFeatures.Shell(a,L,W,H,thk)
   a.ViewObject.Proxy=0
   a.Placement.Base=FreeCAD.Vector(0,0,0)
+  a.ViewObject.ShapeColor=0.0,0.0,1.0
+  a.ViewObject.Transparency=85
   return a
 
 def makeCap(propList=[], pos=None, Z=None):

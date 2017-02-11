@@ -45,7 +45,7 @@ class protopypeForm(QWidget):
     self.firstCol=QWidget()
     self.firstCol.setLayout(QVBoxLayout())
     self.mainHL.addWidget(self.firstCol)
-    self.currentRatingLab=QLabel(self.PRating+':')
+    self.currentRatingLab=QLabel('Rating: '+self.PRating)
     self.firstCol.layout().addWidget(self.currentRatingLab)
     self.sizeList=QListWidget()
     self.sizeList.setMaximumWidth(120)
@@ -101,7 +101,7 @@ class protopypeForm(QWidget):
         break
   def changeRating(self,item):
     self.PRating=item.text()
-    self.currentRatingLab.setText(self.PRating+':')
+    self.currentRatingLab.setText('Rating: '+self.PRating)
     self.fillSizes()
   def findDN(self,DN):
     result=None
@@ -411,6 +411,18 @@ class insertFlangeForm(protopypeForm):
           self.lastFlange=pipeCmd.makeFlange(propList,v.Point)
           if self.combo.currentText()!='<none>':
             pipeCmd.moveToPyLi(self.lastFlange,self.combo.currentText())
+    elif tubes:
+      selex=FreeCADGui.Selection.getSelectionEx()
+      for sx in selex:
+        if hasattr(sx.Object,'PType') and sx.Object.PType=='Pipe' and frameCmd.edges([sx]):
+          for edge in frameCmd.edges([sx]):
+            if edge.curvatureAt(0)!=0:
+              self.lastFlange=pipeCmd.makeFlange(propList,edge.centerOfCurvatureAt(0),sx.Object.Shape.Solids[0].CenterOfMass-edge.centerOfCurvatureAt(0))
+              if self.combo.currentText()!='<none>':
+                pipeCmd.moveToPyLi(self.lastFlange,self.combo.currentText())
+      FreeCAD.activeDocument().commitTransaction()
+      FreeCAD.activeDocument().recompute()
+      return
     else:
       for edge in frameCmd.edges():
         if edge.curvatureAt(0)!=0:
@@ -596,21 +608,31 @@ class insertUboltForm(protopypeForm):
     super(insertUboltForm,self).__init__("Insert U-bolt","Clamp","DIN-UBolt","clamp.svg")
     self.sizeList.setCurrentRow(0)
     self.ratingList.setCurrentRow(0)
+    self.lab1=QLabel('- no ref. face -')
+    self.lab1.setAlignment(Qt.AlignHCenter)
+    self.lab1.setMaximumWidth(100)
+    self.firstCol.layout().addWidget(self.lab1)
     self.btn1.clicked.connect(self.insert)
     self.btn2=QPushButton('Ref. face')
     self.btn2.setMaximumWidth(100)
     self.secondCol.layout().addWidget(self.btn2)
     self.btn2.clicked.connect(self.getReference)
-    self.lab1=QLabel('- no ref. face -')
-    self.lab1.setAlignment(Qt.AlignHCenter)
-    self.lab1.setMaximumWidth(100)
-    self.secondCol.layout().addWidget(self.lab1)
     self.btn1.setDefault(True)
     self.btn1.setFocus()
-    self.edit1=QLineEdit('1')
-    self.edit1.setAlignment(Qt.AlignHCenter)
-    self.edit1.setMaximumWidth(100)
-    self.secondCol.layout().addWidget(self.edit1)
+    #self.edit1=QLineEdit('1')
+    #self.edit1.setAlignment(Qt.AlignHCenter)
+    #self.edit1.setMaximumWidth(100)
+    self.cb1=QCheckBox(' Head')
+    self.cb1.setChecked(True)
+    self.cb2=QCheckBox(' Middle')
+    self.cb3=QCheckBox(' Tail')
+    self.checkb=QWidget()
+    self.checkb.setLayout(QFormLayout())
+    self.checkb.layout().setAlignment(Qt.AlignHCenter)
+    self.checkb.layout().addRow(self.cb1)
+    self.checkb.layout().addRow(self.cb2)
+    self.checkb.layout().addRow(self.cb3)
+    self.secondCol.layout().addWidget(self.checkb)
     self.show()
     self.refNorm=None
     self.getReference()
@@ -634,10 +656,10 @@ class insertUboltForm(protopypeForm):
       FreeCAD.activeDocument().commitTransaction()
       FreeCAD.activeDocument().recompute()
     else:
-      try:
-        n=int(self.edit1.text())
-      except:
-        n=1
+      #try:
+      #  n=int(self.edit1.text())
+      #except:
+      #  n=1
       FreeCAD.activeDocument().openTransaction('Insert clamp on tube')
       for objex in selex:
         if hasattr(objex.Object,'PType') and objex.Object.PType=='Pipe':
@@ -647,17 +669,21 @@ class insertUboltForm(protopypeForm):
           else:
             d=self.pipeDictList[self.sizeList.currentRow()]
           propList=[d['PSize'],self.PRating,float(d['C']),float(d['H']),float(d['d'])]
-          if n>1:
-            step=(float(objex.Object.Height)-float(d['C']))/(n-1)
-          else:
-            step=(float(objex.Object.Height)-float(d['C']))
-          for i in range(n):
-            ub=pipeCmd.makeUbolt(propList,pos=objex.Object.Placement.Base, Z=frameCmd.beamAx(objex.Object))
-            ub.Placement.move(frameCmd.beamAx(objex.Object).multiply(float(d['C'])/2+i*step))
-            if self.refNorm:
-              pipeCmd.rotateTheTubeAx(obj=ub,angle=degrees(self.refNorm.getAngle((frameCmd.beamAx(ub,FreeCAD.Vector(0,1,0))))))
-            if self.combo.currentText()!='<none>':
-              pipeCmd.moveToPyLi(ub,self.combo.currentText())
+          #if n>1:
+          #  step=(float(objex.Object.Height)-float(d['C']))/(n-1)
+          #else:
+          #  step=(float(objex.Object.Height)-float(d['C']))
+          H=float(objex.Object.Height)
+          gap=H-float(d['C'])
+          steps=[gap*self.cb1.isChecked(),H/2*self.cb2.isChecked(),(H-gap)*self.cb3.isChecked()]
+          for s in steps:
+            if s:
+              ub=pipeCmd.makeUbolt(propList,pos=objex.Object.Placement.Base, Z=frameCmd.beamAx(objex.Object))
+              ub.Placement.move(frameCmd.beamAx(objex.Object).multiply(s))
+              if self.refNorm:
+                pipeCmd.rotateTheTubeAx(obj=ub,angle=degrees(self.refNorm.getAngle((frameCmd.beamAx(ub,FreeCAD.Vector(0,1,0))))))
+              if self.combo.currentText()!='<none>':
+                pipeCmd.moveToPyLi(ub,self.combo.currentText())
       FreeCAD.activeDocument().commitTransaction()
     FreeCAD.activeDocument().recompute()
 
@@ -762,16 +788,10 @@ class insertPypeLineForm(protopypeForm):
     self.btn3.setMaximumWidth(100)
     self.secondCol.layout().addWidget(self.btn3)
     self.btn3.clicked.connect(self.changeColor)
-    #self.btn6=QPushButton('create Path')
-    #self.btn6.setMaximumWidth(100)
-    #self.firstCol.layout().addWidget(self.btn6)
-    #self.btn6.clicked.connect(self.createPath)
     self.btn5=QPushButton('Get Path')
-    #self.btn5.setMaximumWidth(100)
     self.firstCol.layout().addWidget(self.btn5)
     self.btn5.clicked.connect(self.getBase)
     self.btnX=QPushButton('Get Profile')
-    #self.btnX.setMaximumWidth(100)
     self.firstCol.layout().addWidget(self.btnX)
     self.btnX.clicked.connect(self.apply)
     self.color=0.8,0.8,0.8
@@ -783,11 +803,11 @@ class insertPypeLineForm(protopypeForm):
   def summary(self,pl=None):
     if self.combo.currentText()!="<new>":
       pl=FreeCAD.ActiveDocument.getObjectsByLabel(self.combo.currentText())[0]
-      FreeCAD.Console.PrintMessage("\n%s: %s - %s\nProfile: %.1fx%.1f\nColor: %.3f, %.3f, %.3f\n"%(pl.Label, pl.PSize, pl.PRating, pl.OD, pl.thk, pl.ViewObject.ShapeColor[0], pl.ViewObject.ShapeColor[1], pl.ViewObject.ShapeColor[2]))
+      FreeCAD.Console.PrintMessage("\n%s: %s - %s\nProfile: %.1fx%.1f\nRGB color: %.3f, %.3f, %.3f\n"%(pl.Label, pl.PSize, pl.PRating, pl.OD, pl.thk, pl.ViewObject.ShapeColor[0], pl.ViewObject.ShapeColor[1], pl.ViewObject.ShapeColor[2]))
       if pl.Base:
-        FreeCAD.Console.PrintMessage('Base: %s\n'%pl.Base.Label)
+        FreeCAD.Console.PrintMessage('Path: %s\n'%pl.Base.Label)
       else:
-        FreeCAD.Console.PrintMessage('Base not defined\n')
+        FreeCAD.Console.PrintMessage('Path not defined\n')
   def apply(self):
     d=self.pipeDictList[self.sizeList.currentRow()]
     if self.combo.currentText()!="<new>":                                           

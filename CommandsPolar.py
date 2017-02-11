@@ -68,9 +68,19 @@ class queryModel:
   def GetResources(self):
     return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","query.svg"),'MenuText':'query the model','ToolTip':'Click objects to print infos'}
     
+class moveWorkPlane:
+
+  def Activated(self):
+    import polarUtilsCmd
+    polarUtilsCmd.setWP()
+
+  def GetResources(self):
+    return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","grid.svg"),'MenuText':'move Workplane','ToolTip':'Move and rotate the drafting workplane with points, edges and faces'}
+    
 #---------------------------------------------------------------------------
 # Adds the commands to the FreeCAD command manager
 #---------------------------------------------------------------------------
 addCommand('drawPolygon',drawPolygon()) 
 addCommand('drawFromFile',drawFromFile())
 addCommand('queryModel',queryModel()) 
+addCommand('moveWorkPlane',moveWorkPlane()) 
