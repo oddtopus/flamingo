@@ -5,7 +5,8 @@ __author__="oddtopus"
 __url__="github.com/oddtopus/flamingo"
 __license__="LGPL 3"
 
-import FreeCAD, FreeCADGui, Part
+import FreeCAD, FreeCADGui, Part, csv
+import ArchProfile
 from PySide.QtCore import *
 from PySide.QtGui import *
 from os import listdir
@@ -230,3 +231,76 @@ class FrameLine(object):
 # s = Arch.makeStructure(p,height=1000.0)
 # s.Profile = "UPE100"
 #   Arch.makeStructure(FreeCAD.ActiveDocument.DWire001)
+
+class insertSectForm(QWidget):
+  ' dialog for Arch.makeProfile'
+  def __init__(self,winTitle='Insert section', icon='flamingo.svg'):
+    '''
+    __init__(self,winTitle='Title')
+    '''
+    super(insertSectForm,self).__init__()
+    self.move(QPoint(100,250))
+    self.setWindowFlags(Qt.WindowStaysOnTopHint)
+    self.setWindowTitle(winTitle)
+    iconPath=join(dirname(abspath(__file__)),"icons",icon)
+    from PySide.QtGui import QIcon
+    Icon=QIcon()
+    Icon.addFile(iconPath)
+    self.setWindowIcon(Icon) 
+    self.mainHL=QHBoxLayout()
+    self.setLayout(self.mainHL)
+    self.firstCol=QWidget()
+    self.firstCol.setLayout(QVBoxLayout())
+    self.mainHL.addWidget(self.firstCol)
+    self.SType='IPE'
+    self.currentRatingLab=QLabel('Section: '+self.SType)
+    self.firstCol.layout().addWidget(self.currentRatingLab)
+    self.sizeList=QListWidget()
+    self.sizeList.setMaximumWidth(120)
+    self.firstCol.layout().addWidget(self.sizeList)
+    self.sectDictList=[]
+    self.fileList=listdir(join(dirname(abspath(__file__)),"tables"))
+    self.fillSizes()
+    self.PRatingsList=[s.lstrip("Section_").rstrip(".csv") for s in self.fileList if s.startswith("Section")]
+    self.secondCol=QWidget()
+    self.secondCol.setLayout(QVBoxLayout())
+    self.lab1=QLabel('Section types:')
+    self.secondCol.layout().addWidget(self.lab1)
+    self.ratingList=QListWidget()
+    self.ratingList.setMaximumWidth(100)
+    self.ratingList.addItems(self.PRatingsList)
+    self.ratingList.itemClicked.connect(self.changeRating)
+    self.ratingList.setCurrentRow(0)
+    self.secondCol.layout().addWidget(self.ratingList)
+    self.btn1=QPushButton('Insert')
+    self.btn1.setMaximumWidth(100)
+    self.btn1.clicked.connect(self.insert)
+    self.secondCol.layout().addWidget(self.btn1)
+    self.mainHL.addWidget(self.secondCol)
+    self.show()
+  def fillSizes(self):
+    self.sizeList.clear()
+    for fileName in self.fileList:
+      if fileName=='Section_'+self.SType+'.csv':
+        f=open(join(dirname(abspath(__file__)),"tables",fileName),'r')
+        reader=csv.DictReader(f,delimiter=';')
+        self.sectDictList=[x for x in reader]
+        f.close()
+        for row in self.sectDictList:
+          s=row['SSize']
+          self.sizeList.addItem(s)
+  def changeRating(self,item):
+    self.SType=item.text()
+    self.currentRatingLab.setText('Section: '+self.SType)
+    self.fillSizes()
+  def insert(self):      # insert the section
+    result=FreeCAD.ActiveDocument.findObjects("App::DocumentObjectGroup","Profiles_set")
+    if result:
+      group= result[0]
+    else:
+      group=FreeCAD.activeDocument().addObject("App::DocumentObjectGroup","Profiles_set")
+    prop=self.sectDictList[self.sizeList.currentRow()]
+    s=ArchProfile.makeProfile([0,'SECTION',prop['SSize']+'-000',prop['stype'],float(prop['W']),float(prop['H']),float(prop['ta']),float(prop['tf'])])
+    group.addObject(s)
+    FreeCAD.activeDocument().recompute()
+    

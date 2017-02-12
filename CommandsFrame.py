@@ -201,6 +201,15 @@ class FrameLineManager:
   def GetResources(self):
     return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","frameline.svg"),'MenuText':'FrameLine Manager','ToolTip':'Open FrameLine Manager'}
 
+class insertSection:
+  def Activated(self):
+    if FreeCAD.ActiveDocument:
+      import frameFeatures
+      frameFormObj=frameFeatures.insertSectForm()
+
+  def GetResources(self):
+    return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","sect.svg"),'MenuText':'Insert Std. Sections','ToolTip':'Creates in the model standard beam profiles to be used with Frameline Manager'}
+
 #---------------------------------------------------------------------------
 # Adds the commands to the FreeCAD command manager
 #---------------------------------------------------------------------------
@@ -218,3 +227,4 @@ addCommand('adjustFrameAngle',adjustFrameAngle())
 addCommand('rotJoin',rotJoin())
 addCommand('insertPath',insertPath())
 addCommand('FrameLineManager',FrameLineManager())
+addCommand('insertSection',insertSection())
