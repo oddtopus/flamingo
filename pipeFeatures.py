@@ -221,11 +221,11 @@ class Cap(pypeType):
     fp.Profile=str(fp.OD)+"x"+str(fp.thk)
     D=float(fp.OD)
     s=float(fp.thk)
-    sfera=Part.makeSphere(0.8*D,FreeCAD.Vector(-(0.55*D-6*s),0,0))
-    cilindro=Part.makeCylinder(D/2,D*1.7,FreeCAD.Vector(-(0.55*D-6*s+1),0,0),FreeCAD.Vector(1,0,0))
+    sfera=Part.makeSphere(0.8*D,FreeCAD.Vector(0,0,-(0.55*D-6*s)))
+    cilindro=Part.makeCylinder(D/2,D*1.7,FreeCAD.Vector(0,0,-(0.55*D-6*s+1)),FreeCAD.Vector(0,0,1))
     common=sfera.common(cilindro)
     fil=common.makeFillet(D/6.5,common.Edges)
-    cut=fil.cut(Part.makeCylinder(D*1.1,D,FreeCAD.Vector(0,0,0),FreeCAD.Vector(-1,0,0)))
+    cut=fil.cut(Part.makeCylinder(D*1.1,D,FreeCAD.Vector(0,0,0),FreeCAD.Vector(0,0,-1)))
     cap=cut.makeThickness([f for f in cut.Faces if type(f.Surface)==Part.Plane],-s,1.e-3)
     fp.Shape = cap
     

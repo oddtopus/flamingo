@@ -41,14 +41,25 @@ class spinSect:
     import FreeCAD, FreeCADGui, frameCmd, pipeCmd
     from math import pi
     FreeCAD.activeDocument().openTransaction('Spin')
-    for beam in FreeCADGui.Selection.getSelection():#frameCmd.beams():
-      #frameCmd.spinTheBeam(beam,beam.Base.Placement.Rotation.Angle/pi*180+45)
+    for beam in FreeCADGui.Selection.getSelection():
       pipeCmd.rotateTheTubeAx(beam)
     FreeCAD.activeDocument().recompute()
     FreeCAD.activeDocument().commitTransaction()
         
   def GetResources(self):
     return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","beamRot.svg"),'MenuText':'Spin beams by 45 deg.','ToolTip':'Rotates the section of the beam by 45 degrees'}
+
+class reverseBeam:
+  def Activated(self):
+    import FreeCAD, FreeCADGui, pipeCmd
+    FreeCAD.activeDocument().openTransaction('Reverse')
+    for objEx in FreeCADGui.Selection.getSelectionEx():
+      pipeCmd.reverseTheTube(objEx)
+    FreeCAD.activeDocument().recompute()
+    FreeCAD.activeDocument().commitTransaction()
+        
+  def GetResources(self):
+    return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","reverse.svg"),'MenuText':'Reverse orientation','ToolTip':'Reverse the orientation of selected objects'}
 
 class fillFrame:
   def Activated(self):
@@ -215,6 +226,7 @@ class insertSection:
 #---------------------------------------------------------------------------
 addCommand('frameIt',frameIt()) 
 addCommand('spinSect',spinSect())
+addCommand('reverseBeam',reverseBeam())
 addCommand('fillFrame',fillFrame())
 addCommand('alignFlange',alignFlange())
 addCommand('shiftBeam',shiftBeam())

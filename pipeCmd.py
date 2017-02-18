@@ -304,7 +304,7 @@ def makeCap(propList=[], pos=None, Z=None):
   if pos==None:
     pos=FreeCAD.Vector(0,0,0)
   if Z==None:
-    Z=FreeCAD.Vector(-1,0,0)
+    Z=FreeCAD.Vector(0,0,1)
   a=FreeCAD.ActiveDocument.addObject("Part::FeaturePython","Fondo")
   if len(propList)==3:
     pipeFeatures.Cap(a,*propList)
@@ -312,7 +312,7 @@ def makeCap(propList=[], pos=None, Z=None):
     pipeFeatures.Cap(a)
   a.ViewObject.Proxy=0
   a.Placement.Base=pos
-  rot=FreeCAD.Rotation(FreeCAD.Vector(-1,0,0),Z)
+  rot=FreeCAD.Rotation(FreeCAD.Vector(0,0,1),Z)
   a.Placement.Rotation=rot.multiply(a.Placement.Rotation)
   return a
 
@@ -432,6 +432,24 @@ def rotateTheTubeAx(obj=None,vShapeRef=None, angle=45):
   rot=FreeCAD.Rotation(frameCmd.beamAx(obj,vShapeRef),angle)
   obj.Placement.Rotation=rot.multiply(obj.Placement.Rotation)
 
+def reverseTheTube(objEx):
+  '''
+  reverseTheTube(objEx)
+  Reverse the orientation of objEx spinning it 180 degrees around the x-axis
+  of its shape.
+  If a circular edge is selected the CentreOfCurvature is used as pivot.
+  '''
+  disp=None
+  selectedEdges=[e for e in objEx.SubObjects if e.ShapeType=='Edge']
+  if selectedEdges:
+    for edge in frameCmd.edges([objEx]):
+      if edge.curvatureAt(0):
+        disp=edge.centerOfCurvatureAt(0)-objEx.Object.Placement.Base
+        break
+  rotateTheTubeAx(objEx.Object,FreeCAD.Vector(1,0,0),180)
+  if disp:
+    objEx.Object.Placement.move(disp*2)
+  
 def rotateTheTubeEdge(ang=45):
   if len(frameCmd.edges())>0 and frameCmd.edges()[0].curvatureAt(0)!=0:
     originalPos=frameCmd.edges()[0].centerOfCurvatureAt(0)

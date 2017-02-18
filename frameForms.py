@@ -209,7 +209,7 @@ class translateForm(prototypeForm):
   def getDisp(self):
     roundDigits=3
     shapes=[y for x in FreeCADGui.Selection.getSelectionEx() for y in x.SubObjects if hasattr(y,'ShapeType')][:2]
-    if len(shapes)>1:
+    if len(shapes)>1:    # if at least 2 shapes selected....
       base,target=shapes[:2]
       disp=None
       if base.ShapeType==target.ShapeType=='Vertex':

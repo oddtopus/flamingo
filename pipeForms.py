@@ -717,33 +717,36 @@ class insertCapForm(protopypeForm):
     selCaps=[p for p in FreeCADGui.Selection.getSelection() if hasattr(p,'PType') and p.PType=='Cap']
     if len(selCaps):
       for p in selCaps:
-        pipeCmd.rotateTheTubeAx(p,FreeCAD.Vector(0,0,1),180)
+        pipeCmd.rotateTheTubeAx(p,FreeCAD.Vector(1,0,0),180)
     else:
-      pipeCmd.rotateTheTubeAx(self.lastCap,FreeCAD.Vector(0,0,1),180)
+      pipeCmd.rotateTheTubeAx(self.lastCap,FreeCAD.Vector(1,0,0),180)
   def insert(self):
     d=self.pipeDictList[self.sizeList.currentRow()]
     FreeCAD.activeDocument().openTransaction('Insert cap')
     if len(frameCmd.edges())==0:
       propList=[d['PSize'],float(d['OD']),float(d['thk'])]
       vs=[v for sx in FreeCADGui.Selection.getSelectionEx() for so in sx.SubObjects for v in so.Vertexes]
-      if len(vs)==0:
+      if len(vs)==0:   # nothing is selected
         self.lastCap=pipeCmd.makeCap(propList)
         if self.combo.currentText()!='<none>':
           pipeCmd.moveToPyLi(self.lastCap,self.combo.currentText())
       else:
-        for v in vs:
+        for v in vs:   # vertexes are selected
           self.lastCap=pipeCmd.makeCap(propList,v.Point)
         if self.combo.currentText()!='<none>':
           pipeCmd.moveToPyLi(self.lastCap,self.combo.currentText())
     else:
       for edge in frameCmd.edges():
-        if edge.curvatureAt(0)!=0:
+        if edge.curvatureAt(0)!=0:   # curved edges are selected...
           objs=[o for o in FreeCADGui.Selection.getSelection() if hasattr(o,'PSize') and hasattr(o,'OD') and hasattr(o,'thk')]
-          if len(objs)>0:
+          Z=None
+          if len(objs)>0:  # ...pype objects are selected
             propList=[objs[0].PSize,objs[0].OD,objs[0].thk]
-          else:
+            Z=edge.centerOfCurvatureAt(0)-objs[0].Shape.Solids[0].CenterOfMass
+          else:            # ...no pype objects are selected
             propList=[d['PSize'],float(d['OD']),float(d['thk'])]
-          self.lastCap=pipeCmd.makeCap(propList,edge.centerOfCurvatureAt(0),edge.tangentAt(0).cross(edge.normalAt(0)))
+            Z=edge.tangentAt(0).cross(edge.normalAt(0))
+          self.lastCap=pipeCmd.makeCap(propList,edge.centerOfCurvatureAt(0),Z)
         if self.combo.currentText()!='<none>':
           pipeCmd.moveToPyLi(self.lastCap,self.combo.currentText())
     FreeCAD.activeDocument().commitTransaction()
