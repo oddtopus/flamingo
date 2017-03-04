@@ -225,7 +225,7 @@ class Cap(pypeType):
     cilindro=Part.makeCylinder(D/2,D*1.7,FreeCAD.Vector(0,0,-(0.55*D-6*s+1)),FreeCAD.Vector(0,0,1))
     common=sfera.common(cilindro)
     fil=common.makeFillet(D/6.5,common.Edges)
-    cut=fil.cut(Part.makeCylinder(D*1.1,D,FreeCAD.Vector(0,0,0),FreeCAD.Vector(0,0,-1)))
+    cut=fil.cut(Part.makeCylinder(D*1.1,D*2,FreeCAD.Vector(0,0,0),FreeCAD.Vector(0,0,-1)))
     cap=cut.makeThickness([f for f in cut.Faces if type(f.Surface)==Part.Plane],-s,1.e-3)
     fp.Shape = cap
     
@@ -304,13 +304,15 @@ class PypeLine2(pypeType):
       n=len(pipes)-1
       if n and not frameCmd.isParallel(frameCmd.beamAx(pipes[n]),frameCmd.beamAx(pipes[n-1])):
         P=frameCmd.intersectionCLines(pipes[n-1],pipes[n])
-        dir1=rounded((frameCmd.beamAx(pipes[n-1]).multiply(pipes[n-1].Height/2)+pipes[n-1].Placement.Base)-P)
-        dir2=rounded((frameCmd.beamAx(pipes[n]).multiply(pipes[n].Height/2)+pipes[n].Placement.Base)-P)
+        dir1=rounded((frameCmd.beamAx(pipes[n-1]).multiply(pipes[n-1].Height/2)+pipes[n-1].Placement.Base)-P).normalize()
+        dir2=rounded((frameCmd.beamAx(pipes[n]).multiply(pipes[n].Height/2)+pipes[n].Placement.Base)-P).normalize()
         ang=180-degrees(dir1.getAngle(dir2))
         propList=[fp.PSize,fp.OD,fp.thk,ang,fp.BendRadius]
         c=pipeCmd.makeElbow(propList,P,dir1.negative().cross(dir2.negative()))
-        elbBisect=frameCmd.beamAx(c,FreeCAD.Vector(1,1,0))
+        elbBisect=rounded(frameCmd.beamAx(c,FreeCAD.Vector(1,1,0))).normalize() # if not rounded, it fails with linux when sketch is vertical!(?)
+        #print elbBisect
         rot=FreeCAD.Rotation(elbBisect,frameCmd.bisect(dir1,dir2))
+        #print rot
         c.Placement.Rotation=rot.multiply(c.Placement.Rotation)
         group.addObject(c)
         portA=c.Placement.multVec(c.Ports[0])
