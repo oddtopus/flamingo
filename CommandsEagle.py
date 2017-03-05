@@ -29,6 +29,20 @@ def addCommand(name,cmdObject):
 # Riccardo Treu - LGPL  2016
 
 class importPos:
+  '''
+  Tool to import from a 2D layout of  PCB, generated 
+  with EAGLE, the positions of the electronic components
+  and place them accordingly in the 3D model, generated with
+  the PCB add-on of FreeCAD. The attribute Name of components
+  in both file must have the same value.
+  
+  Opens a dialog with one list and 2 buttons:
+  * [Import .brd] opens the file with the 2D layout and writes
+  in the list the names of components found that match the name
+  of components in 3D layout.
+  * [Place all] moves the electronic components in the 3D model to
+  the corresponding position of the .brd file opened.
+  '''
   def Activated (self):
     import eagleForms
     eagleForm=eagleForms.eagleForm()

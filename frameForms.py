@@ -141,21 +141,41 @@ class stretchForm(prototypeForm):
     [ Stretch ] changes the Height of the selected beams
   '''
   def __init__(self):
-    super(stretchForm,self).__init__('stretchForm','Get Length','Stretch','1000','mm','beamStretch.svg')
+    super(stretchForm,self).__init__('stretchForm','Get Length','Stretch','','mm','beamStretch.svg')
+    self.L=None
     self.edit1.setMaximumWidth(150)
     self.edit1.setMinimumWidth(40)
     self.edit1.setValidator(QDoubleValidator())
+    self.edit1.editingFinished.connect(self.edit12L)
     self.btn1.clicked.connect(self.getL)
     self.btn2.clicked.connect(self.stretch)
     self.btn1.setFocus()
     self.radios.hide()
+    self.slider=QSlider(Qt.Horizontal)
+    self.slider.setMinimum(-100)
+    self.slider.setMaximum(100)
+    self.slider.setValue(0)
+    self.slider.valueChanged.connect(self.changeL)
+    self.mainVL.addWidget(self.slider)
     self.show()
+  def edit12L(self):
+    if self.edit1.text():
+      self.L=float(self.edit1.text())
+      self.slider.setValue(0)
+  def changeL(self):
+    ext=self.L*(1+self.slider.value()/100.0)
+    print ext
+    self.edit1.setText(str(ext))
   def getL(self):
-    L=frameCmd.getDistance()
-    if L!=None:
-      self.edit1.setText(str(L))
-    elif len(frameCmd.beams())>0:
-      self.edit1.setText(str(float(frameCmd.beams()[0].Height)))
+    self.L=frameCmd.getDistance()
+    if self.L:
+      self.edit1.setText(str(self.L))
+    elif frameCmd.beams():
+      self.L=float(frameCmd.beams()[0].Height)
+      self.edit1.setText(str(self.L))
+    else:
+      self.edit1.setText('') 
+    self.slider.setValue(0)
   def stretch(self):
     FreeCAD.activeDocument().openTransaction('Stretch beam')
     for beam in frameCmd.beams():

@@ -28,6 +28,11 @@ def addCommand(name,cmdObject):
 #---------------------------------------------------------------------------
 
 class frameIt:
+  '''
+  Given a beam object and an edge in the model, this tool lay down the
+  beam over the edge by selecting them one after the other until ESC is
+  pressed.
+  '''
   def Activated(self):
     import FreeCAD, FreeCADGui, frameObservers, frameCmd
     s=frameObservers.frameItObserver()
@@ -37,6 +42,10 @@ class frameIt:
     return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","beamFit.svg"),'MenuText':'Place one-beam over one-edge','ToolTip':'Place one beam after the other over the edges'}
 
 class spinSect:
+  '''
+  Tool to spin one object around the "Z" axis of its shape 
+  by 45 degrees.
+  '''
   def Activated(self):
     import FreeCAD, FreeCADGui, frameCmd, pipeCmd
     from math import pi
@@ -50,6 +59,12 @@ class spinSect:
     return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","beamRot.svg"),'MenuText':'Spin beams by 45 deg.','ToolTip':'Rotates the section of the beam by 45 degrees'}
 
 class reverseBeam:
+  '''
+  Tool to spin one object around the "X" axis of its shape 
+  by 180 degrees.
+  Note: - if one circular edge of the object is selected, that is used
+  as the pivot of rotation.
+  '''
   def Activated(self):
     import FreeCAD, FreeCADGui, pipeCmd
     FreeCAD.activeDocument().openTransaction('Reverse')
@@ -62,6 +77,11 @@ class reverseBeam:
     return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","reverse.svg"),'MenuText':'Reverse orientation','ToolTip':'Reverse the orientation of selected objects'}
 
 class fillFrame:
+  '''
+  Dialog to create over multiple edges selected in the viewport the
+  beams of the type of that previously chosen among those present
+  in the model.
+  '''
   def Activated(self):
     import frameForms
     frameFormObj=frameForms.fillForm()
@@ -70,6 +90,14 @@ class fillFrame:
     return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","fillFrame.svg"),'MenuText':'Fill the frame','ToolTip':'Fill the sketch of the frame with the selected beam'}
 
 class alignFlange:
+  '''
+  Tool to rotate beams (or other objects) so that their surfaces are 
+  parallel to one reference plane.
+  If multiple faces are preselected, objects will be rotated according
+  the first face in the selections set. Otherwise the program prompts
+  to select one reference face and then the faces to be reoriented until
+  ESC is pressed.
+  '''
   def Activated(self):
     import FreeCAD, FreeCADGui, frameCmd, frameObservers
     faces=frameCmd.faces()
@@ -91,7 +119,22 @@ class alignFlange:
     return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","flangeAlign.svg"),'MenuText':'alignFlange','ToolTip':'Rotates the section of the beam to make the faces parallel to the first selection'}
 
 class shiftBeam:
-  
+  '''
+  Dialog to translate and copy objects.
+  * "x/y/z" textboxes: direct input of amount of translation in each 
+  direction.
+  * "Multiple" textbox: the multiple coefficient of the translation
+  amount.
+  * "Steps" textbox: the denominator of the translation amount. It's
+  used when the amount of translation is to be covered in some steps.
+  * "move/copy" radiobuttons: to select if the selected objects shall 
+  be copied or only translated.
+  * [Displacement] button: takes the amount and direction of translation
+  from the distance of selected entities (points, edges, faces).
+  * [Vector] button: defines the amount and direction of translation
+  by the orientation and length of the selected edge.
+  * [Translate] button: execute the translation
+  '''
   def Activated(self):
     import frameForms
     frameFormObj=frameForms.translateForm()
@@ -100,6 +143,14 @@ class shiftBeam:
     return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","beamShift.svg"),'MenuText':'shiftTheBeam','ToolTip':'Translate objects by vectors defined on existing geometry'}
 
 class levelBeam:
+  '''
+  Tool to flush the parallel faces of two objects.
+  
+  Note: - actually the command takes to the same level, respect the
+  position and orientation of the first face selected, the center-of-mass
+  of all faces selected. Thus it translates the objects even if the
+  faces are not parallel.
+  '''
   def Activated(self):
     import FreeCAD, FreeCADGui, frameCmd, frameObservers
     selex=Gui.Selection.getSelectionEx()
@@ -123,6 +174,16 @@ class levelBeam:
     return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","beamLevel.svg"),'MenuText':'Flush the surfaces','ToolTip':'Shift the beams to line-up the faces to the first selection (faces must be //)'}
 
 class alignEdge:
+  '''
+  Tool to mate two parallel edges.
+  
+  Notes: - actually the command moves the objects along the minimum
+  distance of their selected edge to the first one. Thus it translates
+  the object even if edges are not parallel.
+  - It is also possible to select two edges of the same objects. With
+  this method is possible to move quickly one object by steps defined
+  on its own geometry.
+  '''
   def Activated(self):
     import FreeCAD, FreeCADGui, frameCmd, frameObservers
     edges=frameCmd.edges()
@@ -144,6 +205,13 @@ class alignEdge:
     return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","edgeAlign.svg"),'MenuText':'Mate the edges','ToolTip':'Join two edges: select two or pre-select several'}
 
 class pivotBeam:
+  '''
+  Dialog to rotate one beam or other object around one of its edges.
+  * "Angle (deg):" textbox: insert the degree of rotation.
+  * "move/copy" radiobuttons: select if the object will be also copied.
+  * [Rotate] button: execute the rotation.
+  * [Reverse]: rotate in the opposite direction, if necessary.
+  '''
   def Activated(self):
     import frameForms
     frameFormObj=frameForms.pivotForm()
@@ -153,6 +221,16 @@ class pivotBeam:
     return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","pivot.svg"),'MenuText':'pivotTheBeam','ToolTip':'Pivots the beam around an edge'}
 
 class stretchBeam:
+  '''
+  Dialog to change the length of beams.
+  * "mm" textbox: the new length that will be applied to selected beams.
+  * [Get Length] button: takes the new length from the selected geometry,
+  either the length of a beam or edge or the distance between geometric
+  entities (point, edges, faces).
+  * [Stretch] button: execute the stretch operation to the selected beams.
+  * slider: extends the reference length from -100% to +100%.
+  
+  '''
   def Activated(self):
     import frameForms
     frameFormObj=frameForms.stretchForm()
@@ -161,6 +239,12 @@ class stretchBeam:
     return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","beamStretch.svg"),'MenuText':'stretchTheBeam','ToolTip':'Changes the length of the beam, either according a preselected edge or a direct input'}
 
 class extend:
+  '''
+  Dialog to extend one beam to one selected target.
+  Note: - if entities are preselected before calling this command, the
+  first entity is automatically taken as target and the object attached
+  to it is removed from selection set.
+  '''
   def Activated(self):
     import frameForms
     frameFormObj=frameForms.extendForm()
@@ -169,6 +253,9 @@ class extend:
     return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","extend.svg"),'MenuText':'extendTheBeam','ToolTip':'Extend the beam either to a face, a vertex or the c.o.m. of the selected object'}
 
 class adjustFrameAngle:
+  '''
+  Tool to adjust the beams at square angles of frames.
+  '''
   def Activated(self):
     import FreeCADGui, frameObservers
     FreeCADGui.Selection.clearSelection()
@@ -179,6 +266,9 @@ class adjustFrameAngle:
     return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","adjustAngle.svg"),'MenuText':'adjustFrameAngle','ToolTip':'Adjust the angle of frame by two edges'}
 
 class rotJoin:
+  '''
+  Tool to translate and rotate the beams to mate two edges.
+  '''
   def Activated(self):
     import FreeCAD, frameCmd
     if len(frameCmd.beams())>1:
@@ -193,6 +283,11 @@ class rotJoin:
     return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","rotjoin.svg"),'MenuText':'rotJoinEdge','ToolTip':'Rotates and align the beam according another edge'}
 
 class insertPath:
+  '''
+  Tool to create a continuous DWire over the path defined by the
+  edges selected in the viewport, even if these are not continuous or
+  belongs to different objects.
+  '''
   def Activated(self):
     import pipeCmd
     FreeCAD.activeDocument().openTransaction('make Path')
@@ -204,6 +299,39 @@ class insertPath:
     return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","path.svg"),'MenuText':'insert Path','ToolTip':'Creates one path along selected edges'}
 
 class FrameLineManager:
+  '''
+  Dialog to create and change properties of objects FrameLine
+  providing the following features:
+  * a list of beams' profiles previously included in the model 
+  by "insertSection" dialog;
+  * a combo-box to select the active FrameLine among those already
+  created or <new> to create a new one;
+  * a text-box where to write the name of the FrameLine that is going
+  to be created; if nothing or "<name>", the FrameLined will be named
+  as default "Telaio00n";
+  * [Insert] button: creates a new FrameLine object or adds new members
+  to the one selected in the combo-box if edges are selected in the
+  active viewport.
+  * [Redraw] button: creates new beams and places them over the selected
+  path. New beams will be collected inside the group of the FrameLine.
+  Does not create or update beams added to the FrameLine outside
+  its defined path.
+  * [Clear] button: deletes all beams in the FrameLine group. It applies
+  also to beams added to the FrameLine outside its defined path.
+  * [Get Path] button: assigns the Dwire selected to the attribute Path
+  of the FrameLine object.
+  * [Get Profile] button: changes the Profile attribute of the FrameLine
+  object to the one of the beam selected in the viewport or the one 
+  selected in the list.
+  * "Copy profile" checkbox: if checked generates a new profile object
+  for each beam in order to avoid multiple references in the model.
+  * "Move to origin" checkbox: if checked, moves the center-of-mass
+  of the profile to the origin of coordinates system: that makes the
+  centerline of the beam coincide with the c.o.m. of the profile.
+  
+  Notes: - if the name of a FrameLine object is modified, also the name
+  of the relevant group will change automatically but not viceversa. 
+  '''
   def Activated(self):
     if FreeCAD.ActiveDocument:
       import frameFeatures
@@ -213,6 +341,23 @@ class FrameLineManager:
     return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","frameline.svg"),'MenuText':'FrameLine Manager','ToolTip':'Open FrameLine Manager'}
 
 class insertSection:
+  '''
+  Dialog to create the set of profiles to be used in the model for
+  object FrameLine.
+  * "Section:" list: it includes all the sections defined in the .csv
+  file corresponding to the selected section type.
+  * "Section types:" list: the types of profiles defined with the .csv
+  files included in the folder /tables
+  * [Insert] button: creates the group "Profiles_set", if not already
+  existing, and adds to it the object of the selected profile.
+  
+  Notes: - other profiles tables can be created by adding the relevant
+  .csv file in the /tables folder.
+  - Other profiles can be drafted in the model and dragged inside
+  the group "Profiles_set". 
+  - The orientation of the DWires may influence the rendering of beams
+  on the FrameLine.
+  '''
   def Activated(self):
     if FreeCAD.ActiveDocument:
       import frameFeatures
