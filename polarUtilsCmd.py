@@ -43,6 +43,7 @@ def disegna(sk, pos):
   return lines
 
 def setWP():
+  'function to change working plane'
   import FreeCAD, FreeCADGui, frameCmd
   normal=point=None
   curves=[]
@@ -52,19 +53,18 @@ def setWP():
       curves.append(edge)
     else:
       straight.append(edge)
-  #curves=[edge for edge in frameCmd.edges() if edge.curvatureAt(0)!=0]
-  # define normal
+  # define normal: 1st from face->2nd from curve->3rd from straight edges
   if frameCmd.faces():
     normal=frameCmd.faces()[0].normalAt(0,0)
   elif curves:
     normal=curves[0].tangentAt(0).cross(curves[0].normalAt(0))
-  elif straight>1:
+  elif len(straight)>1:
     if straight and not frameCmd.isParallel(straight[0].tangentAt(0),straight[1].tangentAt(0)):
       normal=straight[0].tangentAt(0).cross(straight[1].tangentAt(0))
-  # define point
-  points=[edge.centerOfCurvatureAt(0) for edge in curves]
+  # define point: 1st from vertex->2nd from centerOfCurvature->3rd from intersection
+  points=[v.Point for sx in FreeCADGui.Selection.getSelectionEx() for v in sx.SubObjects if v.ShapeType=='Vertex']
   if not points:
-    points=[v.Point for sx in FreeCADGui.Selection.getSelectionEx() for so in sx.SubObjects for v in so.Vertexes]
+    points=[edge.centerOfCurvatureAt(0) for edge in curves]
   if not points and straight>1:
     if straight and not frameCmd.isParallel(straight[0].tangentAt(0),straight[1].tangentAt(0)):
       points.append(frameCmd.intersectionCLines(straight[0],straight[1]))
@@ -73,5 +73,17 @@ def setWP():
   # move the draft WP
   if point and normal:
     FreeCAD.DraftWorkingPlane.alignToPointAndAxis(point,normal)
+  else:
+    FreeCAD.DraftWorkingPlane.alignToPointAndAxis(FreeCAD.Vector(),FreeCAD.Vector(0,0,1))
+  FreeCADGui.Snapper.setGrid()
+def rotWP(ax=None,ang=45):
+  import FreeCAD, FreeCADGui
+  if not ax:
+    ax=FreeCAD.Vector(0,0,1)
+  if hasattr(FreeCAD,'DraftWorkingPlane') and hasattr(FreeCADGui,'Snapper'):
+    pl=FreeCAD.DraftWorkingPlane.getPlacement()
+    pRot=FreeCAD.Placement(FreeCAD.Vector(),FreeCAD.Rotation(ax,ang))
+    FreeCAD.DraftWorkingPlane.setFromPlacement(pl.multiply(pRot))
     FreeCADGui.Snapper.setGrid()
-        
+  pass
+  

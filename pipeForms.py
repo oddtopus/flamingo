@@ -404,11 +404,13 @@ class insertFlangeForm(protopypeForm):
       vs=[v for sx in FreeCADGui.Selection.getSelectionEx() for so in sx.SubObjects for v in so.Vertexes]
       if len(vs)==0:
         self.lastFlange=pipeCmd.makeFlange(propList)
+        self.lastFlange.PRating=self.PRating
         if self.combo.currentText()!='<none>':
           pipeCmd.moveToPyLi(self.lastFlange,self.combo.currentText())
       else:
         for v in vs:
           self.lastFlange=pipeCmd.makeFlange(propList,v.Point)
+          self.lastFlange.PRating=self.PRating
           if self.combo.currentText()!='<none>':
             pipeCmd.moveToPyLi(self.lastFlange,self.combo.currentText())
     elif tubes:
@@ -418,6 +420,7 @@ class insertFlangeForm(protopypeForm):
           for edge in frameCmd.edges([sx]):
             if edge.curvatureAt(0)!=0:
               self.lastFlange=pipeCmd.makeFlange(propList,edge.centerOfCurvatureAt(0),sx.Object.Shape.Solids[0].CenterOfMass-edge.centerOfCurvatureAt(0))
+              self.lastFlange.PRating=self.PRating
               if self.combo.currentText()!='<none>':
                 pipeCmd.moveToPyLi(self.lastFlange,self.combo.currentText())
       FreeCAD.activeDocument().commitTransaction()
@@ -427,6 +430,7 @@ class insertFlangeForm(protopypeForm):
       for edge in frameCmd.edges():
         if edge.curvatureAt(0)!=0:
           self.lastFlange=pipeCmd.makeFlange(propList,edge.centerOfCurvatureAt(0),edge.tangentAt(0).cross(edge.normalAt(0)))
+          self.lastFlange.PRating=self.PRating
           if self.combo.currentText()!='<none>':
             pipeCmd.moveToPyLi(self.lastFlange,self.combo.currentText())
     FreeCAD.activeDocument().commitTransaction()

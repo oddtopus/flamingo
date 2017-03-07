@@ -27,6 +27,7 @@ class flamingoToolsWorkbench ( Workbench ):
   #Icon= str(FreeCAD.getHomePath() + "Mod/FlamingoTools/icons/flamingo.svg")
   #import os
   #Icon = os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","flamingo.svg")
+  import DraftSnap
   Icon = '''
 /* XPM */
 static char * image[] = 
@@ -111,7 +112,7 @@ static char * image[] =
     #self.appendToolbar("spreadsheetTools",list2)
     #Log ('Loading Spreadsheet tools: done\n')
     import CommandsPolar
-    list3=["drawPolygon","drawFromFile","queryModel","moveWorkPlane"]
+    list3=["drawPolygon","drawFromFile","queryModel","moveWorkPlane","rotateWorkPlane"]
     self.appendToolbar("polarTools",list3)
     Log ('Loading Polar tools: done\n')
     import CommandsFrame
@@ -135,6 +136,8 @@ static char * image[] =
   def Activated(self):
     if hasattr(FreeCADGui,"draftToolBar"):
       FreeCADGui.draftToolBar.Activated()
+    if hasattr(FreeCADGui,"Snapper"):
+      FreeCADGui.Snapper.show()
     FreeCAD.__activePypeLine__=None
     FreeCAD.__activeFrameLine__=None
     Msg("Created variables in FreeCAD module:\n")

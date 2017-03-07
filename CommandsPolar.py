@@ -61,21 +61,38 @@ class queryModel:
   def Activated(self):
     import FreeCAD, FreeCADGui, qForms
     form = qForms.QueryForm(FreeCADGui.Selection)
-    #import qCmd
-    #o=qCmd.infos()
-    #o.enter()
 
   def GetResources(self):
     return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","query.svg"),'MenuText':'query the model','ToolTip':'Click objects to print infos'}
     
 class moveWorkPlane:
-
+  '''
+  Tool to set the DraftWorkingPlane according existing geometry of 
+  the model.
+  The normal of plane is set:
+  * 1st according the selected face,
+  * then according the plane defined by a curved edge,
+  * at last according the plane defined by two straight edges.
+  The origin is set:
+  * 1st according the selected vertex,
+  * then according the center of curvature of a curved edge,
+  * at last according the intersection of two straight edges.
+  '''
   def Activated(self):
     import polarUtilsCmd
     polarUtilsCmd.setWP()
 
   def GetResources(self):
-    return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","grid.svg"),'MenuText':'move Workplane','ToolTip':'Move and rotate the drafting workplane with points, edges and faces'}
+    return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","grid.svg"),'MenuText':'align Workplane','ToolTip':'Moves and rotates the drafting workplane with points, edges and faces'}
+    
+class rotateWorkPlane:
+
+  def Activated(self):
+    import FreeCAD, FreeCADGui, qForms
+    form = qForms.rotWPForm()
+
+  def GetResources(self):
+    return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","rotWP.svg"),'MenuText':'rotate Workplane','ToolTip':'Spin the Draft working plane about one of its axes'}
     
 #---------------------------------------------------------------------------
 # Adds the commands to the FreeCAD command manager
@@ -84,3 +101,4 @@ addCommand('drawPolygon',drawPolygon())
 addCommand('drawFromFile',drawFromFile())
 addCommand('queryModel',queryModel()) 
 addCommand('moveWorkPlane',moveWorkPlane()) 
+addCommand('rotateWorkPlane',rotateWorkPlane())

@@ -6,6 +6,7 @@ __url__="github.com/oddtopus/flamingo"
 __license__="LGPL 3"
 
 from PySide import QtGui, QtCore
+import FreeCAD,FreeCADGui
  
 # UI Class definitions
  
@@ -106,6 +107,51 @@ class QueryForm(QtGui.QWidget):
   def onCancel(self):
     self.close()
 
-  #def mouseMoveEvent(self,event):
-  #  self.labMousePos.setText("X: "+str(event.x()) + " Y: "+str(event.y()))
+from PySide.QtCore import *
+from PySide.QtGui import *
+from os import listdir
+from os.path import join, dirname, abspath
 
+class rotWPForm(QWidget):
+  '''
+  Dialog to rotate the working plane about its axis.
+  '''
+  def __init__(self,winTitle='Rotate WP', icon='rotWP.svg'):
+    super(rotWPForm,self).__init__()
+    self.move(QPoint(100,250))
+    self.setWindowFlags(Qt.WindowStaysOnTopHint)
+    self.setWindowTitle(winTitle)
+    iconPath=join(dirname(abspath(__file__)),"icons",icon)
+    from PySide.QtGui import QIcon
+    Icon=QIcon()
+    Icon.addFile(iconPath)
+    self.setWindowIcon(Icon) 
+    self.grid=QGridLayout()
+    self.setLayout(self.grid)
+    self.radioX=QRadioButton('X')
+    self.radioX.setChecked(True)
+    self.radioY=QRadioButton('Y')
+    self.radioZ=QRadioButton('Z')
+    self.lab1=QLabel('Angle:')
+    self.edit1=QLineEdit('45')
+    self.edit1.setAlignment(Qt.AlignCenter)
+    self.edit1.setValidator(QDoubleValidator())
+    self.btn1=QPushButton('Rotate working plane')
+    self.btn1.clicked.connect(self.rotate)
+    self.grid.addWidget(self.radioX,0,0,1,1,Qt.AlignCenter)
+    self.grid.addWidget(self.radioY,0,1,1,1,Qt.AlignCenter)
+    self.grid.addWidget(self.radioZ,0,2,1,1,Qt.AlignCenter)
+    self.grid.addWidget(self.lab1,1,0,1,1)
+    self.grid.addWidget(self.edit1,1,1,1,2)
+    self.grid.addWidget(self.btn1,2,0,1,3,Qt.AlignCenter)
+    self.show()
+  def rotate(self):
+    if self.radioX.isChecked():
+      ax=FreeCAD.Vector(1,0,0)
+    elif self.radioY.isChecked():
+      ax=FreeCAD.Vector(0,1,0)
+    else:
+      ax=FreeCAD.Vector(0,0,1)
+    ang=float(self.edit1.text())
+    import polarUtilsCmd as puc
+    puc.rotWP(ax,ang)
