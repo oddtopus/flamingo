@@ -303,7 +303,8 @@ class PypeLine2(pypeType):
       pipes.append(p)
       n=len(pipes)-1
       if n and not frameCmd.isParallel(frameCmd.beamAx(pipes[n]),frameCmd.beamAx(pipes[n-1])):
-        P=frameCmd.intersectionCLines(pipes[n-1],pipes[n])
+        #P=frameCmd.intersectionCLines(pipes[n-1],pipes[n]) -> the "rounded" in intersectionCLines makes wrong positioning of curve for some case
+        P=pipes[n].Placement.Base
         dir1=rounded((frameCmd.beamAx(pipes[n-1]).multiply(pipes[n-1].Height/2)+pipes[n-1].Placement.Base)-P).normalize()
         dir2=rounded((frameCmd.beamAx(pipes[n]).multiply(pipes[n].Height/2)+pipes[n].Placement.Base)-P).normalize()
         ang=180-degrees(dir1.getAngle(dir2))

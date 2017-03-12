@@ -338,6 +338,7 @@ class insertElbowForm(protopypeForm):
       for edge in eds:
         frameCmd.extendTheBeam(frameCmd.beams()[0],edge)
       FreeCAD.activeDocument().commitTransaction()
+      FreeCAD.activeDocument().recompute()
     else:
       FreeCAD.Console.PrintError("Wrong selection\n")
   def apply(self):
@@ -867,7 +868,7 @@ class insertPypeLineForm(protopypeForm):
         pl.Proxy.update(pl)
         FreeCAD.ActiveDocument.recompute()
       else:
-        FreeCAD.Console.PrintWarning('No Base -> nothing to redraw\n')
+        FreeCAD.Console.PrintError('No Base -> nothing to redraw\n')
     FreeCAD.activeDocument().commitTransaction()
   def changeColor(self):
     self.hide()
