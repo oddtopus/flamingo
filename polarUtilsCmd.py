@@ -66,7 +66,7 @@ def setWP():
   if not points:
     points=[edge.centerOfCurvatureAt(0) for edge in curves]
   if not points and straight>1:
-    if straight and not frameCmd.isParallel(straight[0].tangentAt(0),straight[1].tangentAt(0)):
+    if len(straight)>1 and not frameCmd.isParallel(straight[0].tangentAt(0),straight[1].tangentAt(0)):
       points.append(frameCmd.intersectionCLines(straight[0],straight[1]))
   if points:
     point=points[0]
@@ -83,7 +83,40 @@ def rotWP(ax=None,ang=45):
   if hasattr(FreeCAD,'DraftWorkingPlane') and hasattr(FreeCADGui,'Snapper'):
     pl=FreeCAD.DraftWorkingPlane.getPlacement()
     pRot=FreeCAD.Placement(FreeCAD.Vector(),FreeCAD.Rotation(ax,ang))
-    FreeCAD.DraftWorkingPlane.setFromPlacement(pl.multiply(pRot))
+    newpl=pl.multiply(pRot)
+    FreeCAD.DraftWorkingPlane.setFromPlacement(newpl)
     FreeCADGui.Snapper.setGrid()
-  pass
+  return newpl
   
+class arrow(object):
+  '''
+  This class draws a green arrow to be used as an auxiliary compass
+  to show position and orientation of objects.
+    arrow(pl=None, scale=[100,100,20],offset=100)
+  '''
+  def __init__(self,pl=None, scale=[100,100,20],offset=100):
+    import FreeCAD, FreeCADGui
+    from pivy import coin
+    self.node=coin.SoSeparator()
+    self.color=coin.SoBaseColor()
+    self.color.rgb=0,0.8,0
+    self.node.addChild(self.color)
+    self.transform=coin.SoTransform()
+    self.node.addChild(self.transform)
+    self.cone=coin.SoCone()
+    self.node.addChild(self.cone)
+    FreeCADGui.ActiveDocument.ActiveView.getSceneGraph().addChild(self.node)
+    self.transform.scaleFactor.setValue(scale)
+    self.offset=offset
+    if not pl:
+      pl=FreeCAD.Placement()
+    self.moveto(pl)
+  def moveto(self,pl):
+    import FreeCAD
+    rotx90=FreeCAD.Base.Rotation(FreeCAD.Vector(0,1,0),FreeCAD.Vector(0,0,1))
+    self.Placement=pl
+    self.transform.rotation.setValue(tuple(self.Placement.Rotation.multiply(rotx90).Q))
+    offsetV=self.Placement.Rotation.multVec(FreeCAD.Vector(0,0,self.offset))
+    self.transform.translation.setValue(tuple(self.Placement.Base+offsetV))
+    
+    

@@ -145,6 +145,9 @@ class rotWPForm(QWidget):
     self.grid.addWidget(self.edit1,1,1,1,2)
     self.grid.addWidget(self.btn1,2,0,1,3,Qt.AlignCenter)
     self.show()
+    self.sg=FreeCADGui.ActiveDocument.ActiveView.getSceneGraph()
+    from polarUtilsCmd import arrow
+    self.arrow =arrow(FreeCAD.DraftWorkingPlane.getPlacement())
   def rotate(self):
     if self.radioX.isChecked():
       ax=FreeCAD.Vector(1,0,0)
@@ -154,4 +157,7 @@ class rotWPForm(QWidget):
       ax=FreeCAD.Vector(0,0,1)
     ang=float(self.edit1.text())
     import polarUtilsCmd as puc
-    puc.rotWP(ax,ang)
+    newpl=puc.rotWP(ax,ang)
+    self.arrow.moveto(newpl)
+  def closeEvent(self,event):
+    self.sg.removeChild(self.arrow.node)

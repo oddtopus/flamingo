@@ -890,7 +890,7 @@ class insertPypeLineForm(protopypeForm):
         fields=['Label','PType','PSize','Volume','Height']
         rows=list()
         for o in group.OutList:
-          if hasattr(o,'PType') and o.PType in ['Pipe','Elbow','Flange','Clamp']:
+          if hasattr(o,'PType') and o.PType in ['Pipe','Elbow','Flange','Clamp','Reduct','Cap']:
             data=[o.Label,o.PType,o.PSize,o.Shape.Volume,'-']
             if o.PType=='Pipe':
               data[4]=o.Height
@@ -1105,16 +1105,16 @@ class breakForm(QWidget):
     self.slider=QSlider(Qt.Horizontal)
     self.slider.valueChanged.connect(self.changePoint)
     self.slider.setMaximum(100)
-    self.grid.addWidget(self.btn0,0,0)
-    self.grid.addWidget(self.lab0,0,1,1,1,Qt.AlignCenter)
-    self.grid.addWidget(self.lab1,1,0,1,1,Qt.AlignCenter)
-    self.grid.addWidget(self.combo,1,1,1,1,Qt.AlignCenter)
-    self.grid.addWidget(self.lab2,2,0,1,1,Qt.AlignCenter)
-    self.grid.addWidget(self.edit1,2,1)
-    self.grid.addWidget(self.lab3,3,0,1,1,Qt.AlignCenter)
-    self.grid.addWidget(self.edit2,3,1)
-    self.grid.addWidget(self.btn1,4,0)
-    self.grid.addWidget(self.btn2,4,1)
+    self.grid.addWidget(self.btn0,4,0)
+    self.grid.addWidget(self.lab0,4,1,1,1,Qt.AlignCenter)
+    self.grid.addWidget(self.lab1,0,0,1,1,Qt.AlignCenter)
+    self.grid.addWidget(self.combo,0,1,1,1,Qt.AlignCenter)
+    self.grid.addWidget(self.lab2,1,0,1,1,Qt.AlignCenter)
+    self.grid.addWidget(self.edit1,1,1)
+    self.grid.addWidget(self.lab3,2,0,1,1,Qt.AlignCenter)
+    self.grid.addWidget(self.edit2,2,1)
+    self.grid.addWidget(self.btn1,3,0)
+    self.grid.addWidget(self.btn2,3,1)
     self.grid.addWidget(self.slider,5,0,1,2)
     self.show()
   def setCurrentPL(self,PLName=None):

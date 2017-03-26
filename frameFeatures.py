@@ -175,8 +175,12 @@ class frameLineForm(QWidget):
         base=sel[0]
         if base.TypeId in ['Part::Part2DObjectPython','Sketcher::SketchObject']:
           self.current.Base=base
+          FreeCAD.Console.PrintWarning(self.current.Label+' base set to '+base.TypeId.split('::')[1]+'.\n')
         else:
           FreeCAD.Console.PrintError('Not a Wire nor Sketch\n')
+      else:
+        self.current.Base=None
+        FreeCAD.Console.PrintWarning(self.current.Label+' base set to None.\n')
   def getProfile(self):
     if self.current:
       from frameCmd import beams
