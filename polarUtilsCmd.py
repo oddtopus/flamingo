@@ -61,13 +61,16 @@ def setWP():
   elif len(straight)>1:
     if straight and not frameCmd.isParallel(straight[0].tangentAt(0),straight[1].tangentAt(0)):
       normal=straight[0].tangentAt(0).cross(straight[1].tangentAt(0))
-  # define point: 1st from vertex->2nd from centerOfCurvature->3rd from intersection
+  # define point: 1st from vertex->2nd from centerOfCurvature->3rd from intersection->4th from center of edge
   points=[v.Point for sx in FreeCADGui.Selection.getSelectionEx() for v in sx.SubObjects if v.ShapeType=='Vertex']
   if not points:
     points=[edge.centerOfCurvatureAt(0) for edge in curves]
-  if not points and straight>1:
-    if len(straight)>1 and not frameCmd.isParallel(straight[0].tangentAt(0),straight[1].tangentAt(0)):
-      points.append(frameCmd.intersectionCLines(straight[0],straight[1]))
+  if not points and len(straight)>1:
+    inters=frameCmd.intersectionCLines(straight[0],straight[1])
+    if inters:
+      points.append(inters)
+  if not points and len(straight):
+    points.append(straight[0].CenterOfMass)
   if points:
     point=points[0]
   # move the draft WP

@@ -226,7 +226,9 @@ class translateForm(prototypeForm):
     #  self.getVect()
     #else:
     #  self.getDisp()
+    self.arrow=None
   def getDisp(self):
+    self.deleteArrow()
     roundDigits=3
     shapes=[y for x in FreeCADGui.Selection.getSelectionEx() for y in x.SubObjects if hasattr(y,'ShapeType')][:2]
     if len(shapes)>1:    # if at least 2 shapes selected....
@@ -281,7 +283,15 @@ class translateForm(prototypeForm):
       self.edit2.setText(str(round(dy,roundDigits)))
       self.edit3.setText(str(round(dz,roundDigits)))
       FreeCADGui.Selection.clearSelection()
+      self.deleteArrow()
+      from polarUtilsCmd import arrow
+      where=FreeCAD.Placement()
+      where.Base=edge.valueAt(0)
+      where.Rotation=FreeCAD.Rotation(FreeCAD.Vector(0,0,1),edge.tangentAt(0))
+      size=[edge.Length/50.0,edge.Length/10.0,edge.Length/10.0]
+      self.arrow=arrow(pl=where,scale=size)
   def translateTheBeams(self):
+    self.deleteArrow()
     scale=float(self.edit4.text())/float(self.edit5.text())
     disp=FreeCAD.Vector(float(self.edit1.text()),float(self.edit2.text()),float(self.edit3.text())).scale(scale,scale,scale)
     FreeCAD.activeDocument().openTransaction('Translate')    
@@ -292,4 +302,13 @@ class translateForm(prototypeForm):
       o.Placement.move(disp)
     FreeCAD.activeDocument().recompute()
     FreeCAD.activeDocument().commitTransaction()    
+  def deleteArrow(self):
+    if self.arrow:
+      FreeCADGui.ActiveDocument.ActiveView.getSceneGraph().removeChild(self.arrow.node)
+      self.arrow=None
+  def closeEvent(self,event):
+    self.deleteArrow()
+    #if self.arrow:
+    #  FreeCADGui.ActiveDocument.ActiveView.getSceneGraph().removeChild(self.arrow.node)
+    print "GoodBye\n"
 
