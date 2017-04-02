@@ -156,6 +156,7 @@ def makeElbowBetweenThings(thing1=None, thing2=None, propList=None):
   for thing in [thing1,thing2]:
     if frameCmd.beams([thing]):
       directions.append(rounded((frameCmd.beamAx(thing).multiply(thing.Height/2)+thing.Placement.Base)-P))
+      #directions.append(frameCmd.beamAx(thing))
     elif hasattr(thing,'ShapeType') and thing.ShapeType=='Edge':
       directions.append(rounded(thing.CenterOfMass-P))
   ang=180-degrees(directions[0].getAngle(directions[1]))
@@ -180,7 +181,6 @@ def makeElbowBetweenThings(thing1=None, thing2=None, propList=None):
       frameCmd.extendTheBeam(tube,portA)
     else:
       frameCmd.extendTheBeam(tube,portB)
-  #FreeCAD.activeDocument().recompute()
   return elb
 
 def makeFlange(propList=[], pos=None, Z=None):
