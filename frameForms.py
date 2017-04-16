@@ -288,8 +288,8 @@ class translateForm(prototypeForm):
       where=FreeCAD.Placement()
       where.Base=edge.valueAt(0)
       where.Rotation=FreeCAD.Rotation(FreeCAD.Vector(0,0,1),edge.tangentAt(0))
-      size=[edge.Length/50.0,edge.Length/10.0,edge.Length/10.0]
-      self.arrow=arrow(pl=where,scale=size)
+      size=[edge.Length/20.0,edge.Length/10.0,edge.Length/20.0]
+      self.arrow=arrow(pl=where,scale=size,offset=edge.Length/2.0)
   def translateTheBeams(self):
     self.deleteArrow()
     scale=float(self.edit4.text())/float(self.edit5.text())

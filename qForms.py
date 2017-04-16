@@ -146,8 +146,10 @@ class rotWPForm(QWidget):
     self.grid.addWidget(self.btn1,2,0,1,3,Qt.AlignCenter)
     self.show()
     self.sg=FreeCADGui.ActiveDocument.ActiveView.getSceneGraph()
+    s=FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/Draft").GetInt("gridSize")
+    sc=[float(x*s) for x in [1,1,.2]]
     from polarUtilsCmd import arrow
-    self.arrow =arrow(FreeCAD.DraftWorkingPlane.getPlacement())
+    self.arrow =arrow(FreeCAD.DraftWorkingPlane.getPlacement(),scale=sc,offset=s)
   def rotate(self):
     if self.radioX.isChecked():
       ax=FreeCAD.Vector(1,0,0)

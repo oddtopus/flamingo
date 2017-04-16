@@ -53,7 +53,7 @@ class protopypeForm(QWidget):
     self.pipeDictList=[]
     self.fileList=listdir(join(dirname(abspath(__file__)),"tables"))
     self.fillSizes()
-    self.PRatingsList=[s.lstrip(PType+"_").rstrip(".csv") for s in self.fileList if s.startswith(PType)]
+    self.PRatingsList=[s.lstrip(PType+"_").rstrip(".csv") for s in self.fileList if s.startswith(PType) and s.endswith('.csv')]
     self.secondCol=QWidget()
     self.secondCol.setLayout(QVBoxLayout())
     self.combo=QComboBox()

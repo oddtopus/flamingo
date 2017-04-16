@@ -90,6 +90,14 @@ def rotWP(ax=None,ang=45):
     FreeCAD.DraftWorkingPlane.setFromPlacement(newpl)
     FreeCADGui.Snapper.setGrid()
   return newpl
+def offsetWP(delta):
+  import FreeCAD,FreeCADGui
+  if hasattr(FreeCAD,'DraftWorkingPlane') and hasattr(FreeCADGui,'Snapper'):
+    rot=FreeCAD.DraftWorkingPlane.getPlacement().Rotation
+    offset=rot.multVec(FreeCAD.Vector(0,0,delta))
+    point=FreeCAD.DraftWorkingPlane.getPlacement().Base+offset
+    FreeCAD.DraftWorkingPlane.alignToPointAndAxis(point,offset)
+    FreeCADGui.Snapper.setGrid()
   
 class arrow(object):
   '''

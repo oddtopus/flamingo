@@ -94,6 +94,22 @@ class rotateWorkPlane:
   def GetResources(self):
     return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","rotWP.svg"),'MenuText':'rotate Workplane','ToolTip':'Spin the Draft working plane about one of its axes'}
     
+class offsetWorkPlane:
+
+  def Activated(self):
+    if hasattr(FreeCAD,'DraftWorkingPlane') and hasattr(FreeCADGui,'Snapper'):
+      import polarUtilsCmd
+      s=FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/Draft").GetInt("gridSize")
+      sc=[float(x*s) for x in [1,1,.2]]
+      arrow =polarUtilsCmd.arrow(FreeCAD.DraftWorkingPlane.getPlacement(),scale=sc,offset=s)
+      from PySide.QtGui import QInputDialog as qid
+      offset=qid.getInteger(None,'Offset Work Plane','Offset: ')
+      if offset[1]:
+        polarUtilsCmd.offsetWP(offset[0])
+      FreeCADGui.ActiveDocument.ActiveView.getSceneGraph().removeChild(arrow.node)
+  def GetResources(self):
+    return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","offsetWP.svg"),'MenuText':'offset Workplane','ToolTip':'Shifts the WP alongg its normal.'}
+    
 #---------------------------------------------------------------------------
 # Adds the commands to the FreeCAD command manager
 #---------------------------------------------------------------------------
@@ -102,3 +118,4 @@ addCommand('drawFromFile',drawFromFile())
 addCommand('queryModel',queryModel()) 
 addCommand('moveWorkPlane',moveWorkPlane()) 
 addCommand('rotateWorkPlane',rotateWorkPlane())
+addCommand('offsetWorkPlane',offsetWorkPlane())
