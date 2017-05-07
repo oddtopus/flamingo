@@ -84,7 +84,9 @@ class fillFrame:
   '''
   def Activated(self):
     import frameForms
-    frameFormObj=frameForms.fillForm()
+    #frameFormObj=frameForms.fillForm()
+    dialog=frameForms.fillForm()
+    FreeCADGui.Control.showDialog(dialog)
       
   def GetResources(self):
     return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","fillFrame.svg"),'MenuText':'Fill the frame','ToolTip':'Fill the sketch of the frame with the selected beam'}
@@ -137,7 +139,9 @@ class shiftBeam:
   '''
   def Activated(self):
     import frameForms
-    frameFormObj=frameForms.translateForm()
+    #frameFormObj=frameForms.translateForm()
+    dialog=frameForms.translateForm()
+    FreeCADGui.Control.showDialog(dialog)
 
   def GetResources(self):
     return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","beamShift.svg"),'MenuText':'shiftTheBeam','ToolTip':'Translate objects by vectors defined on existing geometry'}
