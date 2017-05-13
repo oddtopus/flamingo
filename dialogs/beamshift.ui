@@ -14,7 +14,7 @@
    <enum>Qt::NoFocus</enum>
   </property>
   <property name="windowTitle">
-   <string>Dialog</string>
+   <string>Move</string>
   </property>
   <layout class="QGridLayout" name="gridLayout">
    <property name="bottomMargin">

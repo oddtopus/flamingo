@@ -17,7 +17,7 @@
    </size>
   </property>
   <property name="windowTitle">
-   <string>Fill frame</string>
+   <string>Pivot</string>
   </property>
   <property name="sizeGripEnabled">
    <bool>false</bool>
@@ -35,7 +35,7 @@
       <string>move</string>
      </property>
      <property name="checked">
-      <bool>false</bool>
+      <bool>true</bool>
      </property>
     </widget>
    </item>
@@ -45,30 +45,34 @@
       <string>copy</string>
      </property>
      <property name="checked">
-      <bool>true</bool>
+      <bool>false</bool>
      </property>
     </widget>
    </item>
    <item row="3" column="0" colspan="2">
     <widget class="QPushButton" name="btn1">
      <property name="text">
-      <string>Select</string>
+      <string>Reverse</string>
      </property>
     </widget>
    </item>
-   <item row="0" column="0" colspan="2">
-    <widget class="QLabel" name="label">
-     <property name="frameShape">
-      <enum>QFrame::Box</enum>
-     </property>
-     <property name="frameShadow">
-      <enum>QFrame::Raised</enum>
-     </property>
+   <item row="0" column="1">
+    <widget class="QLineEdit" name="edit1">
      <property name="text">
-      <string>&lt; select a beam &gt;</string>
+      <string>90</string>
      </property>
      <property name="alignment">
       <set>Qt::AlignCenter</set>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="0">
+    <widget class="QLabel" name="label">
+     <property name="text">
+      <string> Angle - deg: </string>
+     </property>
+     <property name="buddy">
+      <cstring>edit1</cstring>
      </property>
     </widget>
    </item>

@@ -85,8 +85,7 @@ class fillFrame:
   def Activated(self):
     import frameForms
     #frameFormObj=frameForms.fillForm()
-    dialog=frameForms.fillForm()
-    FreeCADGui.Control.showDialog(dialog)
+    FreeCADGui.Control.showDialog(frameForms.fillForm())
       
   def GetResources(self):
     return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","fillFrame.svg"),'MenuText':'Fill the frame','ToolTip':'Fill the sketch of the frame with the selected beam'}
@@ -135,13 +134,13 @@ class shiftBeam:
   from the distance of selected entities (points, edges, faces).
   * [Vector] button: defines the amount and direction of translation
   by the orientation and length of the selected edge.
-  * [Translate] button: execute the translation
+  * [OK] button: execute the translation
+  * [Cancel]: exits
   '''
   def Activated(self):
     import frameForms
     #frameFormObj=frameForms.translateForm()
-    dialog=frameForms.translateForm()
-    FreeCADGui.Control.showDialog(dialog)
+    FreeCADGui.Control.showDialog(frameForms.translateForm())
 
   def GetResources(self):
     return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","beamShift.svg"),'MenuText':'shiftTheBeam','ToolTip':'Translate objects by vectors defined on existing geometry'}
@@ -213,13 +212,14 @@ class pivotBeam:
   Dialog to rotate one beam or other object around one of its edges.
   * "Angle (deg):" textbox: insert the degree of rotation.
   * "move/copy" radiobuttons: select if the object will be also copied.
-  * [Rotate] button: execute the rotation.
+  * [OK] button: execute the rotation.
   * [Reverse]: rotate in the opposite direction, if necessary.
+  * [Cancel]: exits
   '''
   def Activated(self):
     import frameForms
-    frameFormObj=frameForms.pivotForm()
-      
+    #frameFormObj=frameForms.pivotForm()
+    FreeCADGui.Control.showDialog(frameForms.pivotForm())
     
   def GetResources(self):
     return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","pivot.svg"),'MenuText':'pivotTheBeam','ToolTip':'Pivots the beam around an edge'}
@@ -228,16 +228,18 @@ class stretchBeam:
   '''
   Dialog to change the length of beams.
   * "mm" textbox: the new length that will be applied to selected beams.
+  * [OK] button: execute the stretch operation to the selected beams.
   * [Get Length] button: takes the new length from the selected geometry,
   either the length of a beam or edge or the distance between geometric
   entities (point, edges, faces).
-  * [Stretch] button: execute the stretch operation to the selected beams.
+  * [Cancel]: exits
   * slider: extends the reference length from -100% to +100%.
   
   '''
   def Activated(self):
     import frameForms
-    frameFormObj=frameForms.stretchForm()
+    #frameFormObj=frameForms.stretchForm()
+    FreeCADGui.Control.showDialog(frameForms.stretchForm())
     
   def GetResources(self):
     return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","beamStretch.svg"),'MenuText':'stretchTheBeam','ToolTip':'Changes the length of the beam, either according a preselected edge or a direct input'}
@@ -251,7 +253,8 @@ class extend:
   '''
   def Activated(self):
     import frameForms
-    frameFormObj=frameForms.extendForm()
+    #frameFormObj=frameForms.extendForm()
+    FreeCADGui.Control.showDialog(frameForms.extendForm())
     
   def GetResources(self):
     return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","extend.svg"),'MenuText':'extendTheBeam','ToolTip':'Extend the beam either to a face, a vertex or the c.o.m. of the selected object'}

@@ -52,26 +52,29 @@ class prototypeForm(QWidget):
     self.buttons.layout().addWidget(self.btn2)
     self.mainVL.addWidget(self.buttons)
 
-class pivotForm(prototypeForm):
+class pivotForm:#(prototypeForm):
   'dialog for pivotTheBeam()'
   def __init__(self):
-    super(pivotForm,self).__init__('pivotForm','Rotate','Reverse','90','Angle - deg:','pivot.svg')
-    self.edit1.setValidator(QDoubleValidator())
-    self.btn1.clicked.connect(self.rotate)
-    self.btn2.clicked.connect(self.reverse)
-    self.show()
-  def rotate(self):
+    #super(pivotForm,self).__init__('pivotForm','Rotate','Reverse','90','Angle - deg:','pivot.svg')
+    dialogPath=join(dirname(abspath(__file__)),"dialogs","pivot.ui")
+    self.form=FreeCADGui.PySideUic.loadUi(dialogPath)
+    self.form.edit1.setValidator(QDoubleValidator())
+    #self.btn1.clicked.connect(self.rotate)
+    self.form.btn1.clicked.connect(self.reverse)
+    #self.show()
+  def accept(self):#rotate(self):
     FreeCAD.activeDocument().openTransaction('Rotate')
-    if self.radio2.isChecked():
+    if self.form.radio2.isChecked():
       FreeCAD.activeDocument().copyObject(FreeCADGui.Selection.getSelection()[0],True)
-      frameCmd.pivotTheBeam(float(self.edit1.text()),ask4revert=False)
+      frameCmd.pivotTheBeam(float(self.form.edit1.text()),ask4revert=False)
     else:
-      frameCmd.pivotTheBeam(float(self.edit1.text()),ask4revert=False)
+      frameCmd.pivotTheBeam(float(self.form.edit1.text()),ask4revert=False)
+    FreeCAD.ActiveDocument.recompute()
     FreeCAD.activeDocument().commitTransaction()
   def reverse(self):
     FreeCAD.activeDocument().openTransaction('Reverse rotate')
-    frameCmd.pivotTheBeam(-2*float(self.edit1.text()),ask4revert=False)
-    self.edit1.setText(str(-1*float(self.edit1.text())))
+    frameCmd.pivotTheBeam(-2*float(self.form.edit1.text()),ask4revert=False)
+    self.form.edit1.setText(str(-1*float(self.form.edit1.text())))
     FreeCAD.activeDocument().commitTransaction()
 
 class fillForm:#(prototypeForm):
@@ -97,6 +100,7 @@ class fillForm:#(prototypeForm):
           struct=FreeCAD.activeDocument().copyObject(self.beam,True)
           frameCmd.placeTheBeam(struct,edge)
         FreeCAD.activeDocument().recompute()
+      FreeCAD.ActiveDocument.recompute()
       FreeCAD.activeDocument().commitTransaction()
   def select(self):
     if len(frameCmd.beams())>0:
@@ -104,38 +108,40 @@ class fillForm:#(prototypeForm):
       self.form.label.setText(self.beam.Label+':'+self.beam.Profile)
       FreeCADGui.Selection.removeSelection(self.beam)
 
-class extendForm(prototypeForm):
+class extendForm:#(prototypeForm):
   'dialog for frameCmd.extendTheBeam()'
   def __init__(self):
-    super(extendForm,self).__init__('extendForm','Extend','Target','<select target>','','extend.svg')
-    self.edit1.setMinimumWidth(150)
+    #super(extendForm,self).__init__('extendForm','Extend','Target','<select target>','','extend.svg')
+    #self.edit1.setMinimumWidth(150)
+    dialogPath=join(dirname(abspath(__file__)),"dialogs","extend.ui")
+    self.form=FreeCADGui.PySideUic.loadUi(dialogPath)
     selex = FreeCADGui.Selection.getSelectionEx()
-    self.btn1.clicked.connect(self.extend)
-    self.btn2.clicked.connect(self.getTarget)
+    #self.btn1.clicked.connect(self.extend)
+    self.form.btn1.clicked.connect(self.getTarget)
     if len(selex):
       self.target=selex[0].SubObjects[0]
-      self.edit1.setText(selex[0].Object.Label+':'+self.target.ShapeType)
-      self.btn1.setFocus()
+      self.form.label.setText(selex[0].Object.Label+':'+self.target.ShapeType)
+      #self.btn1.setFocus()
       FreeCADGui.Selection.removeSelection(selex[0].Object)
     else:
       self.target=None
-    self.radios.hide()
-    self.show()
+    #self.radios.hide()
+    #self.show()
   def getTarget(self):
     selex = FreeCADGui.Selection.getSelectionEx()
     if len(selex[0].SubObjects)>0 and hasattr(selex[0].SubObjects[0],'ShapeType'):
       self.target=selex[0].SubObjects[0]
-      self.edit1.setText(selex[0].Object.Label+':'+self.target.ShapeType)
+      self.form.label.setText(selex[0].Object.Label+':'+self.target.ShapeType)
       FreeCADGui.Selection.clearSelection()
-  def extend(self):
+  def accept(self):#extend(self):
     if self.target!=None and len(frameCmd.beams())>0:
       FreeCAD.activeDocument().openTransaction('Extend beam')
       for beam in frameCmd.beams():
         frameCmd.extendTheBeam(beam,self.target)
-      FreeCAD.activeDocument().commitTransaction()
       FreeCAD.activeDocument().recompute()
+      FreeCAD.activeDocument().commitTransaction()
       
-class stretchForm(prototypeForm):
+class stretchForm:#(prototypeForm):
   '''dialog for stretchTheBeam()
     [Get Length] measures the min. distance of the selected objects or
       the length of the selected edge or
@@ -143,53 +149,54 @@ class stretchForm(prototypeForm):
     [ Stretch ] changes the Height of the selected beams
   '''
   def __init__(self):
-    super(stretchForm,self).__init__('stretchForm','Get Length','Stretch','','mm','beamStretch.svg')
+    #super(stretchForm,self).__init__('stretchForm','Get Length','Stretch','','mm','beamStretch.svg')
     self.L=None
-    self.edit1.setMaximumWidth(150)
-    self.edit1.setMinimumWidth(40)
-    self.edit1.setValidator(QDoubleValidator())
-    self.edit1.editingFinished.connect(self.edit12L)
-    self.btn1.clicked.connect(self.getL)
-    self.btn2.clicked.connect(self.stretch)
-    self.btn1.setFocus()
-    self.radios.hide()
-    self.slider=QSlider(Qt.Horizontal)
-    self.slider.setMinimum(-100)
-    self.slider.setMaximum(100)
-    self.slider.setValue(0)
-    self.slider.valueChanged.connect(self.changeL)
-    self.mainVL.addWidget(self.slider)
-    self.show()
+    #self.edit1.setMaximumWidth(150)
+    #self.edit1.setMinimumWidth(40)
+    dialogPath=join(dirname(abspath(__file__)),"dialogs","beamstretch.ui")
+    self.form=FreeCADGui.PySideUic.loadUi(dialogPath)
+    self.form.edit1.setValidator(QDoubleValidator())
+    self.form.edit1.editingFinished.connect(self.edit12L)
+    self.form.btn1.clicked.connect(self.getL)
+    #self.btn2.clicked.connect(self.stretch)
+    #self.btn1.setFocus()
+    #self.radios.hide()
+    #self.slider=QSlider(Qt.Horizontal)
+    self.form.slider.setMinimum(-100)
+    self.form.slider.setMaximum(100)
+    self.form.slider.setValue(0)
+    self.form.slider.valueChanged.connect(self.changeL)
+    #self.mainVL.addWidget(self.slider)
+    #self.show()
   def edit12L(self):
-    if self.edit1.text():
-      self.L=float(self.edit1.text())
-      self.slider.setValue(0)
+    if self.form.edit1.text():
+      self.L=float(self.form.edit1.text())
+      self.form.slider.setValue(0)
   def changeL(self):
-    ext=self.L*(1+self.slider.value()/100.0)
-    print ext
-    self.edit1.setText(str(ext))
+    ext=self.L*(1+self.form.slider.value()/100.0)
+    self.form.edit1.setText(str(ext))
   def getL(self):
     self.L=frameCmd.getDistance()
     if self.L:
-      self.edit1.setText(str(self.L))
+      self.form.edit1.setText(str(self.L))
     elif frameCmd.beams():
       beam=frameCmd.beams()[0]
       self.L=float(beam.Height)
-      self.edit1.setText(str(self.L))
+      self.form.edit1.setText(str(self.L))
     else:
-      self.edit1.setText('') 
-    self.slider.setValue(0)
-  def stretch(self):
+      self.form.edit1.setText('') 
+    self.form.slider.setValue(0)
+  def accept(self):#stretch(self):
     FreeCAD.activeDocument().openTransaction('Stretch beam')
     for beam in frameCmd.beams():
-      frameCmd.stretchTheBeam(beam,float(self.edit1.text()))
+      frameCmd.stretchTheBeam(beam,float(self.form.edit1.text()))
     FreeCAD.activeDocument().recompute()
     FreeCAD.activeDocument().commitTransaction()
     
-class translateForm(prototypeForm):   
+class translateForm:#(prototypeForm):   
   'dialog for moving blocks'
   def __init__(self):
-    super(translateForm,self).__init__('translateForm','Displacement','Vector','0','x - mm','beamShift.svg')
+    #super(translateForm,self).__init__('translateForm','Displacement','Vector','0','x - mm','beamShift.svg')
     #self.btn1.clicked.connect(self.getDistance)
     #self.btn2.clicked.connect(self.getLength)
     #self.edit1.setMaximumWidth(120)
