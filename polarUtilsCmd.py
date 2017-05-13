@@ -5,7 +5,7 @@ __author__="oddtopus"
 __url__="github.com/oddtopus/flamingo"
 __license__="LGPL 3"
 
-import math
+import math, FreeCAD,FreeCADGui
 
 def cerchio(R=1, nseg=8):
   'arg1=R, arg2=nseg: returns a list of 3-uple for nseg+1 coordintates on the semi-circle centered in (0,0,0)'
@@ -129,5 +129,66 @@ class arrow(object):
     self.transform.rotation.setValue(tuple(self.Placement.Rotation.multiply(rotx90).Q))
     offsetV=self.Placement.Rotation.multVec(FreeCAD.Vector(0,0,self.offset))
     self.transform.translation.setValue(tuple(self.Placement.Base+offsetV))
+
+import DraftTools,Draft,qForms
+from PySide.QtGui import *
+class hackedLine(DraftTools.Line):
+  '''
+  One hack of the class DraftTools.Line
+  to make 3D drafting easier.
+  '''    
+  def __init__(self, wireFlag=True):
+    DraftTools.Line.__init__(self,wireFlag)
+    self.Activated()
+    self.btnRot=QPushButton('Rotate working plane')
+    self.btnRot.clicked.connect(self.rotateWP)
+    self.btnOff=QPushButton('Offset working plane')
+    self.btnOff.clicked.connect(self.offsetWP)
+    self.ui.layout.addWidget(self.btnRot)
+    self.ui.layout.addWidget(self.btnOff)
+  def offsetWP(self):
+    if hasattr(FreeCAD,'DraftWorkingPlane') and hasattr(FreeCADGui,'Snapper'):
+      s=FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/Draft").GetInt("gridSize")
+      sc=[float(x*s) for x in [1,1,.2]]
+      varrow =arrow(FreeCAD.DraftWorkingPlane.getPlacement(),scale=sc,offset=s)
+      offset=QInputDialog.getInteger(None,'Offset Work Plane','Offset: ')
+      if offset[1]:
+        offsetWP(offset[0])
+      FreeCADGui.ActiveDocument.ActiveView.getSceneGraph().removeChild(varrow.node)
     
-    
+  def rotateWP(self):
+    self.form=qForms.rotWPForm()
+  def action(self,arg): #re-defintition of the method of parent
+      "scene event handler"
+      if arg["Type"] == "SoKeyboardEvent":
+          # key detection
+          if arg["Key"] == "ESCAPE":
+              self.finish()
+      elif arg["Type"] == "SoLocation2Event":
+          # mouse movement detection
+          self.point,ctrlPoint,info = DraftTools.getPoint(self,arg)
+      elif arg["Type"] == "SoMouseButtonEvent":
+          # mouse button detection
+          if (arg["State"] == "DOWN") and (arg["Button"] == "BUTTON1"):
+              if (arg["Position"] == self.pos):
+                  self.finish(False,cont=True)
+              else:
+                  if (not self.node) and (not self.support):
+                      DraftTools.getSupport(arg)
+                      self.point,ctrlPoint,info = DraftTools.getPoint(self,arg)
+                  if self.point:
+                      self.ui.redraw()
+                      self.pos = arg["Position"]
+                      self.node.append(self.point)
+                      self.drawSegment(self.point)
+                      rot=FreeCAD.DraftWorkingPlane.getPlacement().Rotation            # hacked 20170513 
+                      normal=rot.multVec(FreeCAD.Vector(0,0,1))                        # hacked 20170513
+                      FreeCAD.DraftWorkingPlane.alignToPointAndAxis(self.point,normal) # hacked 20170513
+                      FreeCADGui.Snapper.setGrid()                                     # hacked 20170513
+                      if (not self.isWire and len(self.node) == 2):
+                          self.finish(False,cont=True)
+                      if (len(self.node) > 2):
+                          if ((self.point-self.node[0]).Length < Draft.tolerance()):
+                              self.undolast()
+                              self.finish(True,cont=True)
+

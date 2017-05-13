@@ -110,6 +110,15 @@ class offsetWorkPlane:
   def GetResources(self):
     return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","offsetWP.svg"),'MenuText':'offset Workplane','ToolTip':'Shifts the WP alongg its normal.'}
     
+class hackedL:
+
+  def Activated(self):
+    import polarUtilsCmd
+    form = polarUtilsCmd.hackedLine()
+
+  def GetResources(self):
+    return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","hackedL.svg"),'MenuText':'draw a DWire','ToolTip':'WP is re-positioned at each point. Possible to spin and offset it.'}
+    
 #---------------------------------------------------------------------------
 # Adds the commands to the FreeCAD command manager
 #---------------------------------------------------------------------------
@@ -119,3 +128,4 @@ addCommand('queryModel',queryModel())
 addCommand('moveWorkPlane',moveWorkPlane()) 
 addCommand('rotateWorkPlane',rotateWorkPlane())
 addCommand('offsetWorkPlane',offsetWorkPlane())
+addCommand('hackedL',hackedL())
