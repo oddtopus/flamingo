@@ -140,10 +140,13 @@ class hackedLine(DraftTools.Line):
   def __init__(self, wireFlag=True):
     DraftTools.Line.__init__(self,wireFlag)
     self.Activated()
-    self.btnRot=QPushButton('Rotate working plane')
+    self.btnRot=QPushButton('(R)otate working plane')
     self.btnRot.clicked.connect(self.rotateWP)
-    self.btnOff=QPushButton('Offset working plane')
+    self.btnOff=QPushButton('(O)ffset working plane')
     self.btnOff.clicked.connect(self.offsetWP)
+    self.cb1=QCheckBox(' (M)ove origin on click')
+    self.cb1.setChecked(True)
+    self.ui.layout.addWidget(self.cb1)
     self.ui.layout.addWidget(self.btnRot)
     self.ui.layout.addWidget(self.btnOff)
   def offsetWP(self):
@@ -155,15 +158,24 @@ class hackedLine(DraftTools.Line):
       if offset[1]:
         offsetWP(offset[0])
       FreeCADGui.ActiveDocument.ActiveView.getSceneGraph().removeChild(varrow.node)
-    
   def rotateWP(self):
     self.form=qForms.rotWPForm()
   def action(self,arg): #re-defintition of the method of parent
       "scene event handler"
-      if arg["Type"] == "SoKeyboardEvent":
+      if arg["Type"] == "SoKeyboardEvent" and arg["State"]=='DOWN':
           # key detection
           if arg["Key"] == "ESCAPE":
               self.finish()
+          elif arg["ShiftDown"] and arg["CtrlDown"]:
+            if arg["Key"] in ('M','m'):
+              if self.cb1.isChecked():
+                self.cb1.setChecked(False)
+              else:
+                self.cb1.setChecked(True)
+            elif arg["Key"] in ('O','o'):
+              self.offsetWP()
+            elif arg["Key"] in ('R','r'):
+              self.rotateWP()
       elif arg["Type"] == "SoLocation2Event":
           # mouse movement detection
           self.point,ctrlPoint,info = DraftTools.getPoint(self,arg)
@@ -181,10 +193,11 @@ class hackedLine(DraftTools.Line):
                       self.pos = arg["Position"]
                       self.node.append(self.point)
                       self.drawSegment(self.point)
-                      rot=FreeCAD.DraftWorkingPlane.getPlacement().Rotation            # hacked 20170513 
-                      normal=rot.multVec(FreeCAD.Vector(0,0,1))                        # hacked 20170513
-                      FreeCAD.DraftWorkingPlane.alignToPointAndAxis(self.point,normal) # hacked 20170513
-                      FreeCADGui.Snapper.setGrid()                                     # hacked 20170513
+                      if self.cb1.isChecked():
+                        rot=FreeCAD.DraftWorkingPlane.getPlacement().Rotation
+                        normal=rot.multVec(FreeCAD.Vector(0,0,1))
+                        FreeCAD.DraftWorkingPlane.alignToPointAndAxis(self.point,normal)
+                        FreeCADGui.Snapper.setGrid()
                       if (not self.isWire and len(self.node) == 2):
                           self.finish(False,cont=True)
                       if (len(self.node) > 2):

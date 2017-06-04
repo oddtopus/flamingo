@@ -117,7 +117,7 @@ class hackedL:
     form = polarUtilsCmd.hackedLine()
 
   def GetResources(self):
-    return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","hackedL.svg"),'MenuText':'draw a DWire','ToolTip':'WP is re-positioned at each point. Possible to spin and offset it.'}
+    return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","hackedL.svg"),'Accel':"H,L",'MenuText':'draw a DWire','ToolTip':'WP is re-positioned at each point. Possible to spin and offset it.'}
     
 #---------------------------------------------------------------------------
 # Adds the commands to the FreeCAD command manager

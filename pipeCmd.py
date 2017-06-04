@@ -167,7 +167,7 @@ def makeElbowBetweenThings(thing1=None, thing2=None, propList=None):
   elb=makeElbow(propList,P,directions[0].negative().cross(directions[1].negative()))
   # mate the elbow ends with the pipes or edges
   b=frameCmd.bisect(directions[0],directions[1])
-  elbBisect=frameCmd.beamAx(elb,FreeCAD.Vector(1,1,0))
+  elbBisect=rounded(frameCmd.beamAx(elb,FreeCAD.Vector(1,1,0))) #if not rounded, fail in plane xz
   rot=FreeCAD.Rotation(elbBisect,b)
   elb.Placement.Rotation=rot.multiply(elb.Placement.Rotation)
   # trim automatically the adjacent tubes
@@ -318,11 +318,7 @@ def makeCap(propList=[], pos=None, Z=None):
 
 def makeW():
   edges=frameCmd.edges()
-  if not len(edges):
-    return None
-  elif len(edges)==1:
-    return Part.Wire(edges)
-  elif len(edges)>1:
+  if len(edges)>1:
     P0=edges[0].valueAt(0)
     P1=edges[0].valueAt(edges[0].LastParameter)
     Pint=frameCmd.intersectionCLines(edges[0],edges[1])
@@ -351,11 +347,15 @@ def makeW():
     p.Label='Path'
     p.ViewObject.LineWidth=6
     p.ViewObject.LineColor=1.0,0.3,0.0
-    return p    
+    p.ViewObject.DrawStyle='Dashdot'
+    return p
+  else:
+    FreeCAD.Console.PrintError('Not enough edges/n')
+    return None
 
 def makePypeLine2(DN="DN50",PRating="SCH-STD",OD=60.3,thk=3,BR=None, lab="Tubatura", pl=None, color=(0.8,0.8,0.8)):
   '''
-  makePypeLine2(DN="DN50",PRating="SCH-STD",OD=60.3,thk=3,BR=None, lab="Tubatura")
+  makePypeLine2(DN="DN50",PRating="SCH-STD",OD=60.3,thk=3,BR=None, lab="Tubatura",pl=None, color=(0.8,0.8,0.8))
   Adds a PypeLine2 object creating pipes over the selected edges.
   Default tube is "DN50", "SCH-STD"
   Bending Radius is set to 0.75*OD.
@@ -368,7 +368,12 @@ def makePypeLine2(DN="DN50",PRating="SCH-STD",OD=60.3,thk=3,BR=None, lab="Tubatu
     pipeFeatures.PypeLine2(a,DN,PRating,OD,thk,BR, lab)
     a.ViewObject.Proxy=0
     a.ViewObject.ShapeColor=color
-    a.Proxy.update(a,frameCmd.edges())
+    #a.Proxy.update(a,frameCmd.edges())
+    if frameCmd.edges():
+      path=makeW()
+      moveToPyLi(path,lab)
+      a.Base=path
+      a.Proxy.update(a)
   else:
     a=FreeCAD.ActiveDocument.getObjectsByLabel(pl)[0]
     group=FreeCAD.ActiveDocument.getObjectsByLabel(a.Group)[0]

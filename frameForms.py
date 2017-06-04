@@ -52,17 +52,14 @@ class prototypeForm(QWidget):
     self.buttons.layout().addWidget(self.btn2)
     self.mainVL.addWidget(self.buttons)
 
-class pivotForm:#(prototypeForm):
+class pivotForm:
   'dialog for pivotTheBeam()'
   def __init__(self):
-    #super(pivotForm,self).__init__('pivotForm','Rotate','Reverse','90','Angle - deg:','pivot.svg')
     dialogPath=join(dirname(abspath(__file__)),"dialogs","pivot.ui")
     self.form=FreeCADGui.PySideUic.loadUi(dialogPath)
     self.form.edit1.setValidator(QDoubleValidator())
-    #self.btn1.clicked.connect(self.rotate)
     self.form.btn1.clicked.connect(self.reverse)
-    #self.show()
-  def accept(self):#rotate(self):
+  def accept(self):      #rotate
     FreeCAD.activeDocument().openTransaction('Rotate')
     if self.form.radio2.isChecked():
       FreeCAD.activeDocument().copyObject(FreeCADGui.Selection.getSelection()[0],True)
@@ -77,19 +74,13 @@ class pivotForm:#(prototypeForm):
     self.form.edit1.setText(str(-1*float(self.form.edit1.text())))
     FreeCAD.activeDocument().commitTransaction()
 
-class fillForm:#(prototypeForm):
+class fillForm:
   'dialog for fillFrame()'
   def __init__(self):
-    #super(fillForm,self).__init__('fillForm','Select','Fill','<select a beam>','','fillFrame.svg')
     dialogPath=join(dirname(abspath(__file__)),"dialogs","fillframe.ui")
     self.form=FreeCADGui.PySideUic.loadUi(dialogPath)
     self.beam=None
-    #self.edit1.setMinimumWidth(150)
     self.form.btn1.clicked.connect(self.select)
-    #self.btn2.clicked.connect(self.fill)
-    #self.radio2.setChecked(True)
-    #self.btn1.setFocus()
-    #self.show()
   def accept(self):
     if self.beam!=None and len(frameCmd.edges())>0:
       FreeCAD.activeDocument().openTransaction('Fill frame')
@@ -108,32 +99,26 @@ class fillForm:#(prototypeForm):
       self.form.label.setText(self.beam.Label+':'+self.beam.Profile)
       FreeCADGui.Selection.removeSelection(self.beam)
 
-class extendForm:#(prototypeForm):
+class extendForm:
   'dialog for frameCmd.extendTheBeam()'
   def __init__(self):
-    #super(extendForm,self).__init__('extendForm','Extend','Target','<select target>','','extend.svg')
-    #self.edit1.setMinimumWidth(150)
     dialogPath=join(dirname(abspath(__file__)),"dialogs","extend.ui")
     self.form=FreeCADGui.PySideUic.loadUi(dialogPath)
     selex = FreeCADGui.Selection.getSelectionEx()
-    #self.btn1.clicked.connect(self.extend)
     self.form.btn1.clicked.connect(self.getTarget)
     if len(selex):
       self.target=selex[0].SubObjects[0]
       self.form.label.setText(selex[0].Object.Label+':'+self.target.ShapeType)
-      #self.btn1.setFocus()
       FreeCADGui.Selection.removeSelection(selex[0].Object)
     else:
       self.target=None
-    #self.radios.hide()
-    #self.show()
   def getTarget(self):
     selex = FreeCADGui.Selection.getSelectionEx()
     if len(selex[0].SubObjects)>0 and hasattr(selex[0].SubObjects[0],'ShapeType'):
       self.target=selex[0].SubObjects[0]
       self.form.label.setText(selex[0].Object.Label+':'+self.target.ShapeType)
       FreeCADGui.Selection.clearSelection()
-  def accept(self):#extend(self):
+  def accept(self):            # extend
     if self.target!=None and len(frameCmd.beams())>0:
       FreeCAD.activeDocument().openTransaction('Extend beam')
       for beam in frameCmd.beams():
@@ -141,7 +126,7 @@ class extendForm:#(prototypeForm):
       FreeCAD.activeDocument().recompute()
       FreeCAD.activeDocument().commitTransaction()
       
-class stretchForm:#(prototypeForm):
+class stretchForm:
   '''dialog for stretchTheBeam()
     [Get Length] measures the min. distance of the selected objects or
       the length of the selected edge or
@@ -149,25 +134,16 @@ class stretchForm:#(prototypeForm):
     [ Stretch ] changes the Height of the selected beams
   '''
   def __init__(self):
-    #super(stretchForm,self).__init__('stretchForm','Get Length','Stretch','','mm','beamStretch.svg')
     self.L=None
-    #self.edit1.setMaximumWidth(150)
-    #self.edit1.setMinimumWidth(40)
     dialogPath=join(dirname(abspath(__file__)),"dialogs","beamstretch.ui")
     self.form=FreeCADGui.PySideUic.loadUi(dialogPath)
     self.form.edit1.setValidator(QDoubleValidator())
     self.form.edit1.editingFinished.connect(self.edit12L)
     self.form.btn1.clicked.connect(self.getL)
-    #self.btn2.clicked.connect(self.stretch)
-    #self.btn1.setFocus()
-    #self.radios.hide()
-    #self.slider=QSlider(Qt.Horizontal)
     self.form.slider.setMinimum(-100)
     self.form.slider.setMaximum(100)
     self.form.slider.setValue(0)
     self.form.slider.valueChanged.connect(self.changeL)
-    #self.mainVL.addWidget(self.slider)
-    #self.show()
   def edit12L(self):
     if self.form.edit1.text():
       self.L=float(self.form.edit1.text())
@@ -186,50 +162,16 @@ class stretchForm:#(prototypeForm):
     else:
       self.form.edit1.setText('') 
     self.form.slider.setValue(0)
-  def accept(self):#stretch(self):
+  def accept(self):        # stretch
     FreeCAD.activeDocument().openTransaction('Stretch beam')
     for beam in frameCmd.beams():
       frameCmd.stretchTheBeam(beam,float(self.form.edit1.text()))
     FreeCAD.activeDocument().recompute()
     FreeCAD.activeDocument().commitTransaction()
     
-class translateForm:#(prototypeForm):   
+class translateForm:   
   'dialog for moving blocks'
   def __init__(self):
-    #super(translateForm,self).__init__('translateForm','Displacement','Vector','0','x - mm','beamShift.svg')
-    #self.btn1.clicked.connect(self.getDistance)
-    #self.btn2.clicked.connect(self.getLength)
-    #self.edit1.setMaximumWidth(120)
-    #self.edit2=QLineEdit('0')
-    #self.edit2.setMinimumWidth(40)
-    #self.edit2.setAlignment(Qt.AlignHCenter)
-    #self.edit2.setMaximumWidth(120)
-    #self.inputs.layout().addRow('y - mm',self.edit2)
-    #self.edit3=QLineEdit('0')
-    #self.edit3.setMinimumWidth(40)
-    #self.edit3.setAlignment(Qt.AlignHCenter)
-    #self.edit3.setMaximumWidth(120)
-    #self.inputs.layout().addRow('z - mm',self.edit3)
-    #self.edit4=QLineEdit('1')
-    #self.edit4.setMinimumWidth(40)
-    #self.edit4.setAlignment(Qt.AlignHCenter)
-    #self.edit4.setMaximumWidth(120)
-    #self.inputs.layout().addRow('Multiple',self.edit4)
-    #self.edit5=QLineEdit('1')
-    #self.edit5.setMinimumWidth(40)
-    #self.edit5.setAlignment(Qt.AlignHCenter)
-    #self.edit5.setMaximumWidth(120)
-    #self.inputs.layout().addRow('Steps',self.edit5)
-    #self.btn3=QPushButton('Translate')
-    #self.btn3.clicked.connect(self.translateTheBeams)
-    #self.buttons2=QWidget()
-    #self.buttons2.setLayout(QHBoxLayout())
-    #self.buttons2.layout().addWidget(self.btn3)
-    #self.mainVL.addWidget(self.buttons2)
-    #self.btn1.setDefault(False)
-    #self.btn3.setDefault(True)
-    #self.btn3.setFocus()
-    #self.show()
     dialogPath=join(dirname(abspath(__file__)),"dialogs","beamshift.ui")
     self.form=FreeCADGui.PySideUic.loadUi(dialogPath)
     for e in [self.form.edit1,self.form.edit2,self.form.edit3,self.form.edit4,self.form.edit5]:
@@ -305,7 +247,7 @@ class translateForm:#(prototypeForm):
       self.getDistance()
     elif len(frameCmd.edges())>0:
       self.getLength()
-  def accept(self):#translateTheBeams(self):
+  def accept(self):           # translate
     self.deleteArrow()
     scale=float(self.form.edit4.text())/float(self.form.edit5.text())
     disp=FreeCAD.Vector(float(self.form.edit1.text()),float(self.form.edit2.text()),float(self.form.edit3.text())).scale(scale,scale,scale)
@@ -323,6 +265,4 @@ class translateForm:#(prototypeForm):
       self.arrow=None
   def closeEvent(self,event):
     self.deleteArrow()
-    #if self.arrow:
-    #  FreeCADGui.ActiveDocument.ActiveView.getSceneGraph().removeChild(self.arrow.node)
 

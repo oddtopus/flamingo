@@ -293,9 +293,9 @@ class PypeLine2(pypeType):
       if not edges:
         FreeCAD.Console.PrintError('Base has not valid edges\n')
         return
-    group=FreeCAD.activeDocument().getObjectsByLabel(fp.Group)[0]
     pipes=list()
     for e in edges:
+      #---Create the tube---
       p=pipeCmd.makePipe([fp.PSize,fp.OD,fp.thk,e.Length],pos=e.valueAt(0),Z=e.tangentAt(0))
       p.PRating=fp.PRating
       p.PSize=fp.PSize
@@ -303,31 +303,33 @@ class PypeLine2(pypeType):
       pipes.append(p)
       n=len(pipes)-1
       if n and not frameCmd.isParallel(frameCmd.beamAx(pipes[n]),frameCmd.beamAx(pipes[n-1])):
-        #-----1-----
-        P=rounded(frameCmd.intersectionCLines(pipes[n-1],pipes[n]))
-        #P=pipes[n].Placement.Base #alternative
-        dir1=rounded((frameCmd.beamAx(pipes[n-1]).multiply(pipes[n-1].Height/2)+pipes[n-1].Placement.Base)-P).normalize()
-        dir2=rounded((frameCmd.beamAx(pipes[n]).multiply(pipes[n].Height/2)+pipes[n].Placement.Base)-P).normalize()
-        ang=180.0-degrees(dir1.getAngle(dir2))
-        propList=[fp.PSize,fp.OD,fp.thk,ang,fp.BendRadius]
-        c=pipeCmd.makeElbow(propList,P,dir1.negative().cross(dir2.negative()))
-        elbBisect=rounded(frameCmd.beamAx(c,FreeCAD.Vector(1,1,0))).normalize() # if not rounded, it fails with linux when sketch is vertical!(?)
-        rot=FreeCAD.Rotation(elbBisect,frameCmd.bisect(dir1,dir2))
-        c.Placement.Rotation=rot.multiply(c.Placement.Rotation)
-        #-----2-----
-        #p1,p2=pipes[-2:]
-        #dir1,dir2=[frameCmd.beamAx(p) for p in [p1,p2]]
-        #ang=0
-        #c=pipeCmd.makeElbowBetweenThings(p1,p2,propList)
-        group.addObject(c)
+        #---Create the curve: method 1---
+        #P=rounded(frameCmd.intersectionCLines(pipes[n-1],pipes[n])) #alternative -> P=pipes[n].Placement.Base
+        #dir1=rounded((frameCmd.beamAx(pipes[n-1]).multiply(pipes[n-1].Height/2)+pipes[n-1].Placement.Base)-P).normalize()
+        #dir2=rounded((frameCmd.beamAx(pipes[n]).multiply(pipes[n].Height/2)+pipes[n].Placement.Base)-P).normalize()
+        #ang=180.0-degrees(dir1.getAngle(dir2))
+        #propList=[fp.PSize,fp.OD,fp.thk,ang,fp.BendRadius]
+        #c=pipeCmd.makeElbow(propList,P,dir1.negative().cross(dir2.negative()))
+        #elbBisect=rounded(frameCmd.beamAx(c,FreeCAD.Vector(1,1,0))).normalize() # if not rounded, it fails with linux when sketch is vertical!(?)
+        #rot=FreeCAD.Rotation(elbBisect,frameCmd.bisect(dir1,dir2))
+        #c.Placement.Rotation=rot.multiply(c.Placement.Rotation)
+        #---Create the curve: method 2---
+        propList=[fp.PSize,fp.OD,fp.thk,90,fp.BendRadius]
+        p1,p2=pipes[-2:]
+        dir1,dir2=[frameCmd.beamAx(p) for p in [p1,p2]]
+        c=pipeCmd.makeElbowBetweenThings(p1,p2,propList)
         portA=c.Placement.multVec(c.Ports[0])
         portB=c.Placement.multVec(c.Ports[1])
-        for tube in pipes[-2:]:
-          vectA=c.Placement.Rotation.multVec(c.Ports[0])
-          if frameCmd.isParallel(vectA,frameCmd.beamAx(tube)):
-            frameCmd.extendTheBeam(tube,portA)
-          else:
-            frameCmd.extendTheBeam(tube,portB)
+        #---Trim the tube: method 1---
+        #for tube in pipes[-2:]:
+        #  vectA=c.Placement.Rotation.multVec(c.Ports[0])
+        #  if frameCmd.isParallel(vectA,frameCmd.beamAx(tube)):
+        #    frameCmd.extendTheBeam(tube,portA)
+        #  else:
+        #    frameCmd.extendTheBeam(tube,portB)
+        #---Trim the tube: method 2---
+        frameCmd.extendTheBeam(p1,portB)
+        frameCmd.extendTheBeam(p2,portA)
         pipeCmd.moveToPyLi(c,fp.Name)
   def execute(self, fp):
     return None
