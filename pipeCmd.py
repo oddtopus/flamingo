@@ -345,9 +345,7 @@ def makeW():
     from Draft import makeWire
     p=makeWire(points)
     p.Label='Path'
-    p.ViewObject.LineWidth=6
-    p.ViewObject.LineColor=1.0,0.3,0.0
-    p.ViewObject.DrawStyle='Dashdot'
+    drawAsCenterLine(p)
     return p
   else:
     FreeCAD.Console.PrintError('Not enough edges/n')
@@ -368,10 +366,19 @@ def makePypeLine2(DN="DN50",PRating="SCH-STD",OD=60.3,thk=3,BR=None, lab="Tubatu
     pipeFeatures.PypeLine2(a,DN,PRating,OD,thk,BR, lab)
     a.ViewObject.Proxy=0
     a.ViewObject.ShapeColor=color
-    #a.Proxy.update(a,frameCmd.edges())
-    if frameCmd.edges():
+    if len(FreeCADGui.Selection.getSelection())==1:
+      obj=FreeCADGui.Selection.getSelection()[0]
+      isWire=hasattr(obj,'Shape') and type(obj.Shape)==Part.Wire
+      isSketch=hasattr(obj,'TypeId') and obj.TypeId=='Sketcher::SketchObject'
+      if isWire or isSketch:
+        a.Base=obj
+        a.Proxy.update(a)
+      if isWire:
+        moveToPyLi(obj,a.Label)
+        drawAsCenterLine(obj)
+    elif frameCmd.edges():
       path=makeW()
-      moveToPyLi(path,lab)
+      moveToPyLi(path,a.Label)
       a.Base=path
       a.Proxy.update(a)
   else:
@@ -547,5 +554,7 @@ def breakTheTubes(point,pipes=[],gap=0):
     FreeCAD.activeDocument().recompute()
   return pipes2nd
     
-    
-    
+def drawAsCenterLine(obj):
+  obj.ViewObject.LineWidth=6
+  obj.ViewObject.LineColor=1.0,0.3,0.0
+  obj.ViewObject.DrawStyle='Dashdot'

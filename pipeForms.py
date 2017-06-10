@@ -815,9 +815,14 @@ class insertPypeLineForm(protopypeForm):
       sel=FreeCADGui.Selection.getSelection()
       if sel:
         base=sel[0]
-        if (hasattr(base,'Shape') and type(base.Shape)==Part.Wire) or (hasattr(base,'TypeId') and base.TypeId=='Sketcher::SketchObject'):
+        isWire=hasattr(base,'Shape') and type(base.Shape)==Part.Wire
+        isSketch=hasattr(base,'TypeId') and base.TypeId=='Sketcher::SketchObject'
+        if isWire or isSketch:
           FreeCAD.activeDocument().openTransaction('Assign Base')
           pl.Base=base
+          if isWire:
+            pipeCmd.drawAsCenterLine(pl.Base)
+            pipeCmd.moveToPyLi(pl.Base,self.combo.currentText())
           FreeCAD.activeDocument().commitTransaction()
         else:
           FreeCAD.Console.PrintError('Not valid Base: select a Wire or a Sketch.\n')

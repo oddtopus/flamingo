@@ -17,6 +17,6 @@ For convenience Flamingo tools are grouped in three toolbars/menus + one utility
 * The 2nd toolbar is "Pype tools": that's the logical continuation of frame tool since it deals with creating pipelines and tubular structures. It also features its own Python classes to create the piping objects, such as tubes, elbows, flanges etc.
 .../flamingo/tutorials/tutorialPype2.pdf
 * The 3rd toolbar, mantanined only for historical reasons, is "Eagle tools": that's basically an addition, and shortcut, to the very fine FreeCAD-PCB workbench (also available in the FreeCAD's add-on repository) to import position of objects from a .brd Eagle's file on a PCB drawn in FreeCAD with the a.m. workbench relating only on their names. It's also the origin, by extension, of the name of the entire workbench.
-.../flamingo/blob/master/tutorials/tutorialEagle.pdf
+.../flamingo/tutorials/tutorialEagle.pdf
 * Finally the "Utils" toolbar provides some functionality to query the objects in the model and their distance, to move/rotate the work plane and a little hack of the DWire creation dialog of Draft module, which allow to change the WP position on-the-fly.
 
