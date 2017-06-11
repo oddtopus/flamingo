@@ -315,9 +315,7 @@ class PypeLine2(pypeType):
         #c.Placement.Rotation=rot.multiply(c.Placement.Rotation)
         #---Create the curve: method 2---
         propList=[fp.PSize,fp.OD,fp.thk,90,fp.BendRadius]
-        p1,p2=pipes[-2:]
-        dir1,dir2=[frameCmd.beamAx(p) for p in [p1,p2]]
-        c=pipeCmd.makeElbowBetweenThings(p1,p2,propList)
+        c=pipeCmd.makeElbowBetweenThings(edges[n-1],edges[n],propList)  #before was ...(p1,p2,propList)
         portA=c.Placement.multVec(c.Ports[0])
         portB=c.Placement.multVec(c.Ports[1])
         #---Trim the tube: method 1---
@@ -328,6 +326,7 @@ class PypeLine2(pypeType):
         #  else:
         #    frameCmd.extendTheBeam(tube,portB)
         #---Trim the tube: method 2---
+        p1,p2=pipes[-2:]
         frameCmd.extendTheBeam(p1,portB)
         frameCmd.extendTheBeam(p2,portA)
         pipeCmd.moveToPyLi(c,fp.Name)
