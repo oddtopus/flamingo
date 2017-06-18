@@ -6,6 +6,7 @@ __url__="github.com/oddtopus/flamingo"
 __license__="LGPL 3"
 
 import math, FreeCAD,FreeCADGui
+from os.path import join, dirname, abspath
 
 def cerchio(R=1, nseg=8):
   'arg1=R, arg2=nseg: returns a list of 3-uple for nseg+1 coordintates on the semi-circle centered in (0,0,0)'
@@ -48,6 +49,7 @@ def setWP():
   normal=point=None
   curves=[]
   straight=[]
+  Z=FreeCAD.Vector(0,0,1)
   for edge in frameCmd.edges():
     if edge.curvatureAt(0)!=0:
       curves.append(edge)
@@ -61,6 +63,10 @@ def setWP():
   elif len(straight)>1:
     if straight and not frameCmd.isParallel(straight[0].tangentAt(0),straight[1].tangentAt(0)):
       normal=straight[0].tangentAt(0).cross(straight[1].tangentAt(0))
+  elif FreeCADGui.Selection.getSelection():
+    normal=FreeCAD.DraftWorkingPlane.getRotation().multVec(Z)
+  else:
+    normal=Z
   # define point: 1st from vertex->2nd from centerOfCurvature->3rd from intersection->4th from center of edge
   points=[v.Point for sx in FreeCADGui.Selection.getSelectionEx() for v in sx.SubObjects if v.ShapeType=='Vertex']
   if not points:
@@ -73,11 +79,10 @@ def setWP():
     points.append(straight[0].CenterOfMass)
   if points:
     point=points[0]
-  # move the draft WP
-  if point and normal:
-    FreeCAD.DraftWorkingPlane.alignToPointAndAxis(point,normal)
   else:
-    FreeCAD.DraftWorkingPlane.alignToPointAndAxis(FreeCAD.Vector(),FreeCAD.Vector(0,0,1))
+    point=FreeCAD.Vector()
+  # move the draft WP
+  FreeCAD.DraftWorkingPlane.alignToPointAndAxis(point,normal)
   FreeCADGui.Snapper.setGrid()
 def rotWP(ax=None,ang=45):
   import FreeCAD, FreeCADGui
@@ -140,15 +145,33 @@ class hackedLine(DraftTools.Line):
   def __init__(self, wireFlag=True):
     DraftTools.Line.__init__(self,wireFlag)
     self.Activated()
-    self.btnRot=QPushButton('(R)otate working plane')
-    self.btnRot.clicked.connect(self.rotateWP)
-    self.btnOff=QPushButton('(O)ffset working plane')
-    self.btnOff.clicked.connect(self.offsetWP)
-    self.cb1=QCheckBox(' (M)ove origin on click')
-    self.cb1.setChecked(True)
-    self.ui.layout.addWidget(self.cb1)
-    self.ui.layout.addWidget(self.btnRot)
-    self.ui.layout.addWidget(self.btnOff)
+    #self.btnRot=QPushButton('(R)otate WP')
+    #self.btnRot.clicked.connect(self.rotateWP)
+    #self.btnOff=QPushButton('(O)ffset WP')
+    #self.btnOff.clicked.connect(self.offsetWP)
+    #self.cb1=QCheckBox(' (M)ove origin on click')
+    #self.cb1.setChecked(True)
+    #self.ui.layout.addWidget(self.cb1)
+    #self.plusButtons=QWidget()
+    #self.HL1=QHBoxLayout()
+    #self.plusButtons.setLayout(self.HL1)
+    #self.HL1.addWidget(self.btnRot)
+    #self.HL1.addWidget(self.btnOff)
+    #self.ui.layout.addWidget(self.plusButtons)
+    #self.btnXY=QPushButton('Restore XY plane')
+    #self.btnXY.clicked.connect(lambda: FreeCAD.DraftWorkingPlane.alignToPointAndAxis(self.node[-1],FreeCAD.Vector(0,0,1)))
+    #self.ui.layout.addWidget(self.btnXY)
+    dialogPath=join(dirname(abspath(__file__)),"dialogs","hackedline.ui")
+    self.hackedUI=FreeCADGui.PySideUic.loadUi(dialogPath)
+    self.hackedUI.btnRot.clicked.connect(self.rotateWP)
+    self.hackedUI.btnOff.clicked.connect(self.offsetWP)
+    self.hackedUI.btnXY.clicked.connect(lambda: self.alignWP(FreeCAD.Vector(0,0,1)))
+    self.hackedUI.btnXZ.clicked.connect(lambda: self.alignWP(FreeCAD.Vector(0,1,0)))
+    self.hackedUI.btnYZ.clicked.connect(lambda: self.alignWP(FreeCAD.Vector(1,0,0)))
+    self.ui.layout.addWidget(self.hackedUI)
+  def alignWP(self, norm):
+      FreeCAD.DraftWorkingPlane.alignToPointAndAxis(self.node[-1],norm)
+      FreeCADGui.Snapper.setGrid()
   def offsetWP(self):
     if hasattr(FreeCAD,'DraftWorkingPlane') and hasattr(FreeCADGui,'Snapper'):
       s=FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/Draft").GetInt("gridSize")
@@ -168,10 +191,10 @@ class hackedLine(DraftTools.Line):
               self.finish()
           elif arg["ShiftDown"] and arg["CtrlDown"]:
             if arg["Key"] in ('M','m'):
-              if self.cb1.isChecked():
-                self.cb1.setChecked(False)
+              if self.hackedUI.cb1.isChecked():
+                self.hackedUI.cb1.setChecked(False)
               else:
-                self.cb1.setChecked(True)
+                self.hackedUI.cb1.setChecked(True)
             elif arg["Key"] in ('O','o'):
               self.offsetWP()
             elif arg["Key"] in ('R','r'):
@@ -193,7 +216,7 @@ class hackedLine(DraftTools.Line):
                       self.pos = arg["Position"]
                       self.node.append(self.point)
                       self.drawSegment(self.point)
-                      if self.cb1.isChecked():
+                      if self.hackedUI.cb1.isChecked():
                         rot=FreeCAD.DraftWorkingPlane.getPlacement().Rotation
                         normal=rot.multVec(FreeCAD.Vector(0,0,1))
                         FreeCAD.DraftWorkingPlane.alignToPointAndAxis(self.point,normal)

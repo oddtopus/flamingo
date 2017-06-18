@@ -444,7 +444,7 @@ def rotateTheTubeAx(obj=None,vShapeRef=None, angle=45):
   rot=FreeCAD.Rotation(frameCmd.beamAx(obj,vShapeRef),angle)
   obj.Placement.Rotation=rot.multiply(obj.Placement.Rotation)
 
-def reverseTheTube(objEx):
+def reverseTheTube(objEx,ang=180):
   '''
   reverseTheTube(objEx)
   Reverse the orientation of objEx spinning it 180 degrees around the x-axis
@@ -458,6 +458,9 @@ def reverseTheTube(objEx):
       if edge.curvatureAt(0):
         disp=edge.centerOfCurvatureAt(0)-objEx.Object.Placement.Base
         break
+      elif frameCmd.beams([objEx.Object]):
+        ax=frameCmd.beamAx(objEx.Object)
+        disp=ax*((edge.CenterOfMass-objEx.Object.Placement.Base).dot(ax))
   rotateTheTubeAx(objEx.Object,FreeCAD.Vector(1,0,0),180)
   if disp:
     objEx.Object.Placement.move(disp*2)
