@@ -592,7 +592,7 @@ class insertUboltForm(protopypeForm):
   For position and orientation you can select
     - one or more circular edges,
     - nothing.
-  In case one pipe is selected, its properties are aplied to the flange.
+  In case one pipe is selected, its properties are aplied to the U-bolt.
   Available one button to reverse the orientation of the last or selected tubes.
   '''
   def __init__(self):
@@ -874,7 +874,7 @@ class insertPypeLineForm(protopypeForm):
         plist.close()
         FreeCAD.Console.PrintMessage('Data saved in %s.\n' %f)
     
-class rotateForm(prototypeForm):
+class rotateForm:#prototypeForm):
   '''
   Dialog for rotateTheTubeAx().
   It allows to rotate one object respect to the axis of its shape.
@@ -882,84 +882,30 @@ class rotateForm(prototypeForm):
   reference edge and the object, then push [Get]
   '''
   def __init__(self):
-    super(rotateForm,self).__init__('rotateForm','Rotate','Reverse','90','Angle - deg:')
-    self.btn1.clicked.connect(self.rotate)
-    self.btn1.setFocus()
-    self.btn2.clicked.connect(self.reverse)
+    dialogPath=join(dirname(abspath(__file__)),"dialogs","rotateax.ui")
+    self.form=FreeCADGui.PySideUic.loadUi(dialogPath)
+    self.form.btn2.clicked.connect(self.reverse)
     self.vShapeRef = FreeCAD.Vector(0,0,1)
-    self.shapeAxis=QWidget()
-    self.shapeAxis.setLayout(QFormLayout())
-    self.xval=QLineEdit("0")
-    self.xval.setMinimumWidth(40)
-    self.xval.setAlignment(Qt.AlignHCenter)
-    self.shapeAxis.layout().addRow("Shape ref. axis - x",self.xval)
-    self.yval=QLineEdit("0")
-    self.yval.setMinimumWidth(40)
-    self.yval.setAlignment(Qt.AlignHCenter)
-    self.shapeAxis.layout().addRow("Shape ref. axis - y",self.yval)
-    self.zval=QLineEdit("1")
-    self.zval.setMinimumWidth(40)
-    self.zval.setAlignment(Qt.AlignHCenter)
-    self.shapeAxis.layout().addRow("Shape ref. axis - z",self.zval)    
-    for e in [self.edit1,self.xval,self.yval,self.zval]:
+    for e in [self.form.edit1,self.form.xval,self.form.yval,self.form.zval]:
       e.setValidator(QDoubleValidator())
-    self.mainVL.addWidget(self.shapeAxis)
-    self.btnGet=QPushButton("Get")
-    self.btnX=QPushButton("-X-")
-    self.btnY=QPushButton("-Y-")
-    self.btnZ=QPushButton("-Z-")
-    self.buttons3=QWidget()
-    self.buttons3.setLayout(QHBoxLayout())
-    self.buttons3.layout().addWidget(self.btnGet)
-    self.buttons3.layout().addWidget(self.btnX)
-    self.buttons3.layout().addWidget(self.btnY)
-    self.buttons3.layout().addWidget(self.btnZ)
-    self.mainVL.addWidget(self.buttons3)
-    self.btnX.clicked.connect(self.setX)
-    self.btnY.clicked.connect(self.setY)
-    self.btnZ.clicked.connect(self.setZ)
-    self.btnGet.clicked.connect(self.getAxis)
+    self.form.btnGet.clicked.connect(self.getAxis)
     self.getAxis()
-    self.btn1.setDefault(True)
-    self.btn1.setFocus()
-    self.show()
-  def rotate(self):
+  def accept(self): #rotate(self):
     if len(FreeCADGui.Selection.getSelection())>0:
       obj = FreeCADGui.Selection.getSelection()[0]
-      self.vShapeRef=FreeCAD.Vector(float(self.xval.text()),float(self.yval.text()),float(self.zval.text()))
+      self.vShapeRef=FreeCAD.Vector(float(self.form.xval.text()),float(self.form.yval.text()),float(self.form.zval.text()))
       FreeCAD.activeDocument().openTransaction('Rotate')
-      if self.radio2.isChecked():
+      if self.form.radio2.isChecked():
         FreeCAD.activeDocument().copyObject(FreeCADGui.Selection.getSelection()[0],True)
-      pipeCmd.rotateTheTubeAx(obj,self.vShapeRef,float(self.edit1.text()))
+      pipeCmd.rotateTheTubeAx(obj,self.vShapeRef,float(self.form.edit1.text()))
       FreeCAD.activeDocument().commitTransaction()
   def reverse(self):
     if len(FreeCADGui.Selection.getSelection())>0:
       obj = FreeCADGui.Selection.getSelection()[0]
       FreeCAD.activeDocument().openTransaction('Reverse rotate')
-      pipeCmd.rotateTheTubeAx(obj,self.vShapeRef,-2*float(self.edit1.text()))
-      self.edit1.setText(str(-1*float(self.edit1.text())))
+      pipeCmd.rotateTheTubeAx(obj,self.vShapeRef,-2*float(self.form.edit1.text()))
+      self.form.edit1.setText(str(-1*float(self.form.edit1.text())))
       FreeCAD.activeDocument().commitTransaction()
-  def setX(self):
-    if self.xval.text()=='1':
-      self.xval.setText('-1')
-    elif self.xval.text()=='0':
-      self.xval.setText('1')
-    else:
-      self.xval.setText('0')
-  def setY(self):
-    if self.yval.text()=='1':
-      self.yval.setText('-1')
-    elif self.yval.text()=='0':
-      self.yval.setText('1')
-    else:
-      self.yval.setText('0')
-  def setZ(self):
-    if self.zval.text()=='1':
-      self.zval.setText('-1')
-    elif self.zval.text()=='0':
-      self.zval.setText('1')
-    else:
-      self.zval.setText('0')
   def getAxis(self):
     coord=[]
     selex=FreeCADGui.Selection.getSelectionEx()
@@ -969,35 +915,32 @@ class rotateForm(prototypeForm):
         axObj=sub.tangentAt(0)
         obj=selex[1].Object
         coord=rounded(pipeCmd.shapeReferenceAxis(obj,axObj))
-        self.xval.setText(str(coord[0]))
-        self.yval.setText(str(coord[1]))
-        self.zval.setText(str(coord[2]))
+        self.form.xval.setText(str(coord[0]))
+        self.form.yval.setText(str(coord[1]))
+        self.form.zval.setText(str(coord[2]))
         FreeCADGui.Selection.removeSelection(selex[0].Object)
 
-class rotateEdgeForm(prototypeForm):
+class rotateEdgeForm: #(prototypeForm):
   '''
   Dialog for rotateTheTubeEdge().
   It allows to rotate one object respect to the axis of one circular edge.
   '''
   def __init__(self):
-    super(rotateEdgeForm,self).__init__('rotateEdgeForm','Rotate','Reverse','90','Angle - deg:')
-    self.edit1.setValidator(QDoubleValidator())
-    self.btn1.clicked.connect(self.rotate)
-    self.btn2.clicked.connect(self.reverse)
-    self.btn1.setDefault(True)
-    self.btn1.setFocus()
-    self.show()
-  def rotate(self):
+    dialogPath=join(dirname(abspath(__file__)),"dialogs","rotateedge.ui")
+    self.form=FreeCADGui.PySideUic.loadUi(dialogPath)
+    self.form.edit1.setValidator(QDoubleValidator())
+    self.form.btn2.clicked.connect(self.reverse)
+  def accept(self): #rotate(self):
     if len(FreeCADGui.Selection.getSelection())>0:
       FreeCAD.activeDocument().openTransaction('Rotate')
-      if self.radio2.isChecked():
+      if self.form.radio2.isChecked():
         FreeCAD.activeDocument().copyObject(FreeCADGui.Selection.getSelection()[0],True)
-      pipeCmd.rotateTheTubeEdge(float(self.edit1.text()))
+      pipeCmd.rotateTheTubeEdge(float(self.form.edit1.text()))
       FreeCAD.activeDocument().commitTransaction()
   def reverse(self):
     FreeCAD.activeDocument().openTransaction('Reverse rotate')
-    pipeCmd.rotateTheTubeEdge(-2*float(self.edit1.text()))
-    self.edit1.setText(str(-1*float(self.edit1.text())))
+    pipeCmd.rotateTheTubeEdge(-2*float(self.form.edit1.text()))
+    self.form.edit1.setText(str(-1*float(self.form.edit1.text())))
     FreeCAD.activeDocument().commitTransaction()
 
 class breakForm(QWidget):
