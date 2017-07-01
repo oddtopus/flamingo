@@ -231,15 +231,13 @@ class Cap(pypeType):
     
 class PypeLine2(pypeType):
   '''Class for object PType="PypeLine2"
-      *** prototype object ***
-  This aims to be a collection of objects "PType" that are updated with the 
+  This object represent a collection of objects "PType" that are updated with the 
   methods defined in the Python class.
-  At present time it creates pipes over the selected edges and collect them
-  in a group.
-  The main difference from PypeLine is that PypeLine2 features the optional 
-  attribute ".Base":
+  At present time it creates, with the method obj.Proxy.update(,obj,[edges]), pipes and curves over 
+  the given edges and collect them in a group named according the object's .Label.
+  PypeLine2 features also the optional attribute ".Base":
   - Base can be a Wire or a Sketch or any object which has edges in its Shape.
-  - Running "obj.Proxy.update(obj)" the class attempts to render the pypeline 
+  - Running "obj.Proxy.update(obj)", without any [edges], the class attempts to render the pypeline 
   (Pipe and Elbow objects) on the "obj.Base" edges: for well defined geometries 
   and open paths, this usually leads to acceptable results.
   - Running "obj.Proxy.purge(obj)" deletes from the model all Pipes and Elbows 
@@ -248,8 +246,7 @@ class PypeLine2(pypeType):
   using the relevant insertion dialogs but remember that these won't be updated 
   when the .Base is changed and won't be deleted if the pype-line is purged.
   - If Base is None, PypeLine2 behaves like a bare container of objects, 
-  with possibility to group them automatically and extract the part-list, 
-  similar to the previous version. 
+  with possibility to group them automatically and extract the part-list. 
   '''
   def __init__(self, obj,DN="DN50",PRating="SCH-STD",OD=60.3,thk=3,BR=None, lab=None):
     # initialize the parent class
@@ -299,7 +296,7 @@ class PypeLine2(pypeType):
       p=pipeCmd.makePipe([fp.PSize,fp.OD,fp.thk,e.Length],pos=e.valueAt(0),Z=e.tangentAt(0))
       p.PRating=fp.PRating
       p.PSize=fp.PSize
-      pipeCmd.moveToPyLi(p,fp.Name)
+      pipeCmd.moveToPyLi(p,fp.Label)
       pipes.append(p)
       n=len(pipes)-1
       if n and not frameCmd.isParallel(frameCmd.beamAx(pipes[n]),frameCmd.beamAx(pipes[n-1])):
@@ -329,7 +326,7 @@ class PypeLine2(pypeType):
         p1,p2=pipes[-2:]
         frameCmd.extendTheBeam(p1,portA)
         frameCmd.extendTheBeam(p2,portB)
-        pipeCmd.moveToPyLi(c,fp.Name)
+        pipeCmd.moveToPyLi(c,fp.Label)
   def execute(self, fp):
     return None
     

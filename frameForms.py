@@ -149,8 +149,9 @@ class stretchForm:
       self.L=float(self.form.edit1.text())
       self.form.slider.setValue(0)
   def changeL(self):
-    ext=self.L*(1+self.form.slider.value()/100.0)
-    self.form.edit1.setText(str(ext))
+    if self.L:
+      ext=self.L*(1+self.form.slider.value()/100.0)
+      self.form.edit1.setText(str(ext))
   def getL(self):
     self.L=frameCmd.getDistance()
     if self.L:
@@ -163,12 +164,13 @@ class stretchForm:
       self.form.edit1.setText('') 
     self.form.slider.setValue(0)
   def accept(self):        # stretch
-    FreeCAD.activeDocument().openTransaction('Stretch beam')
-    for beam in frameCmd.beams():
-      frameCmd.stretchTheBeam(beam,float(self.form.edit1.text()))
-    FreeCAD.activeDocument().recompute()
-    FreeCAD.activeDocument().commitTransaction()
-    
+    if self.form.edit1.text():
+      FreeCAD.activeDocument().openTransaction('Stretch beam')
+      for beam in frameCmd.beams():
+        frameCmd.stretchTheBeam(beam,float(self.form.edit1.text()))
+      FreeCAD.activeDocument().recompute()
+      FreeCAD.activeDocument().commitTransaction()
+
 class translateForm:   
   'dialog for moving blocks'
   def __init__(self):
