@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>216</width>
-    <height>127</height>
+    <height>130</height>
    </rect>
   </property>
   <property name="baseSize">
@@ -57,10 +57,31 @@
      </property>
     </widget>
    </item>
+   <item row="4" column="0">
+    <widget class="QRadioButton" name="head">
+     <property name="text">
+      <string>Head</string>
+     </property>
+     <property name="checked">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item row="4" column="1">
+    <widget class="QRadioButton" name="tail">
+     <property name="text">
+      <string>Tail</string>
+     </property>
+    </widget>
+   </item>
   </layout>
  </widget>
  <tabstops>
   <tabstop>btn1</tabstop>
+  <tabstop>edit1</tabstop>
+  <tabstop>tail</tabstop>
+  <tabstop>head</tabstop>
+  <tabstop>slider</tabstop>
  </tabstops>
  <resources/>
  <connections/>

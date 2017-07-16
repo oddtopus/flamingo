@@ -165,9 +165,13 @@ class stretchForm:
     self.form.slider.setValue(0)
   def accept(self):        # stretch
     if self.form.edit1.text():
+      length=float(self.form.edit1.text())
       FreeCAD.activeDocument().openTransaction('Stretch beam')
       for beam in frameCmd.beams():
-        frameCmd.stretchTheBeam(beam,float(self.form.edit1.text()))
+        delta=float(beam.Height)-length
+        frameCmd.stretchTheBeam(beam,length)
+        if self.form.tail.isChecked():
+          beam.Placement.move(frameCmd.beamAx(beam).multiply(delta))
       FreeCAD.activeDocument().recompute()
       FreeCAD.activeDocument().commitTransaction()
 
@@ -268,3 +272,48 @@ class translateForm:
   def closeEvent(self,event):
     self.deleteArrow()
 
+class alignForm:   
+  'dialog to flush faces'
+  def __init__(self):
+    dialogPath=join(dirname(abspath(__file__)),"dialogs","align.ui")
+    self.form=FreeCADGui.PySideUic.loadUi(dialogPath)
+    self.faceRef=None
+    self.getRef()
+    self.form.btn1.clicked.connect(self.getRef)
+    self.form.btnXY.clicked.connect(lambda: self.refPlane(FreeCAD.Vector(0,0,1)))
+    self.form.btnXZ.clicked.connect(lambda: self.refPlane(FreeCAD.Vector(0,1,0)))
+    self.form.btnYZ.clicked.connect(lambda: self.refPlane(FreeCAD.Vector(1,0,0)))
+    self.form.X.setValidator(QDoubleValidator())
+    self.form.btnNorm.clicked.connect(lambda: self.refPlane(FreeCAD.Vector(float(self.form.X.text()),float(self.form.Y.text()),float(self.form.Z.text()))))
+    #self.form.X.editingFinished.connect(
+    self.form.Y.setValidator(QDoubleValidator())
+    self.form.Z.setValidator(QDoubleValidator())
+  def getRef(self):
+    if frameCmd.faces():
+      a=[(o,frameCmd.faces([o])[0]) for o in FreeCADGui.Selection.getSelectionEx() if frameCmd.faces([o])][0]
+      self.faceRef=a[1]
+      self.form.label.setText(a[0].Object.Label+':Face')
+      FreeCADGui.Selection.clearSelection()
+  def refPlane(self,norm):
+    self.faceRef=norm
+    if norm==FreeCAD.Vector(0,0,1):
+      self.form.label.setText('plane XY')
+    elif norm==FreeCAD.Vector(0,1,0):
+      self.form.label.setText('plane XZ')
+    elif norm==FreeCAD.Vector(1,0,0):
+      self.form.label.setText('plane YZ')
+    else:
+      self.form.label.setText('normal: X=%.2f Y=%.2f Z=%.2f' %(norm.x,norm.y,norm.z))
+    for edit in [self.form.X, self.form.Y, self.form.Z]:
+      edit.clear()
+  def accept(self):
+    faces=frameCmd.faces()
+    beams=frameCmd.beams()
+    if len(faces)==len(beams)>0 and self.faceRef:
+      FreeCAD.activeDocument().openTransaction('AlignFlange')
+      for i in range(len(beams)):
+        frameCmd.rotTheBeam(beams[i],self.faceRef,faces[i])
+      FreeCAD.activeDocument().recompute()
+      FreeCAD.activeDocument().commitTransaction()
+    
+    

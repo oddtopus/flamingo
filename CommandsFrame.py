@@ -100,21 +100,8 @@ class alignFlange:
   ESC is pressed.
   '''
   def Activated(self):
-    import FreeCAD, FreeCADGui, frameCmd, frameObservers
-    faces=frameCmd.faces()
-    beams=frameCmd.beams()
-    if len(faces)==len(beams)>0:
-      FreeCAD.activeDocument().openTransaction('AlignFlange')
-      faceBase=faces.pop(0)
-      beams.pop(0)
-      for i in range(len(beams)):
-        frameCmd.rotTheBeam(beams[i],faceBase,faces[i])
-      FreeCAD.activeDocument().recompute()
-      FreeCAD.activeDocument().commitTransaction()
-    else:
-      FreeCADGui.Selection.clearSelection()
-      s=frameObservers.alignFlangeObserver()
-      FreeCADGui.Selection.addObserver(s)
+    import frameForms
+    FreeCADGui.Control.showDialog(frameForms.alignForm())
 
   def GetResources(self):
     return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","flangeAlign.svg"),'MenuText':'alignFlange','ToolTip':'Rotates the section of the beam to make the faces parallel to the first selection'}
