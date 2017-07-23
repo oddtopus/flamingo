@@ -414,6 +414,7 @@ def alignTheTube():
     if d1.curvatureAt(0)!=0 and d2.curvatureAt(0)!=0:
       n1=d1.tangentAt(0).cross(d1.normalAt(0))
       n2=d2.tangentAt(0).cross(d2.normalAt(0))
+    else: return
   except:
     FreeCAD.Console.PrintError("Wrong selection.\n")
     return None
@@ -423,11 +424,12 @@ def alignTheTube():
   d1,d2=frameCmd.edges() #redo selection to get new positions
   dist=d1.centerOfCurvatureAt(0)-d2.centerOfCurvatureAt(0)
   t2.Placement.move(dist)
-  #controllo posizione
-  #if len(t1.Shape.common(t2.Shape).Solids)>0:
-  #  FreeCAD.Console.PrintWarning("Compenetration of solids!\n")
-  #else:
-  #  FreeCAD.Console.PrintMessage("OK.")
+  #verifica posizione relativa
+  com1,com2=[t.Shape.Solids[0].CenterOfMass for t in [t1,t2]]
+  if isElbow(t2):
+    pass
+  elif (com1-d1.centerOfCurvatureAt(0)).dot(com2-d1.centerOfCurvatureAt(0))>0:
+    reverseTheTube(FreeCADGui.Selection.getSelectionEx()[:2][1])
     
 def rotateTheTubeAx(obj=None,vShapeRef=None, angle=45):
   '''
@@ -444,12 +446,12 @@ def rotateTheTubeAx(obj=None,vShapeRef=None, angle=45):
   rot=FreeCAD.Rotation(frameCmd.beamAx(obj,vShapeRef),angle)
   obj.Placement.Rotation=rot.multiply(obj.Placement.Rotation)
 
-def reverseTheTube(objEx,ang=180):
+def reverseTheTube(objEx):
   '''
   reverseTheTube(objEx)
   Reverse the orientation of objEx spinning it 180 degrees around the x-axis
   of its shape.
-  If a circular edge is selected the CentreOfCurvature is used as pivot.
+  If an edge is selected, it's used as pivot.
   '''
   disp=None
   selectedEdges=[e for e in objEx.SubObjects if e.ShapeType=='Edge']

@@ -21,7 +21,7 @@ def edges(selex=[], except1st=False):
       eds=[e for sx in selex if sx!=selex[0] for so in sx.SubObjects for e in so.Edges]
     else:
       eds=[e for sx in selex for so in sx.SubObjects for e in so.Edges]
-    FreeCAD.Console.PrintMessage('\nFound '+str(len(eds))+' edge(s).\n')
+    #FreeCAD.Console.PrintMessage('\nFound '+str(len(eds))+' edge(s).\n')
   except:
     FreeCAD.Console.PrintError('\nNo valid selection.\n')
   return eds
@@ -40,7 +40,7 @@ def faces(selex=[]):
     selex=FreeCADGui.Selection.getSelectionEx()
   try:
     fcs=[f for sx in selex for so in sx.SubObjects for f in so.Faces]
-    FreeCAD.Console.PrintMessage('\nFound '+str(len(fcs))+' face(s).\n')
+    #FreeCAD.Console.PrintMessage('\nFound '+str(len(fcs))+' face(s).\n')
   except:
     FreeCAD.Console.PrintError('\nNo valid selection.\n')
   return fcs
