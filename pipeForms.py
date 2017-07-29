@@ -124,8 +124,10 @@ class insertPipeForm(protopypeForm):
     self.sizeList.setCurrentRow(0)
     self.ratingList.setCurrentRow(0)
     self.btn1.clicked.connect(self.insert)
-    self.edit1=QLineEdit('<lenght>')
+    self.edit1=QLineEdit()
+    self.edit1.setPlaceholderText('<length>')
     self.edit1.setAlignment(Qt.AlignHCenter)
+    self.edit1.setValidator(QDoubleValidator())
     self.secondCol.layout().addWidget(self.edit1)
     self.btn2=QPushButton('Reverse')
     self.secondCol.layout().addWidget(self.btn2)
@@ -210,8 +212,10 @@ class insertElbowForm(protopypeForm):
     self.sizeList.setCurrentRow(0)
     self.ratingList.setCurrentRow(0)
     self.btn1.clicked.connect(self.insert)
-    self.edit1=QLineEdit('<angle>')
+    self.edit1=QLineEdit()
+    self.edit1.setPlaceholderText('<angle>')
     self.edit1.setAlignment(Qt.AlignHCenter)
+    self.edit1.setValidator(QDoubleValidator())
     self.secondCol.layout().addWidget(self.edit1)
     self.btn2=QPushButton('Trim/Extend')
     self.btn2.clicked.connect(self.trim)
@@ -751,7 +755,8 @@ class insertPypeLineForm(protopypeForm):
     self.ratingList.setCurrentRow(0)
     self.btn1.clicked.connect(self.insert)
     self.combo.activated[str].connect(self.summary)
-    self.edit1=QLineEdit('<name>')
+    self.edit1=QLineEdit()
+    self.edit1.setPlaceholderText('<name>')
     self.edit1.setAlignment(Qt.AlignHCenter)
     self.secondCol.layout().addWidget(self.edit1)
     self.btn4=QPushButton('Redraw')
@@ -799,8 +804,7 @@ class insertPypeLineForm(protopypeForm):
     FreeCAD.activeDocument().openTransaction('Insert pype-line')
     if self.combo.currentText()=='<new>':
       plLabel=self.edit1.text()
-      if plLabel=="<name>" or plLabel.strip()=="":
-        plLabel="Tubatura"
+      if not plLabel: plLabel="Tubatura"
       a=pipeCmd.makePypeLine2(DN=d["PSize"],PRating=self.PRating,OD=float(d["OD"]),thk=float(d["thk"]), lab=plLabel, color=self.color)
       self.combo.addItem(a.Label)
     else:

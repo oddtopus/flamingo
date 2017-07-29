@@ -144,6 +144,7 @@ class stretchForm:
     self.form.slider.setMaximum(100)
     self.form.slider.setValue(0)
     self.form.slider.valueChanged.connect(self.changeL)
+    self.labTail=None
   def edit12L(self):
     if self.form.edit1.text():
       self.L=float(self.form.edit1.text())
@@ -153,6 +154,9 @@ class stretchForm:
       ext=self.L*(1+self.form.slider.value()/100.0)
       self.form.edit1.setText(str(ext))
   def getL(self):
+    if self.labTail:
+      self.labTail.removeLabel()
+      self.labTail=None
     self.L=frameCmd.getDistance()
     if self.L:
       self.form.edit1.setText(str(self.L))
@@ -163,7 +167,20 @@ class stretchForm:
     else:
       self.form.edit1.setText('') 
     self.form.slider.setValue(0)
+    self.writeTail()
+  def writeTail(self):
+    if frameCmd.beams():
+      beam=frameCmd.beams()[0]
+      from polarUtilsCmd import label3D
+      #sc=100
+      #if hasattr(beam,'Width'): sc=float(beam.Width)
+      #elif hasattr(beam,'OD'): sc=float(beam.OD)
+      self.labTail=label3D(pl=beam.Placement, text='____TAIL') #, sizeFont=sc)
   def accept(self):        # stretch
+    if self.labTail:
+      self.labTail.removeLabel()
+      self.labTail=None
+    self.L=frameCmd.getDistance()
     if self.form.edit1.text():
       length=float(self.form.edit1.text())
       FreeCAD.activeDocument().openTransaction('Stretch beam')
@@ -174,6 +191,10 @@ class stretchForm:
           beam.Placement.move(frameCmd.beamAx(beam).multiply(delta))
       FreeCAD.activeDocument().recompute()
       FreeCAD.activeDocument().commitTransaction()
+  def reject(self):
+    if self.labTail:
+      self.labTail.removeLabel()
+    FreeCADGui.Control.closeDialog()
 
 class translateForm:   
   'dialog for moving blocks'

@@ -77,7 +77,8 @@ class frameLineForm(QWidget):
     self.btn0.setMaximumWidth(100)
     self.secondCol.layout().addWidget(self.btn0)
     self.btn0.clicked.connect(self.insert)
-    self.edit1=QLineEdit('<name>')
+    self.edit1=QLineEdit()
+    self.edit1.setPlaceholderText('<name>')
     self.edit1.setAlignment(Qt.AlignHCenter)
     self.edit1.setMaximumWidth(100)
     self.secondCol.layout().addWidget(self.edit1)
@@ -137,7 +138,7 @@ class frameLineForm(QWidget):
     from pipeCmd import moveToPyLi
     if self.combo.currentText()=='<new>':
       n=self.edit1.text()
-      if n and n!='<name>':
+      if n:
         a=makeFrameLine(name=n)
       else:
         a=makeFrameLine()

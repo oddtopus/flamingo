@@ -121,12 +121,15 @@ class arrow(object):
     self.node.addChild(self.transform)
     self.cone=coin.SoCone()
     self.node.addChild(self.cone)
-    FreeCADGui.ActiveDocument.ActiveView.getSceneGraph().addChild(self.node)
+    self.sg=FreeCADGui.ActiveDocument.ActiveView.getSceneGraph()
+    self.sg.addChild(self.node)
     self.transform.scaleFactor.setValue(scale)
     self.offset=offset
     if not pl:
       pl=FreeCAD.Placement()
     self.moveto(pl)
+  def closeArrow(self):
+    self.sg.removeChild(self.node)
   def moveto(self,pl):
     import FreeCAD
     rotx90=FreeCAD.Base.Rotation(FreeCAD.Vector(0,1,0),FreeCAD.Vector(0,0,1))
@@ -134,6 +137,43 @@ class arrow(object):
     self.transform.rotation.setValue(tuple(self.Placement.Rotation.multiply(rotx90).Q))
     offsetV=self.Placement.Rotation.multVec(FreeCAD.Vector(0,0,self.offset))
     self.transform.translation.setValue(tuple(self.Placement.Base+offsetV))
+
+class label3D(object):
+  '''
+  This class writes a 3D label in the viewport.
+  To be used as an auxiliary tool to show flags during execution
+  of commands.
+  Note: default text size is 7 units.
+    label3D(pl=None, scale=[1,1,1], color=(1.0,0.6,0.0), text='TEXT')
+  '''
+  def __init__(self,pl=None, sizeFont=30, color=(1.0,0.6,0.0), text='TEXT'):
+    import FreeCAD, FreeCADGui
+    from pivy import coin
+    self.node=coin.SoSeparator()
+    self.color=coin.SoBaseColor()
+    self.color.rgb=color
+    self.node.addChild(self.color)
+    self.transform=coin.SoTransform()
+    self.node.addChild(self.transform)
+    self.font=coin.SoFont()
+    self.node.addChild(self.font)
+    self.font.size=sizeFont
+    self.text=coin.SoText2()
+    self.text.string=text
+    self.node.addChild(self.text)
+    self.sg=FreeCADGui.ActiveDocument.ActiveView.getSceneGraph()
+    self.sg.addChild(self.node)
+    #self.transform.scaleFactor.setValue(scale)
+    if not pl:
+      pl=FreeCAD.Placement()
+    self.moveto(pl)
+  def removeLabel(self):
+    self.sg.removeChild(self.node)
+  def moveto(self,pl):
+    import FreeCAD
+    self.Placement=pl
+    self.transform.translation.setValue(tuple(self.Placement.Base))
+    self.transform.rotation.setValue(tuple(self.Placement.Rotation.Q))
 
 import DraftTools,Draft,qForms
 from PySide.QtGui import *
