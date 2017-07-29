@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>216</width>
-    <height>130</height>
+    <height>158</height>
    </rect>
   </property>
   <property name="baseSize">
@@ -23,7 +23,31 @@
    <bool>false</bool>
   </property>
   <layout class="QGridLayout" name="gridLayout">
-   <item row="0" column="1">
+   <item row="4" column="1">
+    <widget class="QRadioButton" name="head">
+     <property name="text">
+      <string>Head</string>
+     </property>
+     <property name="checked">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item row="3" column="0" colspan="3">
+    <widget class="QSlider" name="slider">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+    </widget>
+   </item>
+   <item row="4" column="0">
+    <widget class="QLabel" name="label_2">
+     <property name="text">
+      <string>Stretch end:</string>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="1" colspan="2">
     <widget class="QLineEdit" name="edit1">
      <property name="text">
       <string/>
@@ -33,7 +57,7 @@
      </property>
     </widget>
    </item>
-   <item row="2" column="0" colspan="2">
+   <item row="2" column="0" colspan="3">
     <widget class="QPushButton" name="btn1">
      <property name="text">
       <string>Get length</string>
@@ -50,24 +74,7 @@
      </property>
     </widget>
    </item>
-   <item row="3" column="0" colspan="2">
-    <widget class="QSlider" name="slider">
-     <property name="orientation">
-      <enum>Qt::Horizontal</enum>
-     </property>
-    </widget>
-   </item>
-   <item row="4" column="0">
-    <widget class="QRadioButton" name="head">
-     <property name="text">
-      <string>Head</string>
-     </property>
-     <property name="checked">
-      <bool>true</bool>
-     </property>
-    </widget>
-   </item>
-   <item row="4" column="1">
+   <item row="5" column="1">
     <widget class="QRadioButton" name="tail">
      <property name="text">
       <string>Tail</string>
@@ -79,7 +86,6 @@
  <tabstops>
   <tabstop>btn1</tabstop>
   <tabstop>edit1</tabstop>
-  <tabstop>tail</tabstop>
   <tabstop>head</tabstop>
   <tabstop>slider</tabstop>
  </tabstops>
