@@ -893,8 +893,12 @@ class rotateForm:#prototypeForm):
     for e in [self.form.edit1,self.form.xval,self.form.yval,self.form.zval]:
       e.setValidator(QDoubleValidator())
     self.form.btnGet.clicked.connect(self.getAxis)
+    self.labBase=None
     self.getAxis()
   def accept(self): #rotate(self):
+    if self.labBase:
+      self.labBase.removeLabel()
+      self.labBase=None
     if len(FreeCADGui.Selection.getSelection())>0:
       obj = FreeCADGui.Selection.getSelection()[0]
       self.vShapeRef=FreeCAD.Vector(float(self.form.xval.text()),float(self.form.yval.text()),float(self.form.zval.text()))
@@ -911,18 +915,30 @@ class rotateForm:#prototypeForm):
       self.form.edit1.setText(str(-1*float(self.form.edit1.text())))
       FreeCAD.activeDocument().commitTransaction()
   def getAxis(self):
+    if self.labBase:
+      self.labBase.removeLabel()
+      self.labBase=None
     coord=[]
     selex=FreeCADGui.Selection.getSelectionEx()
-    if len(selex)==2 and len(selex[1].SubObjects)>0:
-      sub=selex[0].SubObjects[0]
-      if sub.ShapeType=='Edge':
-        axObj=sub.tangentAt(0)
-        obj=selex[1].Object
-        coord=rounded(pipeCmd.shapeReferenceAxis(obj,axObj))
-        self.form.xval.setText(str(coord[0]))
-        self.form.yval.setText(str(coord[1]))
-        self.form.zval.setText(str(coord[2]))
-        FreeCADGui.Selection.removeSelection(selex[0].Object)
+    if len(selex)==1 and frameCmd.edges():
+      sub=frameCmd.edges()[0]
+    elif len(selex)>1 and frameCmd.edges(selex[1:]):
+      sub=frameCmd.edges(selex[1:])[0]
+    else: return
+    obj=selex[0].Object
+    axObj=sub.tangentAt(0)
+    from polarUtilsCmd import label3D
+    self.labBase=label3D(pl=obj.Placement, text='____BASE')
+    coord=rounded(pipeCmd.shapeReferenceAxis(obj,axObj))
+    self.form.xval.setText(str(coord[0]))
+    self.form.yval.setText(str(coord[1]))
+    self.form.zval.setText(str(coord[2]))
+    if len(selex)>1:
+      for sx in selex[1:]: FreeCADGui.Selection.removeSelection(sx.Object)
+  def reject(self):
+    if self.labBase:
+      self.labBase.removeLabel()
+    FreeCADGui.Control.closeDialog()
 
 class rotateEdgeForm: #(prototypeForm):
   '''
