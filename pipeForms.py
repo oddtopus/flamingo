@@ -121,6 +121,7 @@ class insertPipeForm(protopypeForm):
   '''
   def __init__(self):
     super(insertPipeForm,self).__init__("Insert pipes","Pipe","SCH-STD","pipe.svg")
+    self.move(QPoint(75,225))
     self.sizeList.setCurrentRow(0)
     self.ratingList.setCurrentRow(0)
     self.btn1.clicked.connect(self.insert)
@@ -128,17 +129,25 @@ class insertPipeForm(protopypeForm):
     self.edit1.setPlaceholderText('<length>')
     self.edit1.setAlignment(Qt.AlignHCenter)
     self.edit1.setValidator(QDoubleValidator())
+    #self.edit1.editingFinished.connect(lambda: self.sli.setValue(100))
     self.secondCol.layout().addWidget(self.edit1)
     self.btn2=QPushButton('Reverse')
     self.secondCol.layout().addWidget(self.btn2)
-    self.btn2.clicked.connect(self.reverse) #lambda: pipeCmd.rotateTheTubeAx(self.lastPipe,FreeCAD.Vector(1,0,0),180))
+    self.btn2.clicked.connect(self.reverse)
     self.btn3=QPushButton('Apply')
     self.secondCol.layout().addWidget(self.btn3)
     self.btn3.clicked.connect(self.apply)
     self.btn1.setDefault(True)
     self.btn1.setFocus()
+    self.sli=QSlider(Qt.Vertical)
+    self.sli.setMaximum(200)
+    self.sli.setMinimum(1)
+    self.sli.setValue(100)
+    self.mainHL.addWidget(self.sli)
+    self.sli.valueChanged.connect(self.changeL)
     self.show()
     self.lastPipe=None
+    self.H=200
   def reverse(self):     # revert orientation of selected or last inserted pipe
     selPipes=[p for p in FreeCADGui.Selection.getSelection() if hasattr(p,'PType') and p.PType=='Pipe']
     if len(selPipes):
@@ -147,38 +156,40 @@ class insertPipeForm(protopypeForm):
     else:
       pipeCmd.rotateTheTubeAx(self.lastPipe,FreeCAD.Vector(1,0,0),180)
   def insert(self):      # insert the pipe
+    self.lastPipe=None
     d=self.pipeDictList[self.sizeList.currentRow()]
     FreeCAD.activeDocument().openTransaction('Insert pipe')
-    try:
-      H=float(self.edit1.text())
-    except:
-      H=200
-    if len(frameCmd.edges())==0:
-      propList=[d['PSize'],float(d['OD']),float(d['thk']),H]
+    if self.edit1.text():
+      self.H=float(self.edit1.text())
+    self.sli.setValue(100)
+    if len(frameCmd.edges())==0: #..no edges selected
+      propList=[d['PSize'],float(d['OD']),float(d['thk']),self.H]
       vs=[v for sx in FreeCADGui.Selection.getSelectionEx() for so in sx.SubObjects for v in so.Vertexes]
-      if len(vs)==0:
+      if len(vs)==0: # ...no vertexes selected
         self.lastPipe=pipeCmd.makePipe(propList)
         if self.combo.currentText()!='<none>':
           pipeCmd.moveToPyLi(self.lastPipe,self.combo.currentText())
       else:
-        for v in vs:
+        for v in vs: # ... one or more vertexes
           self.lastPipe=pipeCmd.makePipe(propList,v.Point)
         if self.combo.currentText()!='<none>':
           pipeCmd.moveToPyLi(self.lastPipe,self.combo.currentText())
     else:
-      for edge in frameCmd.edges():
-        if edge.curvatureAt(0)==0:
+      for edge in frameCmd.edges(): # ...one or more edges...
+        if edge.curvatureAt(0)==0: # ...straight edges
           propList=[d['PSize'],float(d['OD']),float(d['thk']),edge.Length]
           self.lastPipe=pipeCmd.makePipe(propList,edge.valueAt(0),edge.tangentAt(0))
-        else:
+        else: # ...curved edges
           objs=[o for o in FreeCADGui.Selection.getSelection() if hasattr(o,'PSize') and hasattr(o,'OD') and hasattr(o,'thk')]
           if len(objs)>0:
-            propList=[objs[0].PSize,objs[0].OD,objs[0].thk,H]
+            propList=[objs[0].PSize,objs[0].OD,objs[0].thk,self.H]
           else:
-            propList=[d['PSize'],float(d['OD']),float(d['thk']),H]
+            propList=[d['PSize'],float(d['OD']),float(d['thk']),self.H]
           self.lastPipe=pipeCmd.makePipe(propList,edge.centerOfCurvatureAt(0),edge.tangentAt(0).cross(edge.normalAt(0)))
         if self.combo.currentText()!='<none>':
           pipeCmd.moveToPyLi(self.lastPipe,self.combo.currentText())
+    self.H=float(self.lastPipe.Height)
+    self.edit1.setText(str(float(self.H)))
     FreeCAD.activeDocument().commitTransaction()
     FreeCAD.activeDocument().recompute()
   def apply(self):
@@ -192,6 +203,13 @@ class insertPipeForm(protopypeForm):
         if self.edit1.text().isnumeric():
           obj.Height=float(self.edit1.text())
         FreeCAD.activeDocument().recompute()
+  def changeL(self):
+    if self.edit1.text():
+      newL=self.H*self.sli.value()/100
+      self.edit1.setText(str(newL))
+      if self.lastPipe:
+        self.lastPipe.Height=newL
+      FreeCAD.ActiveDocument.recompute()
 
 class insertElbowForm(protopypeForm):
   '''
@@ -209,25 +227,50 @@ class insertElbowForm(protopypeForm):
   '''
   def __init__(self):
     super(insertElbowForm,self).__init__("Insert elbows","Elbow","SCH-STD","elbow.svg")
+    self.move(QPoint(125,275))
     self.sizeList.setCurrentRow(0)
     self.ratingList.setCurrentRow(0)
     self.btn1.clicked.connect(self.insert)
     self.edit1=QLineEdit()
-    self.edit1.setPlaceholderText('<angle>')
+    self.edit1.setPlaceholderText('<bend angle>')
     self.edit1.setAlignment(Qt.AlignHCenter)
     self.edit1.setValidator(QDoubleValidator())
     self.secondCol.layout().addWidget(self.edit1)
     self.btn2=QPushButton('Trim/Extend')
     self.btn2.clicked.connect(self.trim)
     self.secondCol.layout().addWidget(self.btn2)
-    self.btn3=QPushButton('Apply')
+    self.btn3=QPushButton('Reverse')
     self.secondCol.layout().addWidget(self.btn3)
-    self.btn3.clicked.connect(self.apply)
+    self.btn3.clicked.connect(self.reverse)
+    self.btn4=QPushButton('Apply')
+    self.secondCol.layout().addWidget(self.btn4)
+    self.btn4.clicked.connect(self.apply)
     self.btn1.setDefault(True)
     self.btn1.setFocus()
+    self.screenDial=QWidget()
+    self.screenDial.setLayout(QHBoxLayout())
+    self.dial=QDial()
+    self.dial.setMaximumSize(80,80)
+    self.dial.setWrapping(True)
+    self.dial.setMaximum(180)
+    self.dial.setMinimum(-180)
+    self.dial.setNotchTarget(15)
+    self.dial.setNotchesVisible(True)
+    self.dial.setMaximumSize(70,70)
+    self.screenDial.layout().addWidget(self.dial)
+    self.lab=QLabel('0 deg')
+    self.lab.setAlignment(Qt.AlignCenter)
+    #self.connect(self.dial,SIGNAL("valueChanged(int)"),self.lab.setNum)
+    self.dial.valueChanged.connect(self.rotatePort)
+    self.screenDial.layout().addWidget(self.lab)
+    self.firstCol.layout().addWidget(self.screenDial)
     self.show()
     self.lastElbow=None
+    self.lastAngle=0
   def insert(self):    # insert the curve
+    self.lastElbow=None
+    self.lastAngle=0
+    self.dial.setValue(0)
     DN=OD=thk=PRating=None
     d=self.pipeDictList[self.sizeList.currentRow()]
     try:
@@ -245,7 +288,7 @@ class insertElbowForm(protopypeForm):
         pipeCmd.moveToPyLi(self.lastElbow,self.combo.currentText())
       FreeCAD.activeDocument().commitTransaction()
     elif len(selex)==1 and len(selex[0].SubObjects)==1:  #one selection -> ...
-      if pipeCmd.isPipe(selex[0].Object):
+      if hasattr(selex[0].Object,'PType') and selex[0].Object.PType in ['Pipe','Elbow','Cap','Reduct']:
         DN=selex[0].Object.PSize
         OD=float(selex[0].Object.OD)
         thk=float(selex[0].Object.thk)
@@ -266,25 +309,29 @@ class insertElbowForm(protopypeForm):
         FreeCAD.activeDocument().commitTransaction()
       elif selex[0].SubObjects[0].ShapeType=="Edge" and  selex[0].SubObjects[0].curvatureAt(0)!=0: # ...on center of curved edge
         P=selex[0].SubObjects[0].centerOfCurvatureAt(0)
-        Z=selex[0].SubObjects[0].tangentAt(0)
+        Z=selex[0].SubObjects[0].normalAt(0).cross(selex[0].SubObjects[0].tangentAt(0)).normalize()
         FreeCAD.activeDocument().openTransaction('Insert elbow on curved edge')
-        self.lastElbow=pipeCmd.makeElbow(propList,P,Z)
+        self.lastElbow=pipeCmd.makeElbow(propList,P)#,Z)
+        rot=FreeCAD.Rotation(self.lastElbow.Ports[0],Z)
+        self.lastElbow.Placement.Rotation=rot.multiply(self.lastElbow.Placement.Rotation)
+        #self.lastElbow.Placement.move(Z*self.lastElbow.Ports[0].Length*-1)
         if self.combo.currentText()!='<none>':
           pipeCmd.moveToPyLi(self.lastElbow,self.combo.currentText())
         FreeCAD.activeDocument().recompute()
         if pipeCmd.isPipe(selex[0].Object):
-          Port0=self.lastElbow.Placement.Rotation.multVec(self.lastElbow.Ports[0])
-          rot=FreeCAD.Rotation(Port0*-1,frameCmd.beamAx(selex[0].Object))
-          self.lastElbow.Placement.Rotation=rot.multiply(self.lastElbow.Placement.Rotation)
-          Port0=self.lastElbow.Placement.multVec(self.lastElbow.Ports[0])
+          comPipe=selex[0].Object.Shape.Solids[0].CenterOfMass
+          self.lastElbow.Placement.Rotation=FreeCAD.Rotation(self.lastElbow.Ports[0],comPipe-P)
+          Port0=pipeCmd.getElbowPort(self.lastElbow)
           self.lastElbow.Placement.move(P-Port0)
+        else:
+          self.lastElbow.Placement.move(self.lastElbow.Placement.Rotation.multVec(self.lastElbow.Ports[0])*-1)
         FreeCAD.activeDocument().commitTransaction()
     else:       # multiple selection -> insert one elbow at intersection of two edges or beams or pipes ##
       # selection of axes
       things=[]
       for objEx in selex:
         # if the profile is not defined and the selection is one piping object, take its profile for elbow
-        if OD==thk==None and hasattr(objEx.Object,'PType') and objEx.Object.PType in ['Pipe','Elbow']: 
+        if OD==thk==None and hasattr(objEx.Object,'PType') and objEx.Object.PType in ['Pipe','Elbow','Cap','Reduct']: 
           DN=objEx.Object.PSize
           OD=objEx.Object.OD
           thk=objEx.Object.thk
@@ -321,7 +368,6 @@ class insertElbowForm(protopypeForm):
       FreeCAD.activeDocument().commitTransaction()
       ####
     FreeCAD.activeDocument().recompute()
-    
   def trim(self):
     if len(frameCmd.beams())==1:
       pipe=frameCmd.beams()[0]
@@ -334,6 +380,12 @@ class insertElbowForm(protopypeForm):
       FreeCAD.activeDocument().recompute()
     else:
       FreeCAD.Console.PrintError("Wrong selection\n")
+  def rotatePort(self):
+    if self.lastElbow:
+      pipeCmd.rotateTheElbowPort(self.lastElbow,0,self.lastAngle*-1)
+      self.lastAngle=self.dial.value()
+      pipeCmd.rotateTheElbowPort(self.lastElbow,0,self.lastAngle)
+    self.lab.setText(str(self.dial.value())+' deg')
   def apply(self):
     for obj in FreeCADGui.Selection.getSelection():
       d=self.pipeDictList[self.sizeList.currentRow()]
@@ -345,10 +397,13 @@ class insertElbowForm(protopypeForm):
           obj.BendAngle=float(self.edit1.text())
         except:
           pass
-        #obj.BendAngle=d['BendAngle']
         obj.BendRadius=d['BendRadius']
         obj.PRating=self.PRating
         FreeCAD.activeDocument().recompute()
+  def reverse(self):
+    if self.lastElbow:
+      pipeCmd.rotateTheTubeAx(self.lastElbow,angle=180)
+      self.lastElbow.Placement.move(self.lastElbow.Placement.Rotation.multVec(self.lastElbow.Ports[0])*-2)
 
 class insertFlangeForm(protopypeForm):
   '''
@@ -895,6 +950,8 @@ class rotateForm:#prototypeForm):
     self.form.btnGet.clicked.connect(self.getAxis)
     self.labBase=None
     self.getAxis()
+    self.form.dial.valueChanged.connect(lambda: self.form.edit1.setText(str(self.form.dial.value())))
+    self.form.edit1.editingFinished.connect(lambda: self.form.dial.setValue(int(self.form.edit1.text())))
   def accept(self): #rotate(self):
     if self.labBase:
       self.labBase.removeLabel()
@@ -950,6 +1007,8 @@ class rotateEdgeForm: #(prototypeForm):
     self.form=FreeCADGui.PySideUic.loadUi(dialogPath)
     self.form.edit1.setValidator(QDoubleValidator())
     self.form.btn2.clicked.connect(self.reverse)
+    self.form.dial.valueChanged.connect(lambda: self.form.edit1.setText(str(self.form.dial.value())))
+    self.form.edit1.editingFinished.connect(lambda: self.form.dial.setValue(int(self.form.edit1.text())))
   def accept(self): #rotate(self):
     if len(FreeCADGui.Selection.getSelection())>0:
       FreeCAD.activeDocument().openTransaction('Rotate')

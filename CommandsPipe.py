@@ -30,14 +30,14 @@ def addCommand(name,cmdObject):
 class insertPipe:
   def Activated (self):
     import pipeForms
-    pipeFormObj=pipeForms.insertPipeForm()
+    pipForm=pipeForms.insertPipeForm()
   def GetResources(self):
     return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","pipe.svg"),'MenuText':'Insert a tube','ToolTip':'Insert a tube'}
 
 class insertElbow: 
   def Activated (self):
     import pipeForms,FreeCAD
-    pipeFormObj=pipeForms.insertElbowForm()
+    elbForm=pipeForms.insertElbowForm()
   def GetResources(self):
     return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","elbow.svg"),'MenuText':'Insert a curve','ToolTip':'Insert a curve'}
 

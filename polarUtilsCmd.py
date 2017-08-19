@@ -140,7 +140,7 @@ class arrow(object):
 
 class label3D(object):
   '''
-  This class writes a 3D label in the viewport.
+  This class writes a 2D label in the 3D viewport.
   To be used as an auxiliary tool to show flags during execution
   of commands.
   Note: default text size is 7 units.

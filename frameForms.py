@@ -189,6 +189,8 @@ class stretchForm:
         frameCmd.stretchTheBeam(beam,length)
         if self.form.tail.isChecked():
           beam.Placement.move(frameCmd.beamAx(beam).multiply(delta))
+        elif self.form.both.isChecked():
+          beam.Placement.move(frameCmd.beamAx(beam).multiply(delta/2))
       FreeCAD.activeDocument().recompute()
       FreeCAD.activeDocument().commitTransaction()
   def reject(self):

@@ -62,7 +62,7 @@ class reverseBeam:
   '''
   Tool to spin one object around the "X" axis of its shape 
   by 180 degrees.
-  Note: - if one circular edge of the object is selected, that is used
+  Note: - if one edge of the object is selected, that is used
   as the pivot of rotation.
   '''
   def Activated(self):

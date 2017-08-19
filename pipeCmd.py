@@ -129,6 +129,7 @@ def makeElbow(propList=[], pos=None, Z=None):
   a.ViewObject.Proxy=0
   a.Placement.Base=pos
   rot=FreeCAD.Rotation(FreeCAD.Vector(0,0,1),Z)
+  #rot=FreeCAD.Rotation(FreeCAD.Vector(0,-1,0),Z)
   a.Placement.Rotation=rot.multiply(a.Placement.Rotation)
   return a
 
@@ -560,6 +561,34 @@ def breakTheTubes(point,pipes=[],gap=0):
   return pipes2nd
     
 def drawAsCenterLine(obj):
-  obj.ViewObject.LineWidth=6
-  obj.ViewObject.LineColor=1.0,0.3,0.0
-  obj.ViewObject.DrawStyle='Dashdot'
+  try:
+    obj.ViewObject.LineWidth=6
+    obj.ViewObject.LineColor=1.0,0.3,0.0
+    obj.ViewObject.DrawStyle='Dashdot'
+  except:
+    FreeCAD.Console.PrintError('The object can not be center-lined\n')
+  
+def getElbowPort(elbow, portId=0):
+  '''
+  getElbowPort(elbow, portId=0)
+   Returns the position of the specified port of elbow.
+  '''
+  if isElbow(elbow):
+    return elbow.Placement.multVec(elbow.Ports[portId])
+
+def rotateTheElbowPort(curve=None, port=0, ang=45):
+  '''
+  rotateTheElbowPort(curve=None, port=0, ang=45)
+   Rotates one curve aroud one of its circular edges.
+  '''
+  if curve==None:
+    try:
+      curve=FreeCADGui.Selection.getSelection()[0]
+      if not isElbow(curve):
+        FreeCAD.Console.PrintError('Please select an elbow.\n')
+        return
+    except:
+      FreeCAD.Console.PrintError('Please select something before.\n')
+  rotateTheTubeAx(curve,curve.Ports[port],ang)
+  
+  
