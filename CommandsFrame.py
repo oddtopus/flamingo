@@ -206,7 +206,7 @@ class pivotBeam:
   def Activated(self):
     import frameForms
     #frameFormObj=frameForms.pivotForm()
-    FreeCADGui.Control.showDialog(frameForms.pivotForm())
+    FreeCADGui.Control.showDialog(frameForms.rotateAroundForm()) #pivotForm())
     
   def GetResources(self):
     return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","pivot.svg"),'MenuText':'pivotTheBeam','ToolTip':'Pivots the beam around an edge'}

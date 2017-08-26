@@ -282,19 +282,6 @@ def rotTheBeam(beam,faceBase,faceAlign):
   rot=FreeCAD.Rotation(n2,n1)
   beam.Placement.Rotation=rot.multiply(beam.Placement.Rotation)
 
-def shiftTheBeam(beam,edge,dist=100, ask4revert=True):   # OBSOLETE: replaced by translateForm
-  '''arg1=beam, arg2=edge, arg3=dist=100: shifts the beam along the edge by dist (default 100)
-  OBSOLETE: replaced by translateForm
-  '''
-  vect=edge.valueAt(edge.LastParameter)-edge.valueAt(edge.FirstParameter)
-  vect.normalize()
-  beam.Placement.Base=beam.Placement.Base.add(vect*dist)
-  if ask4revert:
-    from PySide.QtGui import QMessageBox as MBox
-    dirOK=MBox.question(None, "", "Direction is correct?", MBox.Yes | MBox.No, MBox.Yes)
-    if dirOK==MBox.No:
-      beam.Placement.Base=beam.Placement.Base.add(vect*dist*-2)
-
 def levelTheBeam(beam,faces):
   '''arg1=beams2move, arg2=[faces]: Shifts the second selection to make its flange coplanar to that of the first selection'''
   v=faces[0].CenterOfMass-faces[1].CenterOfMass
@@ -306,38 +293,36 @@ def joinTheBeamsEdges(beam,e1,e2):
     '''arg1=beam, arg2=edge target, arg3=edge start: aligns the edges'''
     beam.Placement.move(e1.distToShape(e2)[1][0][0]-e1.distToShape(e2)[1][0][1])
 
-def pivotTheBeam(ang=None, ask4revert=True):
+def pivotTheBeam(ang=90, edge=None, beam=None): #OBSOLETE: replaced with rotateTheBeamAround
   '''
-  pivotTheBeam(ang=None, ask4revert=True)
+  pivotTheBeam(ang=90)
   Rotates the selected object around the selected pivot (one of its edges)
   by ang degrees.
-  If ask4revert is True, pop-ups a dialog to ask if the direction of
-  rotation is correct.
   '''
-  if len(edges())!=1:
-    FreeCAD.Console.PrintError('Wrong selection\n')
-    return None
-  edge=edges()[0] #FreeCADGui.Selection.getSelectionEx()[0].SubObjects[0]
-  beam=FreeCADGui.Selection.getSelection()[0]
-  from PySide.QtGui import QInputDialog as qid
-  if ang==None:
-    ang=float(qid.getText(None,"pivot a beam","angle?")[0])
+  #if len(edges())!=1:
+  #  FreeCAD.Console.PrintError('Wrong selection\n')
+  #  return None
+  if not (edge and beam):
+    try:
+      edge=edges()[0]
+      beam=FreeCADGui.Selection.getSelection()[0]
+    except:
+      return
   rot=FreeCAD.Rotation(edge.tangentAt(0),ang)
   beam.Placement.Rotation=rot.multiply(beam.Placement.Rotation)
   edgePost=edges()[0] #save position for revert
   dist=edge.CenterOfMass-edgePost.CenterOfMass
   beam.Placement.move(dist)
-  if ask4revert:
-    from PySide.QtGui import QMessageBox as MBox
-    dirOK=MBox.question(None, "", "Direction is correct?", MBox.Yes | MBox.No, MBox.Yes)
-    if dirOK==MBox.No:
-      edge=edges()[0] #FreeCADGui.Selection.getSelectionEx()[0].SubObjects[0]
-      rot=FreeCAD.Rotation(edge.tangentAt(0),ang*-2)
-      beam.Placement.Rotation=rot.multiply(beam.Placement.Rotation)
-      edgePost=edges()[0] #FreeCADGui.Selection.getSelectionEx()[0].SubObjects[0]
-      dist=edge.CenterOfMass-edgePost.CenterOfMass
-      beam.Placement.move(dist)
-
+  
+def rotateTheBeamAround(b,e,ang=90): # for rotation around an axis
+  rot=FreeCAD.Rotation(e.tangentAt(0),ang)
+  from Part import Vertex
+  P0=Vertex(b.Placement.Base)
+  O=P0.distToShape(e)[1][0][1]
+  P1=O+rot.multVec(P0.Point-O)
+  b.Placement.Rotation=rot.multiply(b.Placement.Rotation)
+  b.Placement.Base=P1 #rot.multVec(b.Placement.Base)
+  
 def stretchTheBeam(beam,L):
   if beam!=None and beam.TypeId=="Part::FeaturePython" and hasattr(beam,"Height"):
     beam.Height=L

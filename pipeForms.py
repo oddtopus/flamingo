@@ -193,6 +193,12 @@ class insertPipeForm(protopypeForm):
     FreeCAD.activeDocument().commitTransaction()
     FreeCAD.activeDocument().recompute()
   def apply(self):
+    self.lastPipe=None
+    if self.edit1.text():
+      self.H=float(self.edit1.text())
+    else:
+      self.H=200.0
+    self.sli.setValue(100)
     for obj in FreeCADGui.Selection.getSelection():
       d=self.pipeDictList[self.sizeList.currentRow()]
       if hasattr(obj,'PType') and obj.PType==self.PType:
@@ -200,8 +206,8 @@ class insertPipeForm(protopypeForm):
         obj.OD=d['OD']
         obj.thk=d['thk']
         obj.PRating=self.PRating
-        if self.edit1.text().isnumeric():
-          obj.Height=float(self.edit1.text())
+        if self.edit1.text():
+          obj.Height=self.H
         FreeCAD.activeDocument().recompute()
   def changeL(self):
     if self.edit1.text():
@@ -1151,3 +1157,4 @@ class breakForm(QWidget):
           pipeCmd.moveToPyLi(p,self.combo.currentText())
     FreeCAD.activeDocument().commitTransaction()
     FreeCAD.activeDocument().recompute()
+

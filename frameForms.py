@@ -52,7 +52,7 @@ class prototypeForm(QWidget):
     self.buttons.layout().addWidget(self.btn2)
     self.mainVL.addWidget(self.buttons)
 
-class pivotForm:
+class pivotForm: # OBSOLETE: replaced with rotateAroundForm
   'dialog for pivotTheBeam()'
   def __init__(self):
     dialogPath=join(dirname(abspath(__file__)),"dialogs","pivot.ui")
@@ -63,14 +63,14 @@ class pivotForm:
     FreeCAD.activeDocument().openTransaction('Rotate')
     if self.form.radio2.isChecked():
       FreeCAD.activeDocument().copyObject(FreeCADGui.Selection.getSelection()[0],True)
-      frameCmd.pivotTheBeam(float(self.form.edit1.text()),ask4revert=False)
+      frameCmd.pivotTheBeam(float(self.form.edit1.text()))
     else:
-      frameCmd.pivotTheBeam(float(self.form.edit1.text()),ask4revert=False)
+      frameCmd.pivotTheBeam(float(self.form.edit1.text()))
     FreeCAD.ActiveDocument.recompute()
     FreeCAD.activeDocument().commitTransaction()
   def reverse(self):
     FreeCAD.activeDocument().openTransaction('Reverse rotate')
-    frameCmd.pivotTheBeam(-2*float(self.form.edit1.text()),ask4revert=False)
+    frameCmd.pivotTheBeam(-2*float(self.form.edit1.text()))
     self.form.edit1.setText(str(-1*float(self.form.edit1.text())))
     FreeCAD.activeDocument().commitTransaction()
 
@@ -294,6 +294,10 @@ class translateForm:
       self.arrow=None
   def closeEvent(self,event):
     self.deleteArrow()
+  def reject(self):
+    if self.arrow:
+      self.deleteArrow()
+    FreeCADGui.Control.closeDialog()
 
 class alignForm:   
   'dialog to flush faces'
@@ -339,4 +343,68 @@ class alignForm:
       FreeCAD.activeDocument().recompute()
       FreeCAD.activeDocument().commitTransaction()
     
-    
+class rotateAroundForm:
+  '''
+  Dialog for rotateTheBeamAround().
+  It allows to rotate one object around one edge or the axis of a circular edge (or one principal axis.)
+  '''
+  def __init__(self):
+    dialogPath=join(dirname(abspath(__file__)),"dialogs","rotAround.ui")
+    self.form=FreeCADGui.PySideUic.loadUi(dialogPath)
+    self.form.edit1.setValidator(QDoubleValidator())
+    self.form.btn1.clicked.connect(self.getAxis)
+    self.form.btnX.clicked.connect(lambda: self.getPrincipalAx('X'))
+    self.form.btnY.clicked.connect(lambda: self.getPrincipalAx('Y'))
+    self.form.btnZ.clicked.connect(lambda: self.getPrincipalAx('Z'))
+    self.form.dial.valueChanged.connect(lambda: self.form.edit1.setText(str(self.form.dial.value())))
+    self.form.edit1.editingFinished.connect(lambda: self.form.dial.setValue(int(self.form.edit1.text())))
+    self.Axis=None
+    self.arrow=None
+    self.getAxis()
+  def accept(self):
+    self.deleteArrow()
+    objects=FreeCADGui.Selection.getSelection()
+    if objects and self.Axis:
+      FreeCAD.ActiveDocument.openTransaction('rotateTheBeamAround')
+      for o in objects:
+        if self.form.copyCB.isChecked():
+          FreeCAD.activeDocument().copyObject(o,True)
+        frameCmd.rotateTheBeamAround(o,self.Axis,float(self.form.edit1.text()))
+      FreeCAD.ActiveDocument.commitTransaction()
+  def getPrincipalAx(self, ax='Z'):
+    from Part import Edge,Line
+    O=FreeCAD.Vector()
+    l=Line(O,FreeCAD.Vector(0,0,1000))
+    if ax=='X':
+      l=Line(O,FreeCAD.Vector(1000,0,0))
+    elif ax=='Y':
+      l=Line(O,FreeCAD.Vector(0,1000,0))
+    self.Axis=Edge(l)
+    self.form.lab1.setText("Principal: "+ax)
+  def getAxis(self):
+    edged = [objex for objex in FreeCADGui.Selection.getSelectionEx() if frameCmd.edges([objex])]
+    if edged:
+      self.Axis=frameCmd.edges([edged[0]])[0]
+      self.deleteArrow()
+      from polarUtilsCmd import arrow
+      where=FreeCAD.Placement()
+      where.Base=self.Axis.valueAt(self.Axis.LastParameter)
+      where.Rotation=FreeCAD.Rotation(FreeCAD.Vector(0,0,1),self.Axis.tangentAt(self.Axis.LastParameter))
+      size=[self.Axis.Length/20.0,self.Axis.Length/10.0,self.Axis.Length/20.0]
+      self.arrow=arrow(pl=where,scale=size,offset=self.Axis.Length/10.0)
+      if self.Axis.curvatureAt(0):
+        O=self.Axis.centerOfCurvatureAt(0)
+        n=self.Axis.tangentAt(0).cross(self.Axis.normalAt(0))
+        from Part import Edge, Line
+        self.Axis=(Edge(Line(FreeCAD.Vector(O),FreeCAD.Vector(O+n))))
+      self.form.lab1.setText(edged[0].Object.Label+": edge")
+  def deleteArrow(self):
+    if self.arrow:
+      FreeCADGui.ActiveDocument.ActiveView.getSceneGraph().removeChild(self.arrow.node)
+      self.arrow=None
+  def closeEvent(self,event):
+    self.deleteArrow()
+  def reject(self):
+    if self.arrow:
+      self.deleteArrow()
+    FreeCADGui.Control.closeDialog()
