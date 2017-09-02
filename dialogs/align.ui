@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>299</width>
-    <height>179</height>
+    <height>187</height>
    </rect>
   </property>
   <property name="baseSize">
@@ -112,7 +112,7 @@
       <enum>QFrame::Box</enum>
      </property>
      <property name="frameShadow">
-      <enum>QFrame::Raised</enum>
+      <enum>QFrame::Sunken</enum>
      </property>
      <property name="text">
       <string>&lt; select a target face &gt;</string>

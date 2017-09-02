@@ -372,6 +372,7 @@ class rotateAroundForm:
         frameCmd.rotateTheBeamAround(o,self.Axis,float(self.form.edit1.text()))
       FreeCAD.ActiveDocument.commitTransaction()
   def getPrincipalAx(self, ax='Z'):
+    self.deleteArrow()
     from Part import Edge,Line
     O=FreeCAD.Vector()
     l=Line(O,FreeCAD.Vector(0,0,1000))

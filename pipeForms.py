@@ -939,7 +939,7 @@ class insertPypeLineForm(protopypeForm):
         plist.close()
         FreeCAD.Console.PrintMessage('Data saved in %s.\n' %f)
     
-class rotateForm:#prototypeForm):
+class rotateForm: # OBSOLETE:  functions duplicated by frameForms.rotateAroundForm
   '''
   Dialog for rotateTheTubeAx().
   It allows to rotate one object respect to the axis of its shape.
@@ -1003,7 +1003,7 @@ class rotateForm:#prototypeForm):
       self.labBase.removeLabel()
     FreeCADGui.Control.closeDialog()
 
-class rotateEdgeForm: #(prototypeForm):
+class rotateEdgeForm: # OBSOLETE:  functions duplicated by frameForms.rotateAroundForm
   '''
   Dialog for rotateTheTubeEdge().
   It allows to rotate one object respect to the axis of one circular edge.

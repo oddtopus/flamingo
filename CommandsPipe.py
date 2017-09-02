@@ -92,14 +92,14 @@ class breakPipe:
   def GetResources(self):
     return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","break.svg"),'MenuText':'Break the pipe','ToolTip':'Break one pipe at point and insert gap'}
 
-class rotateAx:
+class rotateAx: # OBSOLETE:  functions duplicated by frameForms.rotateAroundForm
   def Activated (self):
     import pipeForms
     FreeCADGui.Control.showDialog(pipeForms.rotateForm())
   def GetResources(self):
     return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","rotateAx.svg"),'MenuText':'Rotate by axis','ToolTip':'Rotate an object around an axis of existing geometry'}
 
-class rotateEdge:
+class rotateEdge: # OBSOLETE:  functions duplicated by frameForms.rotateAroundForm
   def Activated (self):
     import pipeForms
     FreeCADGui.Control.showDialog(pipeForms.rotateEdgeForm())
@@ -116,7 +116,7 @@ class mateEdges:
   def GetResources(self):
     return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","mate.svg"),'MenuText':'Mate pipes edges','ToolTip':'Mate two terminations through their edges'}
 
-class flat:
+class flat: # SUSPENDED
   def Activated (self):
     import pipeCmd, frameCmd
     FreeCAD.activeDocument().openTransaction('Flatten')

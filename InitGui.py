@@ -116,11 +116,11 @@ static char * image[] =
     self.appendToolbar("polarTools",list3)
     Log ('Loading Polar tools: done\n')
     import CommandsFrame
-    list4=["frameIt","fillFrame","alignFlange","spinSect","reverseBeam","pivotBeam","levelBeam","alignEdge","rotJoin","shiftBeam","stretchBeam","extend","adjustFrameAngle","insertPath","FrameLineManager","insertSection"]
+    list4=["frameIt","fillFrame","insertPath","insertSection","FrameLineManager","spinSect","reverseBeam","shiftBeam","pivotBeam","levelBeam","alignEdge","rotJoin","alignFlange","stretchBeam","extend","adjustFrameAngle"]
     self.appendToolbar("frameTools",list4)
     Log ('Loading Frame tools: done\n')
     import CommandsPipe
-    list5=["insertPipe","insertElbow","insertReduct","insertCap","insertFlange","insertUbolt","insertPypeLine","breakPipe","rotateAx","rotateEdge","mateEdges","flat","extend2intersection","extend1intersection","laydown","raiseup"]
+    list5=["insertPipe","insertElbow","insertReduct","insertCap","insertFlange","insertUbolt","insertPypeLine","breakPipe","mateEdges","extend2intersection","extend1intersection","laydown","raiseup"]
     self.appendToolbar("pipeTools",list5)
     Log ('Loading Pipe tools: done\n')
     menu1 = ["Frame tools"]

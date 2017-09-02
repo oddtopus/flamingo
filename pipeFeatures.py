@@ -38,13 +38,17 @@ class Pipe(pypeType):
     obj.addProperty("App::PropertyLength","Height","Pipe","Length of tube").Height=H
     obj.addProperty("App::PropertyString","Profile","Pipe","Section dim.").Profile=str(obj.OD)+"x"+str(obj.thk)
   def onChanged(self, fp, prop):
-    return None
+    if prop=='ID' and fp.ID<fp.OD:
+      fp.thk=(fp.OD-fp.ID)/2
   def execute(self, fp):
     if fp.thk>fp.OD/2:
-      fp.thk=fp.OD/2.1
+      fp.thk=fp.OD/2
     fp.ID=fp.OD-2*fp.thk
     fp.Profile=str(fp.OD)+"x"+str(fp.thk)
-    fp.Shape = Part.makeCylinder(fp.OD/2,fp.Height).cut(Part.makeCylinder(fp.ID/2,fp.Height))
+    if fp.ID:
+      fp.Shape = Part.makeCylinder(fp.OD/2,fp.Height).cut(Part.makeCylinder(fp.ID/2,fp.Height))
+    else:
+      fp.Shape = Part.makeCylinder(fp.OD/2,fp.Height)
     
 class Elbow(pypeType):
   '''Class for object PType="Elbow"
@@ -72,12 +76,12 @@ class Elbow(pypeType):
     obj.addProperty("App::PropertyVectorList","Ports","Elbow","Ports relative position").Ports=[FreeCAD.Vector(1,0,0),FreeCAD.Vector(0,1,0)]
     self.execute(obj)
   def onChanged(self, fp, prop):
-    #FreeCAD.Console.PrintMessage("Changed Pipe feature\n")
-    return None
+    if prop=='ID' and fp.ID<fp.OD:
+      fp.thk=(fp.OD-fp.ID)/2
   def execute(self, fp):
     if fp.BendAngle<180:
       if fp.thk>fp.OD/2:
-        fp.thk=fp.OD/2.1
+        fp.thk=fp.OD/2
       fp.ID=fp.OD-2*fp.thk
       fp.Profile=str(fp.OD)+"x"+str(fp.thk)
       CenterOfBend=FreeCAD.Vector(fp.BendRadius,fp.BendRadius,0)
@@ -97,8 +101,12 @@ class Elbow(pypeType):
       p2=Part.Face(Part.Wire(Part.makeCircle(fp.OD/2,fp.Ports[1],R.tangentAt(R.LastParameter))))
       sol=Part.Solid(Part.Shell([b,p1,p2]))
       planeFaces=[f for f in sol.Faces if type(f.Surface)==Part.Plane]
-      elbow=sol.makeThickness(planeFaces,-fp.thk,1.e-3)
-      fp.Shape = elbow
+      #elbow=sol.makeThickness(planeFaces,-fp.thk,1.e-3)
+      #fp.Shape = elbow
+      if fp.thk<fp.OD/2:
+        fp.Shape=sol.makeThickness(planeFaces,-fp.thk,1.e-3)
+      else:
+        fp.Shape=sol
       
 class Flange(pypeType):
   '''Class for object PType="Flange"

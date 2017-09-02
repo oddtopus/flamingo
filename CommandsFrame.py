@@ -104,7 +104,7 @@ class alignFlange:
     FreeCADGui.Control.showDialog(frameForms.alignForm())
 
   def GetResources(self):
-    return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","flangeAlign.svg"),'MenuText':'alignFlange','ToolTip':'Rotates the section of the beam to make the faces parallel to the first selection'}
+    return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","flangeAlign.svg"),'MenuText':'alignFlange','ToolTip':'Rotates the section of the beam to make the faces parallel to another face'}
 
 class shiftBeam:
   '''
@@ -196,20 +196,19 @@ class alignEdge:
 
 class pivotBeam:
   '''
-  Dialog to rotate one beam or other object around one of its edges.
-  * "Angle (deg):" textbox: insert the degree of rotation.
-  * "move/copy" radiobuttons: select if the object will be also copied.
-  * [OK] button: execute the rotation.
-  * [Reverse]: rotate in the opposite direction, if necessary.
-  * [Cancel]: exits
+  Dialog to rotate objects around one edge in the model or principal axis.
+  * Dial or textbox: the degree of rotation.
+  * "copy items" checkbox: select if the objects will be also copied.
+  * [Select axis] button: choose the pivot.
+  * [X / Y / Z]: choose one principal axis as pivot.
   '''
   def Activated(self):
     import frameForms
     #frameFormObj=frameForms.pivotForm()
-    FreeCADGui.Control.showDialog(frameForms.rotateAroundForm()) #pivotForm())
+    FreeCADGui.Control.showDialog(frameForms.rotateAroundForm()) 
     
   def GetResources(self):
-    return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","pivot.svg"),'MenuText':'pivotTheBeam','ToolTip':'Pivots the beam around an edge'}
+    return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","around.svg"),'MenuText':'pivotTheBeam','ToolTip':'Rotates the beam around an axis (edge or center-of-curvature)'}
 
 class stretchBeam:
   '''

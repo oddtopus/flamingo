@@ -270,7 +270,11 @@ class insertSectForm(QWidget):
       group=FreeCAD.activeDocument().addObject("App::DocumentObjectGroup","Profiles_set")
     if self.sizeList.selectedItems():
       prop=self.sectDictList[self.sizeList.currentRow()]
-      s=ArchProfile.makeProfile([0,'SECTION',prop['SSize']+'-000',prop['stype'],float(prop['W']),float(prop['H']),float(prop['ta']),float(prop['tf'])])
+      if prop['stype']=='C':
+        from Draft import makeCircle
+        s=makeCircle(float(prop['H']))
+      else:
+        s=ArchProfile.makeProfile([0,'SECTION',prop['SSize']+'-000',prop['stype'],float(prop['W']),float(prop['H']),float(prop['ta']),float(prop['tf'])])
       group.addObject(s)
     FreeCAD.activeDocument().recompute()
 

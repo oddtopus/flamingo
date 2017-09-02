@@ -562,7 +562,7 @@ def breakTheTubes(point,pipes=[],gap=0):
     
 def drawAsCenterLine(obj):
   try:
-    obj.ViewObject.LineWidth=6
+    obj.ViewObject.LineWidth=4
     obj.ViewObject.LineColor=1.0,0.3,0.0
     obj.ViewObject.DrawStyle='Dashdot'
   except:
