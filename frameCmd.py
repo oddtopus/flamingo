@@ -187,7 +187,7 @@ def isOrtho(e1=None,e2=None):
         v.append(e.normalAt(0,0))
     else:
       v.append(e)
-  return round(v[0].dot(v[1]),2)==0 #v[0].dot(v[1])==0 
+  return round(v[0].dot(v[1]),2)==0
 
 def isParallel(e1=None,e2=None):
   '"True" if two Edges or Vectors or the normal of Faces are parallel (with a margin)'

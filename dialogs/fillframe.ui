@@ -39,20 +39,10 @@
      </property>
     </widget>
    </item>
-   <item row="1" column="1">
-    <widget class="QRadioButton" name="radio2">
-     <property name="text">
-      <string>copy</string>
-     </property>
-     <property name="checked">
-      <bool>true</bool>
-     </property>
-    </widget>
-   </item>
    <item row="3" column="0" colspan="2">
     <widget class="QPushButton" name="btn1">
      <property name="text">
-      <string>Select</string>
+      <string>(S)elect</string>
      </property>
     </widget>
    </item>
@@ -66,6 +56,26 @@
      </property>
      <property name="text">
       <string>&lt; select a beam &gt;</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignCenter</set>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="1">
+    <widget class="QRadioButton" name="radio2">
+     <property name="text">
+      <string>copy</string>
+     </property>
+     <property name="checked">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item row="4" column="0" colspan="2">
+    <widget class="QLabel" name="label_2">
+     <property name="text">
+      <string>OK or RETURN to fill</string>
      </property>
      <property name="alignment">
       <set>Qt::AlignCenter</set>

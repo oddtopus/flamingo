@@ -10,6 +10,7 @@ import frameCmd
 from PySide.QtCore import *
 from PySide.QtGui import *
 from os.path import join, dirname, abspath
+from Draft import get3DView
 
 class prototypeForm(QWidget):
   'prototype dialog for frame tools workbench'
@@ -52,35 +53,54 @@ class prototypeForm(QWidget):
     self.buttons.layout().addWidget(self.btn2)
     self.mainVL.addWidget(self.buttons)
 
-class pivotForm: # OBSOLETE: replaced with rotateAroundForm
-  'dialog for pivotTheBeam()'
-  def __init__(self):
-    dialogPath=join(dirname(abspath(__file__)),"dialogs","pivot.ui")
+class prototypeDialog(object):
+  'prototype for dialogs.ui with callback function'
+  def __init__(self,dialog='someFile.ui'):
+    dialogPath=join(dirname(abspath(__file__)),"dialogs",dialog)
     self.form=FreeCADGui.PySideUic.loadUi(dialogPath)
-    self.form.edit1.setValidator(QDoubleValidator())
-    self.form.btn1.clicked.connect(self.reverse)
-  def accept(self):      #rotate
-    FreeCAD.activeDocument().openTransaction('Rotate')
-    if self.form.radio2.isChecked():
-      FreeCAD.activeDocument().copyObject(FreeCADGui.Selection.getSelection()[0],True)
-      frameCmd.pivotTheBeam(float(self.form.edit1.text()))
-    else:
-      frameCmd.pivotTheBeam(float(self.form.edit1.text()))
-    FreeCAD.ActiveDocument.recompute()
-    FreeCAD.activeDocument().commitTransaction()
-  def reverse(self):
-    FreeCAD.activeDocument().openTransaction('Reverse rotate')
-    frameCmd.pivotTheBeam(-2*float(self.form.edit1.text()))
-    self.form.edit1.setText(str(-1*float(self.form.edit1.text())))
-    FreeCAD.activeDocument().commitTransaction()
+    try:
+      self.view=get3DView()
+      self.call=self.view.addEventCallback("SoEvent", self.action)
+    except:
+      FreeCAD.Console.PrintError('No view available.\n')
+  def action(self,arg):
+    'Default function executed by callback'
+    if arg['Type']=='SoKeyboardEvent':
+      if arg['Key'] in ['s','S'] and arg['State']=='DOWN' and FreeCADGui.Selection.getSelection():
+        self.selectAction()
+      elif arg['Key']=='RETURN' and arg['State']=='DOWN':
+        self.accept()
+      elif arg['Key']=='ESCAPE' and arg['State']=='DOWN':
+        self.reject()
+    if arg['Type']=='SoMouseButtonEvent':
+      CtrlAltShift=[arg['CtrlDown'],arg['AltDown'],arg['ShiftDown']]
+      if arg['Button']=='BUTTON1' and arg['State']=='DOWN': self.mouseActionB1(CtrlAltShift)
+      elif arg['Button']=='BUTTON2' and arg['State']=='DOWN': self.mouseActionB2(CtrlAltShift)
+      elif arg['Button']=='BUTTON3' and arg['State']=='DOWN': self.mouseActionB3(CtrlAltShift)
+  def selectAction(self):
+    'MUST be redefined in the child class'
+    pass
+  def mouseActionB1(self,CtrlAltShift):
+    'MUST be redefined in the child class'
+    pass
+  def mouseActionB2(self,CtrlAltShift):
+    'MUST be redefined in the child class'
+    pass
+  def mouseActionB3(self,CtrlAltShift):
+    'MUST be redefined in the child class'
+    pass
+  def reject(self):
+    'CAN be redefined to remove other attributes, such as arrow()s or label()s'
+    try: self.view.removeEventCallback('SoEvent',self.call)
+    except: pass
+    FreeCADGui.Control.closeDialog()
 
-class fillForm:
+class fillForm(prototypeDialog):
   'dialog for fillFrame()'
   def __init__(self):
-    dialogPath=join(dirname(abspath(__file__)),"dialogs","fillframe.ui")
-    self.form=FreeCADGui.PySideUic.loadUi(dialogPath)
+    super(fillForm,self).__init__('fillframe.ui')
     self.beam=None
-    self.form.btn1.clicked.connect(self.select)
+    self.form.btn1.clicked.connect(self.selectAction)
   def accept(self):
     if self.beam!=None and len(frameCmd.edges())>0:
       FreeCAD.activeDocument().openTransaction('Fill frame')
@@ -93,26 +113,25 @@ class fillForm:
         FreeCAD.activeDocument().recompute()
       FreeCAD.ActiveDocument.recompute()
       FreeCAD.activeDocument().commitTransaction()
-  def select(self):
+  def selectAction(self):
     if len(frameCmd.beams())>0:
       self.beam=frameCmd.beams()[0]
       self.form.label.setText(self.beam.Label+':'+self.beam.Profile)
       FreeCADGui.Selection.removeSelection(self.beam)
 
-class extendForm:
+class extendForm(prototypeDialog):
   'dialog for frameCmd.extendTheBeam()'
   def __init__(self):
-    dialogPath=join(dirname(abspath(__file__)),"dialogs","extend.ui")
-    self.form=FreeCADGui.PySideUic.loadUi(dialogPath)
+    super(extendForm,self).__init__('extend.ui')
     selex = FreeCADGui.Selection.getSelectionEx()
-    self.form.btn1.clicked.connect(self.getTarget)
+    self.form.btn1.clicked.connect(self.selectAction)
     if len(selex):
       self.target=selex[0].SubObjects[0]
       self.form.label.setText(selex[0].Object.Label+':'+self.target.ShapeType)
       FreeCADGui.Selection.removeSelection(selex[0].Object)
     else:
       self.target=None
-  def getTarget(self):
+  def selectAction(self):
     selex = FreeCADGui.Selection.getSelectionEx()
     if len(selex[0].SubObjects)>0 and hasattr(selex[0].SubObjects[0],'ShapeType'):
       self.target=selex[0].SubObjects[0]
@@ -126,7 +145,7 @@ class extendForm:
       FreeCAD.activeDocument().recompute()
       FreeCAD.activeDocument().commitTransaction()
       
-class stretchForm:
+class stretchForm(prototypeDialog):
   '''dialog for stretchTheBeam()
     [Get Length] measures the min. distance of the selected objects or
       the length of the selected edge or
@@ -135,11 +154,10 @@ class stretchForm:
   '''
   def __init__(self):
     self.L=None
-    dialogPath=join(dirname(abspath(__file__)),"dialogs","beamstretch.ui")
-    self.form=FreeCADGui.PySideUic.loadUi(dialogPath)
+    super(stretchForm,self).__init__('beamstretch.ui')
     self.form.edit1.setValidator(QDoubleValidator())
     self.form.edit1.editingFinished.connect(self.edit12L)
-    self.form.btn1.clicked.connect(self.getL)
+    self.form.btn1.clicked.connect(self.selectAction)
     self.form.slider.setMinimum(-100)
     self.form.slider.setMaximum(100)
     self.form.slider.setValue(0)
@@ -152,18 +170,18 @@ class stretchForm:
   def changeL(self):
     if self.L:
       ext=self.L*(1+self.form.slider.value()/100.0)
-      self.form.edit1.setText(str(ext))
-  def getL(self):
+      self.form.edit1.setText("%.3f" %ext)
+  def selectAction(self):
     if self.labTail:
       self.labTail.removeLabel()
       self.labTail=None
     self.L=frameCmd.getDistance()
     if self.L:
-      self.form.edit1.setText(str(self.L))
+      self.form.edit1.setText("%.3f"%self.L)
     elif frameCmd.beams():
       beam=frameCmd.beams()[0]
       self.L=float(beam.Height)
-      self.form.edit1.setText(str(self.L))
+      self.form.edit1.setText("%.3f"%self.L)
     else:
       self.form.edit1.setText('') 
     self.form.slider.setValue(0)
@@ -172,9 +190,6 @@ class stretchForm:
     if frameCmd.beams():
       beam=frameCmd.beams()[0]
       from polarUtilsCmd import label3D
-      #sc=100
-      #if hasattr(beam,'Width'): sc=float(beam.Width)
-      #elif hasattr(beam,'OD'): sc=float(beam.OD)
       self.labTail=label3D(pl=beam.Placement, text='____TAIL') #, sizeFont=sc)
   def accept(self):        # stretch
     if self.labTail:
@@ -193,19 +208,20 @@ class stretchForm:
           beam.Placement.move(frameCmd.beamAx(beam).multiply(delta/2))
       FreeCAD.activeDocument().recompute()
       FreeCAD.activeDocument().commitTransaction()
-  def reject(self):
+  def reject(self): # redefined to remove label from the scene
+    try: self.view.removeEventCallback('SoEvent',self.call)
+    except: pass
     if self.labTail:
       self.labTail.removeLabel()
     FreeCADGui.Control.closeDialog()
 
-class translateForm:   
+class translateForm(prototypeDialog):   
   'dialog for moving blocks'
   def __init__(self):
-    dialogPath=join(dirname(abspath(__file__)),"dialogs","beamshift.ui")
-    self.form=FreeCADGui.PySideUic.loadUi(dialogPath)
+    super(translateForm,self).__init__("beamshift.ui")
     for e in [self.form.edit1,self.form.edit2,self.form.edit3,self.form.edit4,self.form.edit5]:
       e.setValidator(QDoubleValidator())
-    self.form.btn1.clicked.connect(self.getDisplacement)
+    self.form.btn1.clicked.connect(self.selectAction)
     self.arrow=None
   def getDistance(self):
     self.deleteArrow()
@@ -270,7 +286,7 @@ class translateForm:
       where.Rotation=FreeCAD.Rotation(FreeCAD.Vector(0,0,1),edge.tangentAt(0))
       size=[edge.Length/20.0,edge.Length/10.0,edge.Length/20.0]
       self.arrow=arrow(pl=where,scale=size,offset=edge.Length/2.0)
-  def getDisplacement(self):
+  def selectAction(self):
     shapes=[y for x in FreeCADGui.Selection.getSelectionEx() for y in x.SubObjects if hasattr(y,'ShapeType')][:2]
     if len(shapes)>1:
       self.getDistance()
@@ -292,30 +308,27 @@ class translateForm:
     if self.arrow:
       FreeCADGui.ActiveDocument.ActiveView.getSceneGraph().removeChild(self.arrow.node)
       self.arrow=None
-  def closeEvent(self,event):
+  def reject(self): # redefined to remove arrow from scene
+    try: self.view.removeEventCallback('SoEvent',self.call)
+    except: pass
     self.deleteArrow()
-  def reject(self):
-    if self.arrow:
-      self.deleteArrow()
     FreeCADGui.Control.closeDialog()
 
-class alignForm:   
+class alignForm(prototypeDialog):   
   'dialog to flush faces'
   def __init__(self):
-    dialogPath=join(dirname(abspath(__file__)),"dialogs","align.ui")
-    self.form=FreeCADGui.PySideUic.loadUi(dialogPath)
+    super(alignForm,self).__init__('align.ui')
     self.faceRef=None
-    self.getRef()
-    self.form.btn1.clicked.connect(self.getRef)
+    self.selectAction()
+    self.form.btn1.clicked.connect(self.selectAction)
     self.form.btnXY.clicked.connect(lambda: self.refPlane(FreeCAD.Vector(0,0,1)))
     self.form.btnXZ.clicked.connect(lambda: self.refPlane(FreeCAD.Vector(0,1,0)))
     self.form.btnYZ.clicked.connect(lambda: self.refPlane(FreeCAD.Vector(1,0,0)))
     self.form.X.setValidator(QDoubleValidator())
     self.form.btnNorm.clicked.connect(lambda: self.refPlane(FreeCAD.Vector(float(self.form.X.text()),float(self.form.Y.text()),float(self.form.Z.text()))))
-    #self.form.X.editingFinished.connect(
     self.form.Y.setValidator(QDoubleValidator())
     self.form.Z.setValidator(QDoubleValidator())
-  def getRef(self):
+  def selectAction(self):
     if frameCmd.faces():
       a=[(o,frameCmd.faces([o])[0]) for o in FreeCADGui.Selection.getSelectionEx() if frameCmd.faces([o])][0]
       self.faceRef=a[1]
@@ -343,16 +356,16 @@ class alignForm:
       FreeCAD.activeDocument().recompute()
       FreeCAD.activeDocument().commitTransaction()
     
-class rotateAroundForm:
+class rotateAroundForm(prototypeDialog):
   '''
   Dialog for rotateTheBeamAround().
   It allows to rotate one object around one edge or the axis of a circular edge (or one principal axis.)
   '''
   def __init__(self):
-    dialogPath=join(dirname(abspath(__file__)),"dialogs","rotAround.ui")
-    self.form=FreeCADGui.PySideUic.loadUi(dialogPath)
+    super(rotateAroundForm,self).__init__('rotAround.ui')
     self.form.edit1.setValidator(QDoubleValidator())
-    self.form.btn1.clicked.connect(self.getAxis)
+    self.form.btn1.clicked.connect(self.selectAction)
+    self.form.btn2.clicked.connect(self.reverse)
     self.form.btnX.clicked.connect(lambda: self.getPrincipalAx('X'))
     self.form.btnY.clicked.connect(lambda: self.getPrincipalAx('Y'))
     self.form.btnZ.clicked.connect(lambda: self.getPrincipalAx('Z'))
@@ -360,8 +373,10 @@ class rotateAroundForm:
     self.form.edit1.editingFinished.connect(lambda: self.form.dial.setValue(int(self.form.edit1.text())))
     self.Axis=None
     self.arrow=None
-    self.getAxis()
-  def accept(self):
+    self.selectAction()
+  def accept(self, ang=None):
+    if not ang:
+      ang=float(self.form.edit1.text())
     self.deleteArrow()
     objects=FreeCADGui.Selection.getSelection()
     if objects and self.Axis:
@@ -369,8 +384,13 @@ class rotateAroundForm:
       for o in objects:
         if self.form.copyCB.isChecked():
           FreeCAD.activeDocument().copyObject(o,True)
-        frameCmd.rotateTheBeamAround(o,self.Axis,float(self.form.edit1.text()))
+        frameCmd.rotateTheBeamAround(o,self.Axis,ang)
       FreeCAD.ActiveDocument.commitTransaction()
+  def reverse(self):
+    ang=float(self.form.edit1.text())*-1
+    self.form.edit1.setText('%.0f'%ang)
+    self.form.dial.setValue(int(self.form.edit1.text()))
+    self.accept(ang*2)
   def getPrincipalAx(self, ax='Z'):
     self.deleteArrow()
     from Part import Edge,Line
@@ -382,7 +402,7 @@ class rotateAroundForm:
       l=Line(O,FreeCAD.Vector(0,1000,0))
     self.Axis=Edge(l)
     self.form.lab1.setText("Principal: "+ax)
-  def getAxis(self):
+  def selectAction(self):
     edged = [objex for objex in FreeCADGui.Selection.getSelectionEx() if frameCmd.edges([objex])]
     if edged:
       self.Axis=frameCmd.edges([edged[0]])[0]
@@ -403,9 +423,8 @@ class rotateAroundForm:
     if self.arrow:
       FreeCADGui.ActiveDocument.ActiveView.getSceneGraph().removeChild(self.arrow.node)
       self.arrow=None
-  def closeEvent(self,event):
+  def reject(self): # redefined to remove arrow from scene
+    try: self.view.removeEventCallback('SoEvent',self.call)
+    except: pass
     self.deleteArrow()
-  def reject(self):
-    if self.arrow:
-      self.deleteArrow()
     FreeCADGui.Control.closeDialog()

@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>216</width>
-    <height>158</height>
+    <height>186</height>
    </rect>
   </property>
   <property name="baseSize">
@@ -23,10 +23,17 @@
    <bool>false</bool>
   </property>
   <layout class="QGridLayout" name="gridLayout">
-   <item row="3" column="0" colspan="3">
-    <widget class="QSlider" name="slider">
-     <property name="orientation">
-      <enum>Qt::Horizontal</enum>
+   <item row="2" column="0" colspan="3">
+    <widget class="QPushButton" name="btn1">
+     <property name="text">
+      <string>(S)et length</string>
+     </property>
+    </widget>
+   </item>
+   <item row="6" column="1">
+    <widget class="QRadioButton" name="both">
+     <property name="text">
+      <string>both</string>
      </property>
     </widget>
    </item>
@@ -40,17 +47,17 @@
      </property>
     </widget>
    </item>
+   <item row="4" column="0">
+    <widget class="QLabel" name="label_2">
+     <property name="text">
+      <string>Stretched end:</string>
+     </property>
+    </widget>
+   </item>
    <item row="5" column="1">
     <widget class="QRadioButton" name="tail">
      <property name="text">
       <string>tail</string>
-     </property>
-    </widget>
-   </item>
-   <item row="2" column="0" colspan="3">
-    <widget class="QPushButton" name="btn1">
-     <property name="text">
-      <string>Get length</string>
      </property>
     </widget>
    </item>
@@ -64,13 +71,6 @@
      </property>
     </widget>
    </item>
-   <item row="4" column="0">
-    <widget class="QLabel" name="label_2">
-     <property name="text">
-      <string>Stretched end:</string>
-     </property>
-    </widget>
-   </item>
    <item row="0" column="1" colspan="2">
     <widget class="QLineEdit" name="edit1">
      <property name="text">
@@ -81,10 +81,20 @@
      </property>
     </widget>
    </item>
-   <item row="6" column="1">
-    <widget class="QRadioButton" name="both">
+   <item row="3" column="0" colspan="3">
+    <widget class="QSlider" name="slider">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+    </widget>
+   </item>
+   <item row="7" column="0" colspan="3">
+    <widget class="QLabel" name="label_3">
      <property name="text">
-      <string>both</string>
+      <string>OK or Return to stretch</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignCenter</set>
      </property>
     </widget>
    </item>

@@ -205,7 +205,7 @@ class insertSectForm(QWidget):
   '''
   def __init__(self,winTitle='Insert section', icon='flamingo.svg'):
     '''
-    __init__(self,winTitle='Title')
+    __init__(self,winTitle='Title',icon='filename.svg')
     '''
     super(insertSectForm,self).__init__()
     self.move(QPoint(100,250))

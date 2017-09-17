@@ -92,20 +92,6 @@ class breakPipe:
   def GetResources(self):
     return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","break.svg"),'MenuText':'Break the pipe','ToolTip':'Break one pipe at point and insert gap'}
 
-class rotateAx: # OBSOLETE:  functions duplicated by frameForms.rotateAroundForm
-  def Activated (self):
-    import pipeForms
-    FreeCADGui.Control.showDialog(pipeForms.rotateForm())
-  def GetResources(self):
-    return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","rotateAx.svg"),'MenuText':'Rotate by axis','ToolTip':'Rotate an object around an axis of existing geometry'}
-
-class rotateEdge: # OBSOLETE:  functions duplicated by frameForms.rotateAroundForm
-  def Activated (self):
-    import pipeForms
-    FreeCADGui.Control.showDialog(pipeForms.rotateEdgeForm())
-  def GetResources(self):
-    return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","rotateEdge.svg"),'MenuText':'Rotate by edge','ToolTip':'Rotate an object around the axis of a circular edge'}
-
 class mateEdges:
   def Activated (self):
     import pipeCmd
@@ -193,11 +179,7 @@ addCommand('insertUbolt',insertUbolt())
 addCommand('insertPypeLine',insertPypeLine())
 addCommand('breakPipe',breakPipe())
 addCommand('mateEdges',mateEdges())
-addCommand('rotateAx',rotateAx())
-addCommand('rotateEdge',rotateEdge())
-addCommand('flat',flat())
 addCommand('extend2intersection',extend2intersection())
 addCommand('extend1intersection',extend1intersection())
 addCommand('laydown',laydown())
 addCommand('raiseup',raiseup())
-

@@ -175,19 +175,28 @@ class insertPipeForm(protopypeForm):
         if self.combo.currentText()!='<none>':
           pipeCmd.moveToPyLi(self.lastPipe,self.combo.currentText())
     else:
-      for edge in frameCmd.edges(): # ...one or more edges...
-        if edge.curvatureAt(0)==0: # ...straight edges
-          propList=[d['PSize'],float(d['OD']),float(d['thk']),edge.Length]
-          self.lastPipe=pipeCmd.makePipe(propList,edge.valueAt(0),edge.tangentAt(0))
-        else: # ...curved edges
-          objs=[o for o in FreeCADGui.Selection.getSelection() if hasattr(o,'PSize') and hasattr(o,'OD') and hasattr(o,'thk')]
-          if len(objs)>0:
-            propList=[objs[0].PSize,objs[0].OD,objs[0].thk,self.H]
-          else:
-            propList=[d['PSize'],float(d['OD']),float(d['thk']),self.H]
-          self.lastPipe=pipeCmd.makePipe(propList,edge.centerOfCurvatureAt(0),edge.tangentAt(0).cross(edge.normalAt(0)))
-        if self.combo.currentText()!='<none>':
-          pipeCmd.moveToPyLi(self.lastPipe,self.combo.currentText())
+      selex=FreeCADGui.Selection.getSelectionEx()
+      for objex in selex:
+        o=objex.Object # SELECT PROPERTIES ACCORDING OBJECT
+        if hasattr(o,'PSize') and hasattr(o,'OD') and hasattr(o,'thk'):
+          propList=[o.PSize,o.OD,o.thk,self.H]
+        else:
+          propList=[d['PSize'],float(d['OD']),float(d['thk']),self.H]
+        for edge in frameCmd.edges([objex]): # ...one or more edges...
+          if edge.curvatureAt(0)==0: # ...straight edges
+            pL=propList
+            pL[3]=edge.Length
+            self.lastPipe=pipeCmd.makePipe(pL,edge.valueAt(0),edge.tangentAt(0))
+          else: # ...curved edges
+            pos=edge.centerOfCurvatureAt(0)
+            Z=edge.tangentAt(0).cross(edge.normalAt(0))
+            if pipeCmd.isElbow(o):
+              p0,p1=[o.Placement.Rotation.multVec(p) for p in o.Ports]
+              if not frameCmd.isParallel(Z,p0):
+                Z=p1
+            self.lastPipe=pipeCmd.makePipe(propList,pos,Z)
+          if self.combo.currentText()!='<none>':
+            pipeCmd.moveToPyLi(self.lastPipe,self.combo.currentText())
     self.H=float(self.lastPipe.Height)
     self.edit1.setText(str(float(self.H)))
     FreeCAD.activeDocument().commitTransaction()
@@ -274,14 +283,14 @@ class insertElbowForm(protopypeForm):
     self.lastElbow=None
     self.lastAngle=0
   def insert(self):    # insert the curve
-    self.lastElbow=None
+    #self.lastElbow=None
     self.lastAngle=0
     self.dial.setValue(0)
     DN=OD=thk=PRating=None
     d=self.pipeDictList[self.sizeList.currentRow()]
     try:
-      if float(self.edit1.text())>=180:
-        self.edit1.setText("179")
+      if float(self.edit1.text())>180:
+        self.edit1.setText("180")
       ang=float(self.edit1.text())
     except:
       ang=float(d['BendAngle'])
@@ -315,22 +324,41 @@ class insertElbowForm(protopypeForm):
         FreeCAD.activeDocument().commitTransaction()
       elif selex[0].SubObjects[0].ShapeType=="Edge" and  selex[0].SubObjects[0].curvatureAt(0)!=0: # ...on center of curved edge
         P=selex[0].SubObjects[0].centerOfCurvatureAt(0)
-        Z=selex[0].SubObjects[0].normalAt(0).cross(selex[0].SubObjects[0].tangentAt(0)).normalize()
+        N=selex[0].SubObjects[0].normalAt(0).cross(selex[0].SubObjects[0].tangentAt(0)).normalize()
+        #Z=None
+        #if self.lastElbow:
+        #  Z=frameCmd.beamAx(self.lastElbow) # stores orientation of previous curve
         FreeCAD.activeDocument().openTransaction('Insert elbow on curved edge')
-        self.lastElbow=pipeCmd.makeElbow(propList,P)#,Z)
-        rot=FreeCAD.Rotation(self.lastElbow.Ports[0],Z)
-        self.lastElbow.Placement.Rotation=rot.multiply(self.lastElbow.Placement.Rotation)
-        #self.lastElbow.Placement.move(Z*self.lastElbow.Ports[0].Length*-1)
+        self.lastElbow=pipeCmd.makeElbow(propList,P) # ,Z)
+        if pipeCmd.isPipe(selex[0].Object):
+          print 'isPipe'
+          ax=selex[0].Object.Shape.Solids[0].CenterOfMass-P
+          rot=FreeCAD.Rotation(self.lastElbow.Ports[0],ax)
+          self.lastElbow.Placement.Rotation=rot.multiply(self.lastElbow.Placement.Rotation)
+          #self.lastElbow.Placement.Rotation=FreeCAD.Rotation(ax,self.lastElbow.Ports[0])
+          Port0=pipeCmd.getElbowPort(self.lastElbow)
+          self.lastElbow.Placement.move(P-Port0)
+        elif pipeCmd.isElbow(selex[0].Object):
+          print 'isElbow'
+          p0,p1=[selex[0].Object.Placement.Rotation.multVec(p) for p in selex[0].Object.Ports]
+          if frameCmd.isParallel(p0,N):
+            self.lastElbow.Placement.Rotation=FreeCAD.Rotation(self.lastElbow.Ports[0],p0*-1)
+          else:
+            self.lastElbow.Placement.Rotation=FreeCAD.Rotation(self.lastElbow.Ports[0],p1*-1)
+          self.lastElbow.Placement.move(P-pipeCmd.getElbowPort(self.lastElbow))
+        else:
+          print 'else'
+          rot=FreeCAD.Rotation(self.lastElbow.Ports[0],N)
+          self.lastElbow.Placement.Rotation=rot.multiply(self.lastElbow.Placement.Rotation)
+          self.lastElbow.Placement.move(self.lastElbow.Placement.Rotation.multVec(self.lastElbow.Ports[0])*-1)
+        #if Z:
+        #  from math import pi
+        #  ang=Z.getAngle(frameCmd.beamAx(self.lastElbow))/pi*180 #not enough accurate!!
+        #  rotAx=Part.Edge(Part.Line(P,P+self.lastElbow.Placement.Rotation.multVec(self.lastElbow.Ports[0])))
+        #  frameCmd.rotateTheBeamAround(self.lastElbow,rotAx,ang)
         if self.combo.currentText()!='<none>':
           pipeCmd.moveToPyLi(self.lastElbow,self.combo.currentText())
         FreeCAD.activeDocument().recompute()
-        if pipeCmd.isPipe(selex[0].Object):
-          comPipe=selex[0].Object.Shape.Solids[0].CenterOfMass
-          self.lastElbow.Placement.Rotation=FreeCAD.Rotation(self.lastElbow.Ports[0],comPipe-P)
-          Port0=pipeCmd.getElbowPort(self.lastElbow)
-          self.lastElbow.Placement.move(P-Port0)
-        else:
-          self.lastElbow.Placement.move(self.lastElbow.Placement.Rotation.multVec(self.lastElbow.Ports[0])*-1)
         FreeCAD.activeDocument().commitTransaction()
     else:       # multiple selection -> insert one elbow at intersection of two edges or beams or pipes ##
       # selection of axes
@@ -939,95 +967,6 @@ class insertPypeLineForm(protopypeForm):
         plist.close()
         FreeCAD.Console.PrintMessage('Data saved in %s.\n' %f)
     
-class rotateForm: # OBSOLETE:  functions duplicated by frameForms.rotateAroundForm
-  '''
-  Dialog for rotateTheTubeAx().
-  It allows to rotate one object respect to the axis of its shape.
-  It's possible to get the rotation axis from one existing edge: select the
-  reference edge and the object, then push [Get]
-  '''
-  def __init__(self):
-    dialogPath=join(dirname(abspath(__file__)),"dialogs","rotateax.ui")
-    self.form=FreeCADGui.PySideUic.loadUi(dialogPath)
-    self.form.btn2.clicked.connect(self.reverse)
-    self.vShapeRef = FreeCAD.Vector(0,0,1)
-    for e in [self.form.edit1,self.form.xval,self.form.yval,self.form.zval]:
-      e.setValidator(QDoubleValidator())
-    self.form.btnGet.clicked.connect(self.getAxis)
-    self.labBase=None
-    self.getAxis()
-    self.form.dial.valueChanged.connect(lambda: self.form.edit1.setText(str(self.form.dial.value())))
-    self.form.edit1.editingFinished.connect(lambda: self.form.dial.setValue(int(self.form.edit1.text())))
-  def accept(self): #rotate(self):
-    if self.labBase:
-      self.labBase.removeLabel()
-      self.labBase=None
-    if len(FreeCADGui.Selection.getSelection())>0:
-      obj = FreeCADGui.Selection.getSelection()[0]
-      self.vShapeRef=FreeCAD.Vector(float(self.form.xval.text()),float(self.form.yval.text()),float(self.form.zval.text()))
-      FreeCAD.activeDocument().openTransaction('Rotate')
-      if self.form.radio2.isChecked():
-        FreeCAD.activeDocument().copyObject(FreeCADGui.Selection.getSelection()[0],True)
-      pipeCmd.rotateTheTubeAx(obj,self.vShapeRef,float(self.form.edit1.text()))
-      FreeCAD.activeDocument().commitTransaction()
-  def reverse(self):
-    if len(FreeCADGui.Selection.getSelection())>0:
-      obj = FreeCADGui.Selection.getSelection()[0]
-      FreeCAD.activeDocument().openTransaction('Reverse rotate')
-      pipeCmd.rotateTheTubeAx(obj,self.vShapeRef,-2*float(self.form.edit1.text()))
-      self.form.edit1.setText(str(-1*float(self.form.edit1.text())))
-      FreeCAD.activeDocument().commitTransaction()
-  def getAxis(self):
-    if self.labBase:
-      self.labBase.removeLabel()
-      self.labBase=None
-    coord=[]
-    selex=FreeCADGui.Selection.getSelectionEx()
-    if len(selex)==1 and frameCmd.edges():
-      sub=frameCmd.edges()[0]
-    elif len(selex)>1 and frameCmd.edges(selex[1:]):
-      sub=frameCmd.edges(selex[1:])[0]
-    else: return
-    obj=selex[0].Object
-    axObj=sub.tangentAt(0)
-    from polarUtilsCmd import label3D
-    self.labBase=label3D(pl=obj.Placement, text='____BASE')
-    coord=rounded(pipeCmd.shapeReferenceAxis(obj,axObj))
-    self.form.xval.setText(str(coord[0]))
-    self.form.yval.setText(str(coord[1]))
-    self.form.zval.setText(str(coord[2]))
-    if len(selex)>1:
-      for sx in selex[1:]: FreeCADGui.Selection.removeSelection(sx.Object)
-  def reject(self):
-    if self.labBase:
-      self.labBase.removeLabel()
-    FreeCADGui.Control.closeDialog()
-
-class rotateEdgeForm: # OBSOLETE:  functions duplicated by frameForms.rotateAroundForm
-  '''
-  Dialog for rotateTheTubeEdge().
-  It allows to rotate one object respect to the axis of one circular edge.
-  '''
-  def __init__(self):
-    dialogPath=join(dirname(abspath(__file__)),"dialogs","rotateedge.ui")
-    self.form=FreeCADGui.PySideUic.loadUi(dialogPath)
-    self.form.edit1.setValidator(QDoubleValidator())
-    self.form.btn2.clicked.connect(self.reverse)
-    self.form.dial.valueChanged.connect(lambda: self.form.edit1.setText(str(self.form.dial.value())))
-    self.form.edit1.editingFinished.connect(lambda: self.form.dial.setValue(int(self.form.edit1.text())))
-  def accept(self): #rotate(self):
-    if len(FreeCADGui.Selection.getSelection())>0:
-      FreeCAD.activeDocument().openTransaction('Rotate')
-      if self.form.radio2.isChecked():
-        FreeCAD.activeDocument().copyObject(FreeCADGui.Selection.getSelection()[0],True)
-      pipeCmd.rotateTheTubeEdge(float(self.form.edit1.text()))
-      FreeCAD.activeDocument().commitTransaction()
-  def reverse(self):
-    FreeCAD.activeDocument().openTransaction('Reverse rotate')
-    pipeCmd.rotateTheTubeEdge(-2*float(self.form.edit1.text()))
-    self.form.edit1.setText(str(-1*float(self.form.edit1.text())))
-    FreeCAD.activeDocument().commitTransaction()
-
 class breakForm(QWidget):
   '''
   Dialog to break one pipe and create a gap.
