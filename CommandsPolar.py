@@ -106,7 +106,8 @@ class offsetWorkPlane:
       offset=qid.getInteger(None,'Offset Work Plane','Offset: ')
       if offset[1]:
         polarUtilsCmd.offsetWP(offset[0])
-      FreeCADGui.ActiveDocument.ActiveView.getSceneGraph().removeChild(arrow.node)
+      #FreeCADGui.ActiveDocument.ActiveView.getSceneGraph().removeChild(arrow.node)
+      arrow.closeArrow()
   def GetResources(self):
     return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","offsetWP.svg"),'MenuText':'offset Workplane','ToolTip':'Shifts the WP alongg its normal.'}
     
@@ -119,6 +120,15 @@ class hackedL:
   def GetResources(self):
     return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","hackedL.svg"),'Accel':"H,L",'MenuText':'draw a DWire','ToolTip':'WP is re-positioned at each point. Possible to spin and offset it.'}
     
+class moveHandle:
+
+  def Activated(self):
+    import polarUtilsCmd
+    FreeCADGui.Control.showDialog(polarUtilsCmd.handleDialog())
+    #form = polarUtilsCmd.handleDialog()
+
+  def GetResources(self):
+    return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","moveHandle.svg"),'Accel':"M,H",'MenuText':'Move objects','ToolTip':'Move quickly objects inside viewport'}
 #---------------------------------------------------------------------------
 # Adds the commands to the FreeCAD command manager
 #---------------------------------------------------------------------------
@@ -129,3 +139,4 @@ addCommand('moveWorkPlane',moveWorkPlane())
 addCommand('rotateWorkPlane',rotateWorkPlane())
 addCommand('offsetWorkPlane',offsetWorkPlane())
 addCommand('hackedL',hackedL())
+addCommand('moveHandle',moveHandle())

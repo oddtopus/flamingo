@@ -5,8 +5,10 @@ __author__="oddtopus"
 __url__="github.com/oddtopus/flamingo"
 __license__="LGPL 3"
 
-import math, FreeCAD,FreeCADGui
+import math, FreeCAD, FreeCADGui, frameCmd
 from os.path import join, dirname, abspath
+from pivy import coin
+from frameForms import prototypeDialog
 
 def cerchio(R=1, nseg=8):
   'arg1=R, arg2=nseg: returns a list of 3-uple for nseg+1 coordintates on the semi-circle centered in (0,0,0)'
@@ -108,27 +110,32 @@ class arrow(object):
   '''
   This class draws a green arrow to be used as an auxiliary compass
   to show position and orientation of objects.
-    arrow(pl=None, scale=[100,100,20],offset=100)
+    arrow(pl=None, scale=[100,100,20],offset=100,name='ARROW')
   '''
-  def __init__(self,pl=None, scale=[100,100,20],offset=100):
-    import FreeCAD, FreeCADGui
-    from pivy import coin
-    self.node=coin.SoSeparator()
-    self.color=coin.SoBaseColor()
-    self.color.rgb=0,0.8,0
-    self.node.addChild(self.color)
-    self.transform=coin.SoTransform()
-    self.node.addChild(self.transform)
+  def __init__(self,pl=None, scale=[100,100,20],offset=100,name='ARROW'):
+    # define main properties
+    self.view=FreeCADGui.ActiveDocument.ActiveView
+    self.sg=self.view.getSceneGraph()
+    self.cb=self.view.addEventCallbackPivy(coin.SoMouseButtonEvent.getClassTypeId(), self.pickCB)
+    # define OpenInventor properties
+    self.node=coin.SoSeparator() #self.node=coin.SoSelection()
+    self.name=name
+    self.node.setName(self.name)
+    self.color=coin.SoBaseColor(); self.color.rgb=0,0.8,0
+    self.transform=coin.SoTransform(); self.transform.scaleFactor.setValue(scale)
     self.cone=coin.SoCone()
+    # create children of node
+    self.node.addChild(self.color)
+    self.node.addChild(self.transform)
     self.node.addChild(self.cone)
-    self.sg=FreeCADGui.ActiveDocument.ActiveView.getSceneGraph()
+    # draw the arrow and move it to its Placement with the specified offset
     self.sg.addChild(self.node)
-    self.transform.scaleFactor.setValue(scale)
     self.offset=offset
     if not pl:
       pl=FreeCAD.Placement()
     self.moveto(pl)
   def closeArrow(self):
+    self.view.removeEventCallbackPivy(coin.SoMouseButtonEvent.getClassTypeId(), self.cb)
     self.sg.removeChild(self.node)
   def moveto(self,pl):
     import FreeCAD
@@ -137,6 +144,97 @@ class arrow(object):
     self.transform.rotation.setValue(tuple(self.Placement.Rotation.multiply(rotx90).Q))
     offsetV=self.Placement.Rotation.multVec(FreeCAD.Vector(0,0,self.offset))
     self.transform.translation.setValue(tuple(self.Placement.Base+offsetV))
+  def pickCB(self, ecb):
+    event=ecb.getEvent()
+    if event.getState()==coin.SoMouseButtonEvent.DOWN:
+      render_manager=self.view.getViewer().getSoRenderManager()
+      doPick=coin.SoRayPickAction(render_manager.getViewportRegion())
+      doPick.setPoint(coin.SbVec2s(*ecb.getEvent().getPosition()))
+      doPick.apply(render_manager.getSceneGraph())
+      points=doPick.getPickedPointList()
+      if points.getLength():
+        path=points[0].getPath()
+        if str(tuple(path)[-2].getName())==self.name: self.pickAction(path=path,event=event)
+  def pickAction(self,path=None,event=None,arg=None): # sample
+    if path:
+      for n in path: 
+        if str(n.getName())==self.name: 
+          FreeCAD.Console.PrintMessage("You hit the %s\n"%self.name)
+
+class arrow_move(arrow):
+  '''
+  This class derives from "arrow" and adds the ability to move the selected
+  objects when the arrow is picked.  This is accomplished by redefining the
+  method "pickAction".
+  '''
+  def __init__(self, direct=None):
+    # define general size of arrow
+    bb=FreeCAD.BoundBox()
+    M=0.0
+    self.moveSet=FreeCADGui.Selection.getSelection()
+    if self.moveSet:
+      for o in self.moveSet: 
+        if hasattr(o,'Shape'): bb=bb.united(o.Shape.BoundBox)
+      edgesLens=[e.Length for o in self.moveSet if hasattr(o,'Shape') for e in o.Shape.Edges]
+      for l in edgesLens: M+=l
+      M=M/len(edgesLens)
+    else:
+      M=100
+    # define direction
+    if direct: self.direct=direct
+    else: self.direct=FreeCAD.Vector(0,0,1)*M
+    # define placement
+    pl=FreeCAD.Placement()
+    pl.Rotation=FreeCAD.Rotation(FreeCAD.Vector(0,0,1),self.direct).multiply(pl.Rotation)
+    orig=bb.Center
+    orig[2]=bb.ZMax
+    pl.move(orig)
+    # draw arrow
+    super(arrow_move,self).__init__(pl=pl, scale=[M/2,M/2,M/10], offset=0)
+  def pickAction(self,path=None,event=None,arg=None):
+    if event.wasCtrlDown() and event.wasAltDown(): 
+      for o in self.moveSet: o.Placement.move(self.direct*-1)
+      self.Placement.move(self.direct*-1)
+    else: 
+      for o in self.moveSet: o.Placement.move(self.direct)
+      self.Placement.move(self.direct)
+    self.moveto(self.Placement)
+
+class handleDialog(prototypeDialog):
+  def __init__(self):
+    self.arrow=None
+    super(handleDialog,self).__init__('disp.ui')
+    self.form.edit1.setValidator(QDoubleValidator())
+    self.form.btn1.clicked.connect(self.selectAction)
+    from sys import platform
+    if platform.startswith('win'):
+      self.form.lab2.hide()
+  def selectAction(self):
+    if self.arrow: self.arrow.closeArrow()
+    L=direct=None
+    if self.form.edit1.text(): L=float(self.form.edit1.text())
+    if frameCmd.faces():
+      f=frameCmd.faces()[0]
+      if L: 
+        direct=f.normalAt(0,0)*L
+      else: 
+        direct=f.normalAt(0,0)*math.sqrt(f.Area)
+        self.form.edit1.setText('%.3f' %math.sqrt(f.Area))
+    elif frameCmd.edges():
+      e=frameCmd.edges()[0]
+      if L: 
+        direct=e.tangentAt(0)*L
+      else:
+        direct=e.tangentAt(0).multiply(e.Length)
+        self.form.edit1.setText('%.3f' %float(e.Length))
+    if direct: self.arrow=arrow_move(direct=direct)
+  def accept(self):
+    self.reject()
+  def reject(self):
+    if self.arrow: self.arrow.closeArrow()
+    try: self.view.removeEventCallback('SoEvent',self.call)
+    except: pass
+    FreeCADGui.Control.closeDialog()
 
 class label3D(object):
   '''
@@ -148,7 +246,6 @@ class label3D(object):
   '''
   def __init__(self,pl=None, sizeFont=30, color=(1.0,0.6,0.0), text='TEXT'):
     import FreeCAD, FreeCADGui
-    from pivy import coin
     self.node=coin.SoSeparator()
     self.color=coin.SoBaseColor()
     self.color.rgb=color
@@ -163,7 +260,6 @@ class label3D(object):
     self.node.addChild(self.text)
     self.sg=FreeCADGui.ActiveDocument.ActiveView.getSceneGraph()
     self.sg.addChild(self.node)
-    #self.transform.scaleFactor.setValue(scale)
     if not pl:
       pl=FreeCAD.Placement()
     self.moveto(pl)

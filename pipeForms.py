@@ -7,7 +7,7 @@ __license__="LGPL 3"
 
 import FreeCAD,FreeCADGui,Part, csv
 import frameCmd, pipeCmd
-from frameForms import prototypeForm
+#from frameForms import prototypeForm
 from os import listdir
 from os.path import join, dirname, abspath
 from PySide.QtCore import *

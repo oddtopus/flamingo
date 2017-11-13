@@ -11,8 +11,9 @@ from PySide.QtCore import *
 from PySide.QtGui import *
 from os.path import join, dirname, abspath
 from Draft import get3DView
+from sys import platform
 
-class prototypeForm(QWidget):
+class prototypeForm(QWidget): #OBSOLETE: no more used. Replaced by prototypeDialog
   'prototype dialog for frame tools workbench'
   def __init__(self,winTitle='Title',btn1Text='Button1',btn2Text='Button2',initVal='someVal',units='someUnit', icon='flamingo.svg'):
     super(prototypeForm,self).__init__()
@@ -53,16 +54,21 @@ class prototypeForm(QWidget):
     self.buttons.layout().addWidget(self.btn2)
     self.mainVL.addWidget(self.buttons)
 
-class prototypeDialog(object):
+class prototypeDialog(object): 
+  # ACHTUNG: "self.call" DISABLED IN WINDOWS OS, DUE TO UNHANDLED RUN-TIME EXCEPTION
   'prototype for dialogs.ui with callback function'
   def __init__(self,dialog='someFile.ui'):
     dialogPath=join(dirname(abspath(__file__)),"dialogs",dialog)
     self.form=FreeCADGui.PySideUic.loadUi(dialogPath)
-    try:
-      self.view=get3DView()
-      self.call=self.view.addEventCallback("SoEvent", self.action)
-    except:
-      FreeCAD.Console.PrintError('No view available.\n')
+    if platform.startswith('win'):
+      FreeCAD.Console.PrintWarning("No keyboard shortcuts.\n")
+    else:
+      FreeCAD.Console.PrintMessage("Keyboard shortcuts available.\n")
+      try:
+        self.view=get3DView()
+        self.call=self.view.addEventCallback("SoEvent", self.action)
+      except:
+        FreeCAD.Console.PrintError('No view available.\n')
   def action(self,arg):
     'Default function executed by callback'
     if arg['Type']=='SoKeyboardEvent':
@@ -305,9 +311,8 @@ class translateForm(prototypeDialog):
     FreeCAD.activeDocument().recompute()
     FreeCAD.activeDocument().commitTransaction()    
   def deleteArrow(self):
-    if self.arrow:
-      FreeCADGui.ActiveDocument.ActiveView.getSceneGraph().removeChild(self.arrow.node)
-      self.arrow=None
+    if self.arrow: self.arrow.closeArrow() #FreeCADGui.ActiveDocument.ActiveView.getSceneGraph().removeChild(self.arrow.node)
+    self.arrow=None
   def reject(self): # redefined to remove arrow from scene
     try: self.view.removeEventCallback('SoEvent',self.call)
     except: pass
@@ -420,9 +425,8 @@ class rotateAroundForm(prototypeDialog):
         self.Axis=(Edge(Line(FreeCAD.Vector(O),FreeCAD.Vector(O+n))))
       self.form.lab1.setText(edged[0].Object.Label+": edge")
   def deleteArrow(self):
-    if self.arrow:
-      FreeCADGui.ActiveDocument.ActiveView.getSceneGraph().removeChild(self.arrow.node)
-      self.arrow=None
+    if self.arrow: self.arrow.closeArrow() #FreeCADGui.ActiveDocument.ActiveView.getSceneGraph().removeChild(self.arrow.node)
+    self.arrow=None
   def reject(self): # redefined to remove arrow from scene
     try: self.view.removeEventCallback('SoEvent',self.call)
     except: pass
