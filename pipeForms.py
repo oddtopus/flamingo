@@ -549,7 +549,7 @@ class insertReductForm(protopypeForm):
   reductions.
   '''
   def __init__(self):
-    super(insertReductForm,self).__init__("Insert concentric reductions","Reduct","SCH-STD","reduct.svg")
+    super(insertReductForm,self).__init__("Insert reductions","Reduct","SCH-STD","reduct.svg")
     self.sizeList.setCurrentRow(0)
     self.ratingList.setCurrentRow(0)
     self.ratingList.itemClicked.connect(self.changeRating2)
@@ -568,6 +568,8 @@ class insertReductForm(protopypeForm):
     self.btn3.clicked.connect(self.applyProp)
     self.btn1.setDefault(True)
     self.btn1.setFocus()
+    self.cb1=QCheckBox(' Eccentric')
+    self.secondCol.layout().addWidget(self.cb1)
     self.fillOD2()
     self.show()
     self.lastReduct=None
@@ -617,7 +619,7 @@ class insertReductForm(protopypeForm):
     pos=Z=H=None
     selex=FreeCADGui.Selection.getSelectionEx()
     pipes=[p.Object for p in selex if hasattr(p.Object,'PType') and p.Object.PType=='Pipe']
-    if len(pipes)>1 and frameCmd.isParallel(frameCmd.beamAx(pipes[0]),frameCmd.beamAx(pipes[1])):                # if at least 2 pipes are selected...
+    if len(pipes)>1 and frameCmd.isParallel(frameCmd.beamAx(pipes[0]),frameCmd.beamAx(pipes[1])):  # if at least 2 pipes are selected...
       if pipes[0].OD>=pipes[1].OD:
         p1,p2=pipes[:2]
       else:
@@ -668,7 +670,10 @@ class insertReductForm(protopypeForm):
       H=float(3*(OD1-OD2))
     propList=[DN,OD1,OD2,thk1,thk2,H]
     FreeCAD.activeDocument().openTransaction('Insert reduction')
-    self.lastReduct=pipeCmd.makeReduct(propList,pos,Z)
+    if self.cb1.isChecked():
+      self.lastReduct=pipeCmd.makeReduct(propList,pos,Z,False)
+    else:
+      self.lastReduct=pipeCmd.makeReduct(propList,pos,Z)
     FreeCAD.activeDocument().commitTransaction()
     FreeCAD.activeDocument().recompute()
     if self.combo.currentText()!='<none>':

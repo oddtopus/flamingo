@@ -152,7 +152,7 @@ class Flange(pypeType):
 
 class Reduct(pypeType):
   '''Class for object PType="Reduct"
-  Reduct(obj,[PSize="DN50",OD=60.3, OD2= 48.3, thk=3, thk2=None, H=None])
+  Reduct(obj,[PSize="DN50",OD=60.3, OD2= 48.3, thk=3, thk2=None, H=None, conc=True])
     obj: the "App::FeaturePython object"
     PSize (string): nominal diameter (major)
     OD (float): major outside diameter
@@ -160,10 +160,11 @@ class Reduct(pypeType):
     thk (float): major shell thickness
     thk2 (float): minor shell thickness
     H (float): length of reduction
+    conc (bool): True for a concentric reduction, False for eccentric
   If thk2 is None or 0, the same thickness is used at both ends.
   If H is None or 0, the length of the reduction is calculated as 3x(OD-OD2).
     '''
-  def __init__(self, obj,DN="DN50",OD=60.3,OD2=48.3,thk=3, thk2=None, H=None):
+  def __init__(self, obj,DN="DN50",OD=60.3,OD2=48.3,thk=3, thk2=None, H=None, conc=True):
     # initialize the parent class
     super(Reduct,self).__init__(obj)
     # define common properties
@@ -186,8 +187,9 @@ class Reduct(pypeType):
       obj.Height=3*(obj.OD-obj.OD2)
     else:
       obj.calcH=False
-      obj.Height=H
+      obj.Height=float(H)
     obj.addProperty("App::PropertyString","Profile","Reduct","Section dim.").Profile=str(obj.OD)+"x"+str(obj.OD2)
+    obj.addProperty("App::PropertyBool","conc","Reduct","Concentric or Eccentric").conc=conc
   def onChanged(self, fp, prop):
     return None
   def execute(self, fp):
@@ -199,7 +201,63 @@ class Reduct(pypeType):
       if fp.calcH or fp.Height==0:
         fp.Height=3*(fp.OD-fp.OD2)
       fp.Profile=str(fp.OD)+"x"+str(fp.OD2)
-      fp.Shape = Part.makeCone(fp.OD/2,fp.OD2/2,fp.Height).cut(Part.makeCone(fp.OD/2-fp.thk,fp.OD2/2-fp.thk2,fp.Height))
+      if fp.conc:
+        fp.Shape = Part.makeCone(fp.OD/2,fp.OD2/2,fp.Height).cut(Part.makeCone(fp.OD/2-fp.thk,fp.OD2/2-fp.thk2,fp.Height))
+      else:
+        C=Part.makeCircle(fp.OD/2,FreeCAD.Vector(0,0,0),FreeCAD.Vector(0,0,1))
+        c=Part.makeCircle(fp.OD2/2,FreeCAD.Vector(0,0,0),FreeCAD.Vector(0,0,1))
+        c.translate(FreeCAD.Vector((fp.OD-fp.OD2)/2,0,fp.Height))
+        sol=Part.makeLoft([c,C],True)
+        planeFaces=[f for f in sol.Faces if type(f.Surface)==Part.Plane]
+        fp.Shape= sol.makeThickness(planeFaces,-fp.thk,1.e-3)
+    
+class RedEcc(Reduct): # (pypeType)
+  '''Class for object PType="RedEcc"
+  RedEcc(obj,[PSize="DN50",OD=60.3, OD2= 48.3, thk=3, thk2=None, H=None])
+    This class is child of Reduct.
+    It only re-implements execute() to draw an eccentric reduction.
+    '''
+  def __init__(self, obj,DN="DN50",OD=60.3,OD2=48.3,thk=3, thk2=None, H=None):
+    # initialize the parent class
+    super(RedEcc,self).__init__(obj)
+    # change the different properties
+    obj.PType="RedEcc"
+    obj.PRating="SCH-STD"
+    obj.PSize=DN
+    # define specific properties
+    obj.addProperty("App::PropertyLength","OD","RedEcc","Major diameter").OD=OD
+    obj.addProperty("App::PropertyLength","OD2","RedEcc","Minor diameter").OD2=OD2
+    obj.addProperty("App::PropertyLength","thk","RedEcc","Wall thickness").thk=thk
+    obj.addProperty("App::PropertyLength","thk2","RedEcc","Wall thickness")
+    if not thk2:
+      obj.thk2=thk
+    else:
+      obj.thk2=thk2
+    obj.addProperty("App::PropertyBool","calcH","RedEcc","Make the lenght variable")
+    obj.addProperty("App::PropertyLength","Height","RedEcc","Length of RedEcc")
+    if not H:
+      obj.calcH=True
+      obj.Height=3*(obj.OD-obj.OD2)
+    else:
+      obj.calcH=False
+      obj.Height=H
+    obj.addProperty("App::PropertyString","Profile","RedEcc","Section dim.").Profile=str(obj.OD)+"x"+str(obj.OD2)
+  def execute(self, fp):
+    if fp.OD>fp.OD2:
+      if fp.thk>fp.OD/2:
+        fp.thk=fp.OD/2.1
+      if fp.thk2>fp.OD2/2:
+        fp.thk2=fp.OD2/2.1
+      if fp.calcH or fp.Height==0:
+        fp.Height=3*(fp.OD-fp.OD2)
+      fp.Profile=str(fp.OD)+"x"+str(fp.OD2)
+      los=list()
+      for i in [0,1]:
+        C=Part.makeCircle(fp.OD/2-i*fp.thk,FreeCAD.Vector(0,0,0),FreeCAD.Vector(0,0,1))
+        c=Part.makeCircle(fp.OD2/2-i*fp.thk2,FreeCAD.Vector(0,0,0),FreeCAD.Vector(0,0,1))
+        c.translate(FreeCAD.Vector((fp.OD-fp.OD2)/2,0,fp.Height))
+        los.append(Part.makeLoft([c,C],True))
+      fp.Shape=los[0].cut(los[1])
     
 class Cap(pypeType):
   '''Class for object PType="Cap"

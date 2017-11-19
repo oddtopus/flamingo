@@ -216,9 +216,9 @@ def makeFlange(propList=[], pos=None, Z=None):
   a.Placement.Rotation=rot.multiply(a.Placement.Rotation)
   return a
 
-def makeReduct(propList=[], pos=None, Z=None):
+def makeReduct(propList=[], pos=None, Z=None, conc=True):
   '''Adds a Reduct object
-  makeReduct(propList=[], pos=None, Z=None)
+  makeReduct(propList=[], pos=None, Z=None, conc=True)
     propList is one optional list with 6 elements:
       PSize (string): nominal diameter
       OD (float): major diameter
@@ -228,6 +228,7 @@ def makeReduct(propList=[], pos=None, Z=None):
       H (float): length of reduction      
     pos (vector): position of insertion; default = 0,0,0
     Z (vector): orientation: default = 0,0,1
+    conc (bool): True for concentric or Flase for eccentric reduction
   Remember: property PRating must be defined afterwards
   '''
   if pos==None:
@@ -235,10 +236,8 @@ def makeReduct(propList=[], pos=None, Z=None):
   if Z==None:
     Z=FreeCAD.Vector(0,0,1)
   a=FreeCAD.ActiveDocument.addObject("Part::FeaturePython","Riduz")
-  if len(propList)==6:
-    pipeFeatures.Reduct(a,*propList)
-  else:
-    pipeFeatures.Reduct(a)
+  propList.append(conc)
+  pipeFeatures.Reduct(a,*propList)
   a.ViewObject.Proxy=0
   a.Placement.Base=pos
   rot=FreeCAD.Rotation(FreeCAD.Vector(0,0,1),Z)
