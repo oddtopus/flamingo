@@ -319,31 +319,45 @@ def makeCap(propList=[], pos=None, Z=None):
 def makeW():
   edges=frameCmd.edges()
   if len(edges)>1:
-    P0=edges[0].valueAt(0)
-    P1=edges[0].valueAt(edges[0].LastParameter)
-    Pint=frameCmd.intersectionCLines(edges[0],edges[1])
-    d0=Pint-P0
-    d1=Pint-P1
-    if d1.Length>d0.Length:
-      P0=P1
-    eds=list()
-    for i in range(len(edges)-1):
-      P1=frameCmd.intersectionCLines(edges[i],edges[i+1])
-      eds.append(Part.Edge(Part.Line(P0,P1)))
-      P0=P1
-    P1=edges[-1].valueAt(edges[-1].LastParameter)
-    P2=edges[-1].valueAt(0)
-    d1=P1-P0
-    d2=P2-P0
-    if d1.Length<d2.Length:
-      P1=P2
-    eds.append(Part.Edge(Part.Line(P0,P1)))
-    w=Part.Wire(eds)
-    points=[e.valueAt(0) for e in w.Edges]
-    last=e.Edges[-1]
-    points.append(last.valueAt(last.LastParameter))
+    # patch for FC 0.17: 
+    first=edges[0]
+    points=list()
+    while len(edges)>1: points.append(frameCmd.intersectionCLines(edges.pop(0),edges[0]))
+    if edges[0].valueAt(0)==points[-1]: points.append(edges[0].valueAt(edges[0].LastParameter))
+    else: points.append(edges[0].valueAt(0))
+    if first.valueAt(0)==points[0]: points.insert(0,first.valueAt(first.LastParameter))
+    else: points.insert(0,first.valueAt(0)) # END
+    #P0=edges[0].valueAt(0)
+    #P1=edges[0].valueAt(edges[0].LastParameter)
+    #Pint=frameCmd.intersectionCLines(edges[0],edges[1])
+    #d0=Pint-P0
+    #d1=Pint-P1
+    #if d1.Length>d0.Length:
+      #P0=P1
+    #eds=list()
+    #for i in range(len(edges)-1):
+      #P1=frameCmd.intersectionCLines(edges[i],edges[i+1])
+      #eds.append(Part.Edge(Part.Line(P0,P1)))
+      #P0=P1
+    #P1=edges[-1].valueAt(edges[-1].LastParameter)
+    #P2=edges[-1].valueAt(0)
+    #d1=P1-P0
+    #d2=P2-P0
+    #if d1.Length<d2.Length:
+      #P1=P2
+    #eds.append(Part.Edge(Part.Line(P0,P1)))
+    #for e in eds:
+      #print(type(e))
+    #w=Part.Wire(eds)
+    #points=[e.valueAt(0) for e in w.Edges]
+    #last=e.Edges[-1]
+    #points.append(last.valueAt(last.LastParameter))
     from Draft import makeWire
-    p=makeWire(points)
+    try:
+      p=makeWire(points)
+    except: 
+      FreeCAD.Console.PrintError('Missing intersection\n')
+      return None
     p.Label='Path'
     drawAsCenterLine(p)
     return p
@@ -425,11 +439,14 @@ def alignTheTube():
   dist=d1.centerOfCurvatureAt(0)-d2.centerOfCurvatureAt(0)
   t2.Placement.move(dist)
   #verifica posizione relativa
-  com1,com2=[t.Shape.Solids[0].CenterOfMass for t in [t1,t2]]
-  if isElbow(t2):
+  try:
+    com1,com2=[t.Shape.Solids[0].CenterOfMass for t in [t1,t2]]
+    if isElbow(t2):
+      pass
+    elif (com1-d1.centerOfCurvatureAt(0)).dot(com2-d1.centerOfCurvatureAt(0))>0:
+      reverseTheTube(FreeCADGui.Selection.getSelectionEx()[:2][1])
+  except: 
     pass
-  elif (com1-d1.centerOfCurvatureAt(0)).dot(com2-d1.centerOfCurvatureAt(0))>0:
-    reverseTheTube(FreeCADGui.Selection.getSelectionEx()[:2][1])
     
 def rotateTheTubeAx(obj=None,vShapeRef=None, angle=45):
   '''

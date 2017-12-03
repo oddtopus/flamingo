@@ -209,9 +209,11 @@ class stretchForm(prototypeDialog):
         delta=float(beam.Height)-length
         frameCmd.stretchTheBeam(beam,length)
         if self.form.tail.isChecked():
-          beam.Placement.move(frameCmd.beamAx(beam).multiply(delta))
+          disp=frameCmd.beamAx(beam).multiply(delta)
+          beam.Placement.move(disp)
         elif self.form.both.isChecked():
-          beam.Placement.move(frameCmd.beamAx(beam).multiply(delta/2))
+          disp=frameCmd.beamAx(beam).multiply(delta/2.0)
+          beam.Placement.move(disp)
       FreeCAD.activeDocument().recompute()
       FreeCAD.activeDocument().commitTransaction()
   def reject(self): # redefined to remove label from the scene

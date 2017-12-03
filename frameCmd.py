@@ -264,7 +264,7 @@ def spinTheBeam(beam, angle):  # OBSOLETE: replaced by rotateTheTubeAx
 
 def placeTheBeam(beam, edge):
   '''arg1= beam, arg2= edge: lay down the selected beam on the selected edge'''
-  vect=edge.tangentAt(0)
+  vect=edge.tangentAt(0)#.negative() # patched for 0.17 version of ArchProfile.py
   beam.Placement.Rotation=FreeCAD.Rotation(0,0,0,1)
   rot=FreeCAD.Rotation(beam.Placement.Rotation.Axis,vect)
   beam.Placement.Rotation=rot.multiply(beam.Placement.Rotation)  # this method is not fully accurate, probably for the deg/rad conversions and floating-point calculation: this don't allow verification of perpendicularity or parallelism with the .cross() or .dot() methods! It would be good to have some symbolic algebra methods available...

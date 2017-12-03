@@ -169,13 +169,12 @@ class arrow_move(arrow):
   '''
   def __init__(self, direct=None):
     # define general size of arrow
-    bb=FreeCAD.BoundBox()
     M=0.0
-    self.moveSet=FreeCADGui.Selection.getSelection()
+    self.moveSet=[o for o in FreeCADGui.Selection.getSelection() if hasattr(o,'Shape')]
     if self.moveSet:
-      for o in self.moveSet: 
-        if hasattr(o,'Shape'): bb=bb.united(o.Shape.BoundBox)
-      edgesLens=[e.Length for o in self.moveSet if hasattr(o,'Shape') for e in o.Shape.Edges]
+      bb=self.moveSet[0].Shape.BoundBox
+      for o in self.moveSet: bb=bb.united(o.Shape.BoundBox)
+      edgesLens=[e.Length for o in self.moveSet for e in o.Shape.Edges]
       for l in edgesLens: M+=l
       M=M/len(edgesLens)
     else:
@@ -226,7 +225,7 @@ class handleDialog(prototypeDialog):
         direct=e.tangentAt(0)*L
       else:
         direct=e.tangentAt(0).multiply(e.Length)
-        self.form.edit1.setText('%.3f' %float(e.Length))
+        #self.form.edit1.setText('%.3f' %float(e.Length))
     if direct: self.arrow=arrow_move(direct=direct)
   def accept(self):
     self.reject()
