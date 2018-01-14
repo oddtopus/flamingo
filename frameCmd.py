@@ -315,6 +315,12 @@ def pivotTheBeam(ang=90, edge=None, beam=None): #OBSOLETE: replaced with rotateT
   beam.Placement.move(dist)
   
 def rotateTheBeamAround(b,e,ang=90): # for rotation around an axis
+  '''
+  rotateTheBeamAround(b,e,ang=90): rotates any Body around an edge
+    b: any object with a Placement property
+    e: the edge being axis of rotation
+    ang: degrees of rotation
+  '''
   rot=FreeCAD.Rotation(e.tangentAt(0),ang)
   from Part import Vertex
   P0=Vertex(b.Placement.Base)

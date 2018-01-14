@@ -146,6 +146,7 @@ class arrow(object):
     self.transform.translation.setValue(tuple(self.Placement.Base+offsetV))
   def pickCB(self, ecb):
     event=ecb.getEvent()
+    arg=None
     if event.getState()==coin.SoMouseButtonEvent.DOWN:
       render_manager=self.view.getViewer().getSoRenderManager()
       doPick=coin.SoRayPickAction(render_manager.getViewportRegion())
@@ -154,7 +155,7 @@ class arrow(object):
       points=doPick.getPickedPointList()
       if points.getLength():
         path=points[0].getPath()
-        if str(tuple(path)[-2].getName())==self.name: self.pickAction(path=path,event=event)
+        if str(tuple(path)[-2].getName())==self.name: self.pickAction(path,event,arg)
   def pickAction(self,path=None,event=None,arg=None): # sample
     if path:
       for n in path: 
@@ -163,70 +164,87 @@ class arrow(object):
 
 class arrow_move(arrow):
   '''
+  arrow_move(pl=None,direct=None,M=100)
+    pl: the placement of the arrow
+    direct: the displacement vector
+    M: the scale of display
   This class derives from "arrow" and adds the ability to move the selected
   objects when the arrow is picked.  This is accomplished by redefining the
   method "pickAction".
   '''
-  def __init__(self, direct=None):
-    # define general size of arrow
-    M=0.0
-    self.moveSet=[o for o in FreeCADGui.Selection.getSelection() if hasattr(o,'Shape')]
-    if self.moveSet:
-      bb=self.moveSet[0].Shape.BoundBox
-      for o in self.moveSet: bb=bb.united(o.Shape.BoundBox)
-      edgesLens=[e.Length for o in self.moveSet for e in o.Shape.Edges]
-      for l in edgesLens: M+=l
-      M=M/len(edgesLens)
-    else:
-      M=100
+  def __init__(self, pl=None, direct=None, M=100, objs=None):
+    self.objs=objs
+    self.edge=None
     # define direction
+    self.scale=M
     if direct: self.direct=direct
     else: self.direct=FreeCAD.Vector(0,0,1)*M
     # define placement
-    pl=FreeCAD.Placement()
-    pl.Rotation=FreeCAD.Rotation(FreeCAD.Vector(0,0,1),self.direct).multiply(pl.Rotation)
-    orig=bb.Center
-    orig[2]=bb.ZMax
-    pl.move(orig)
+    if not pl:pl=FreeCAD.Placement()
     # draw arrow
-    super(arrow_move,self).__init__(pl=pl, scale=[M/2,M/2,M/10], offset=0)
+    super(arrow_move,self).__init__(pl=pl, scale=[M/2,M/2,M/10], offset=M/2)
   def pickAction(self,path=None,event=None,arg=None):
-    if event.wasCtrlDown() and event.wasAltDown(): 
-      for o in self.moveSet: o.Placement.move(self.direct*-1)
-      self.Placement.move(self.direct*-1)
-    else: 
-      for o in self.moveSet: o.Placement.move(self.direct)
-      self.Placement.move(self.direct)
-    self.moveto(self.Placement)
+    FreeCAD.activeDocument().openTransaction('Quick move')
+    if event.wasCtrlDown(): k=-1
+    else: k=1
+    sel=FreeCADGui.Selection.getSelection()
+    if sel: self.objs=[o for o in sel if hasattr(o,'Shape')]
+    if event.wasCtrlDown() and event.wasAltDown():
+      if frameCmd.edges(): 
+        self.edge=frameCmd.edges()[0]
+        for o in self.objs: frameCmd.rotateTheBeamAround(o, self.edge, 90)
+      elif self.edge:
+        for o in self.objs: frameCmd.rotateTheBeamAround(o, self.edge, 90)
+    else:
+      for o in self.objs: o.Placement.move(self.direct*k)
+      self.Placement.move(self.direct*k)
+      pl,direct,M=[self.Placement,self.direct,self.scale]
+      self.closeArrow()
+      self.__init__(pl,direct,M,self.objs)
+    FreeCAD.activeDocument().commitTransaction()
 
 class handleDialog(prototypeDialog):
   def __init__(self):
     self.arrow=None
     super(handleDialog,self).__init__('disp.ui')
     self.form.edit1.setValidator(QDoubleValidator())
+    #self.form.edit1.hide()#
+    #self.form.lab1.hide()#
     self.form.btn1.clicked.connect(self.selectAction)
     from sys import platform
     if platform.startswith('win'):
       self.form.lab2.hide()
   def selectAction(self):
-    if self.arrow: self.arrow.closeArrow()
+    self.objs=FreeCADGui.Selection.getSelection()
     L=direct=None
+    pl=FreeCAD.Placement()
+    # define general size of arrow
+    if self.arrow: self.arrow.closeArrow()
+    M=100.0
+    moveSet=[o for o in FreeCADGui.Selection.getSelection() if hasattr(o,'Shape')]
+    if moveSet:
+      bb=moveSet[0].Shape.BoundBox
+      for o in moveSet: bb=bb.united(o.Shape.BoundBox)
+      edgesLens=[e.Length for o in moveSet for e in o.Shape.Edges]
+      M=(bb.XLength+bb.YLength+bb.ZLength)/6.0
+      # define placement of arrow
+      orig=bb.Center
+      orig[2]=bb.ZMax+bb.ZLength*0.1
+      pl.move(orig)
+    # define direction and displacement
     if self.form.edit1.text(): L=float(self.form.edit1.text())
     if frameCmd.faces():
       f=frameCmd.faces()[0]
-      if L: 
-        direct=f.normalAt(0,0)*L
-      else: 
-        direct=f.normalAt(0,0)*math.sqrt(f.Area)
-        self.form.edit1.setText('%.3f' %math.sqrt(f.Area))
+      if L: direct=f.normalAt(0,0).normalize()*L
+      else: direct=f.normalAt(0,0).normalize()*math.sqrt(f.Area)
     elif frameCmd.edges():
       e=frameCmd.edges()[0]
-      if L: 
-        direct=e.tangentAt(0)*L
-      else:
-        direct=e.tangentAt(0).multiply(e.Length)
-        #self.form.edit1.setText('%.3f' %float(e.Length))
-    if direct: self.arrow=arrow_move(direct=direct)
+      if L: direct=e.tangentAt(0)*L
+      else: direct=e.tangentAt(0).multiply(e.Length)
+    # create the arrow_move object
+    if direct: 
+      pl.Rotation=FreeCAD.Rotation(FreeCAD.Vector(0,0,1),direct).multiply(pl.Rotation)
+      self.arrow=arrow_move(pl=pl,direct=direct,M=M,objs=self.objs)
   def accept(self):
     self.reject()
   def reject(self):

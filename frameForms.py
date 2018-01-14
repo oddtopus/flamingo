@@ -427,7 +427,7 @@ class rotateAroundForm(prototypeDialog):
         self.Axis=(Edge(Line(FreeCAD.Vector(O),FreeCAD.Vector(O+n))))
       self.form.lab1.setText(edged[0].Object.Label+": edge")
   def deleteArrow(self):
-    if self.arrow: self.arrow.closeArrow() #FreeCADGui.ActiveDocument.ActiveView.getSceneGraph().removeChild(self.arrow.node)
+    if self.arrow: self.arrow.closeArrow()
     self.arrow=None
   def reject(self): # redefined to remove arrow from scene
     try: self.view.removeEventCallback('SoEvent',self.call)
