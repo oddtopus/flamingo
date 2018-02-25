@@ -60,7 +60,7 @@ def isElbow(obj):
   
 def moveToPyLi(obj,plName):
   pl=FreeCAD.ActiveDocument.getObjectsByLabel(plName)[0]
-  group=FreeCAD.ActiveDocument.getObjectsByLabel(pl.Group)[0]
+  group=FreeCAD.ActiveDocument.getObjectsByLabel(str(pl.Group))[0]
   group.addObject(obj)
   if hasattr(obj,'PType') and obj.PType in objToPaint:
     obj.ViewObject.ShapeColor=pl.ViewObject.ShapeColor
@@ -157,7 +157,6 @@ def makeElbowBetweenThings(thing1=None, thing2=None, propList=None):
   for thing in [thing1,thing2]:
     if frameCmd.beams([thing]):
       directions.append(rounded((frameCmd.beamAx(thing).multiply(thing.Height/2)+thing.Placement.Base)-P))
-      #directions.append(frameCmd.beamAx(thing))
     elif hasattr(thing,'ShapeType') and thing.ShapeType=='Edge':
       directions.append(rounded(thing.CenterOfMass-P))
   ang=180-degrees(directions[0].getAngle(directions[1]))
@@ -171,8 +170,8 @@ def makeElbowBetweenThings(thing1=None, thing2=None, propList=None):
   elbBisect=rounded(frameCmd.beamAx(elb,FreeCAD.Vector(1,1,0))) #if not rounded, fail in plane xz
   rot=FreeCAD.Rotation(elbBisect,b)
   elb.Placement.Rotation=rot.multiply(elb.Placement.Rotation)
-  # trim automatically the adjacent tubes
-  FreeCAD.activeDocument().recompute()
+  # trim the adjacent tubes
+  FreeCAD.activeDocument().recompute() # may delete this row?
   portA=elb.Placement.multVec(elb.Ports[0])
   portB=elb.Placement.multVec(elb.Ports[1])
   for tube in [t for t in [thing1,thing2] if frameCmd.beams([t])]:
@@ -388,11 +387,11 @@ def makePypeLine2(DN="DN50",PRating="SCH-STD",OD=60.3,thk=3,BR=None, lab="Tubatu
         a.Base=obj
         a.Proxy.update(a)
       if isWire:
-        moveToPyLi(obj,a.Label)
+        #moveToPyLi(obj,a.Label) TEMPORARY: disabled for PypeLine3
         drawAsCenterLine(obj)
     elif frameCmd.edges():
       path=makeW()
-      moveToPyLi(path,a.Label)
+      #moveToPyLi(path,a.Label) TEMPORARY: disabled for PypeLine3
       a.Base=path
       a.Proxy.update(a)
   else:
@@ -402,6 +401,36 @@ def makePypeLine2(DN="DN50",PRating="SCH-STD",OD=60.3,thk=3,BR=None, lab="Tubatu
     FreeCAD.Console.PrintWarning("Objects added to pypeline's group "+a.Group+"\n")
   return a
 
+def makeRoute(base=None, DN="DN50",PRating="SCH-STD",OD=60.3,thk=3,BR=None, lab="Traccia", color=(0.8,0.8,0.8)):
+  '''
+  makeRoute(base=None, DN="DN50",PRating="SCH-STD",OD=60.3,thk=3,BR=None, lab="Traccia" color=(0.8,0.8,0.8))
+  Draft function for PypeRoute.
+  '''
+  if not BR:
+    BR=0.75*OD
+  if not base:
+    if FreeCADGui.Selection.getSelection():
+      obj=FreeCADGui.Selection.getSelection()[0]
+      isWire=hasattr(obj,'Shape') and type(obj.Shape)==Part.Wire
+      isSketch=hasattr(obj,'TypeId') and obj.TypeId=='Sketcher::SketchObject'
+      if isWire or isSketch:
+        base=obj
+      if isWire:
+        drawAsCenterLine(obj)
+    elif frameCmd.edges():
+      path=makeW()
+      base=path
+  try:
+    a=FreeCAD.ActiveDocument.addObject("Part::FeaturePython",lab)
+    pipeFeatures.PypeRoute(a,base.Label,DN,PRating,OD,thk,BR, lab)
+    pipeFeatures.ViewProviderPypeRoute(a.ViewObject)
+    #a.ViewObject.Proxy=0
+    #a.ViewObject.ShapeColor=color
+    FreeCAD.ActiveDocument.recompute()
+    return a
+  except:
+    FreeCAD.Console.PrintError('Select a valid Base\n')
+  
 def updatePLColor(sel=None, color=None):
   if not sel:
     sel=FreeCADGui.Selection.getSelection()
@@ -573,7 +602,7 @@ def breakTheTubes(point,pipes=[],gap=0):
         pos=pipe.Placement.Base+Z*(float(pipe.Height)+gap)
         pipe2nd=makePipe(propList,pos,Z)
         pipes2nd.append(pipe2nd)
-    FreeCAD.activeDocument().recompute()
+    #FreeCAD.activeDocument().recompute()
   return pipes2nd
     
 def drawAsCenterLine(obj):

@@ -1,0 +1,528 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg version="1.2" width="11.29mm" height="11.29mm" viewBox="0 0 1129 1129" preserveAspectRatio="xMidYMid" fill-rule="evenodd" stroke-width="28.222" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg" xmlns:ooo="http://xml.openoffice.org/svg/export" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:presentation="http://sun.com/xmlns/staroffice/presentation" xmlns:smil="http://www.w3.org/2001/SMIL20/" xmlns:anim="urn:oasis:names:tc:opendocument:xmlns:animation:1.0" xml:space="preserve">
+ <defs class="ClipPathGroup">
+  <clipPath id="presentation_clip_path" clipPathUnits="userSpaceOnUse">
+   <rect x="0" y="0" width="1129" height="1129"/>
+  </clipPath>
+ </defs>
+ <defs class="TextShapeIndex">
+  <g ooo:slide="id1" ooo:id-list="id3 id4 id5 id6 id7 id8 id9 id10 id11 id12 id13 id14 id15 id16 id17 id18 id19 id20 id21 id22 id23 id24 id25 id26 id27 id28 id29 id30 id31 id32 id33 id34 id35 id36 id37 id38 id39 id40 id41 id42 id43 id44 id45 id46 id47 id48 id49 id50 id51 id52 id53 id54 id55 id56 id57 id58 id59 id60 id61 id62 id63 id64 id65 id66 id67 id68 id69 id70 id71 id72 id73 id74 id75 id76 id77 id78 id79 id80 id81"/>
+ </defs>
+ <defs class="EmbeddedBulletChars">
+  <g id="bullet-char-template(57356)" transform="scale(0.00048828125,-0.00048828125)">
+   <path d="M 580,1141 L 1163,571 580,0 -4,571 580,1141 Z"/>
+  </g>
+  <g id="bullet-char-template(57354)" transform="scale(0.00048828125,-0.00048828125)">
+   <path d="M 8,1128 L 1137,1128 1137,0 8,0 8,1128 Z"/>
+  </g>
+  <g id="bullet-char-template(10146)" transform="scale(0.00048828125,-0.00048828125)">
+   <path d="M 174,0 L 602,739 174,1481 1456,739 174,0 Z M 1358,739 L 309,1346 659,739 1358,739 Z"/>
+  </g>
+  <g id="bullet-char-template(10132)" transform="scale(0.00048828125,-0.00048828125)">
+   <path d="M 2015,739 L 1276,0 717,0 1260,543 174,543 174,936 1260,936 717,1481 1274,1481 2015,739 Z"/>
+  </g>
+  <g id="bullet-char-template(10007)" transform="scale(0.00048828125,-0.00048828125)">
+   <path d="M 0,-2 C -7,14 -16,27 -25,37 L 356,567 C 262,823 215,952 215,954 215,979 228,992 255,992 264,992 276,990 289,987 310,991 331,999 354,1012 L 381,999 492,748 772,1049 836,1024 860,1049 C 881,1039 901,1025 922,1006 886,937 835,863 770,784 769,783 710,716 594,584 L 774,223 C 774,196 753,168 711,139 L 727,119 C 717,90 699,76 672,76 641,76 570,178 457,381 L 164,-76 C 142,-110 111,-127 72,-127 30,-127 9,-110 8,-76 1,-67 -2,-52 -2,-32 -2,-23 -1,-13 0,-2 Z"/>
+  </g>
+  <g id="bullet-char-template(10004)" transform="scale(0.00048828125,-0.00048828125)">
+   <path d="M 285,-33 C 182,-33 111,30 74,156 52,228 41,333 41,471 41,549 55,616 82,672 116,743 169,778 240,778 293,778 328,747 346,684 L 369,508 C 377,444 397,411 428,410 L 1163,1116 C 1174,1127 1196,1133 1229,1133 1271,1133 1292,1118 1292,1087 L 1292,965 C 1292,929 1282,901 1262,881 L 442,47 C 390,-6 338,-33 285,-33 Z"/>
+  </g>
+  <g id="bullet-char-template(9679)" transform="scale(0.00048828125,-0.00048828125)">
+   <path d="M 813,0 C 632,0 489,54 383,161 276,268 223,411 223,592 223,773 276,916 383,1023 489,1130 632,1184 813,1184 992,1184 1136,1130 1245,1023 1353,916 1407,772 1407,592 1407,412 1353,268 1245,161 1136,54 992,0 813,0 Z"/>
+  </g>
+  <g id="bullet-char-template(8226)" transform="scale(0.00048828125,-0.00048828125)">
+   <path d="M 346,457 C 273,457 209,483 155,535 101,586 74,649 74,723 74,796 101,859 155,911 209,963 273,989 346,989 419,989 480,963 531,910 582,859 608,796 608,723 608,648 583,586 532,535 482,483 420,457 346,457 Z"/>
+  </g>
+  <g id="bullet-char-template(8211)" transform="scale(0.00048828125,-0.00048828125)">
+   <path d="M -4,459 L 1135,459 1135,606 -4,606 -4,459 Z"/>
+  </g>
+ </defs>
+ <defs class="TextEmbeddedBitmaps"/>
+ <g>
+  <g id="id2" class="Master_Slide">
+   <g id="bg-id2" class="Background"/>
+   <g id="bo-id2" class="BackgroundObjects"/>
+  </g>
+ </g>
+ <g class="SlideGroup">
+  <g>
+   <g id="id1" class="Slide" clip-path="url(#presentation_clip_path)">
+    <g class="Page">
+     <g class="com.sun.star.drawing.PolyPolygonShape">
+      <g id="id3">
+       <rect class="BoundingBox" stroke="none" fill="none" x="0" y="-1" width="3" height="3"/>
+       <path fill="rgb(0,0,0)" stroke="none" d="M 2,-1 L 2,1 0,1 2,-1 Z"/>
+      </g>
+     </g>
+     <g class="com.sun.star.drawing.PolyPolygonShape">
+      <g id="id4">
+       <rect class="BoundingBox" stroke="none" fill="none" x="0" y="-1" width="3" height="3"/>
+       <path fill="rgb(0,0,0)" stroke="none" d="M 0,-1 L 2,-1 2,1 0,1 0,-1 Z"/>
+      </g>
+     </g>
+     <g class="com.sun.star.drawing.PolyPolygonShape">
+      <g id="id5">
+       <rect class="BoundingBox" stroke="none" fill="none" x="0" y="-1" width="3" height="3"/>
+       <path fill="rgb(0,0,0)" stroke="none" d="M 0,1 L 0,-1 2,1 0,1 Z M 2,1 L 0,-1 0,1 2,1 Z"/>
+      </g>
+     </g>
+     <g class="com.sun.star.drawing.PolyPolygonShape">
+      <g id="id6">
+       <rect class="BoundingBox" stroke="none" fill="none" x="0" y="-1" width="4" height="3"/>
+       <path fill="rgb(0,0,0)" stroke="none" d="M 3,1 L 2,1 0,1 2,1 2,-1 3,1 Z"/>
+      </g>
+     </g>
+     <g class="com.sun.star.drawing.PolyPolygonShape">
+      <g id="id7">
+       <rect class="BoundingBox" stroke="none" fill="none" x="0" y="-1" width="1" height="2"/>
+      </g>
+     </g>
+     <g class="com.sun.star.drawing.PolyPolygonShape">
+      <g id="id8">
+       <rect class="BoundingBox" stroke="none" fill="none" x="0" y="-1" width="3" height="3"/>
+       <path fill="rgb(0,0,0)" stroke="none" d="M 0,1 L 0,-1 0,1 2,-1 0,1 Z"/>
+      </g>
+     </g>
+     <g class="com.sun.star.drawing.ClosedBezierShape">
+      <g id="id9">
+       <rect class="BoundingBox" stroke="none" fill="none" x="0" y="-1" width="3" height="3"/>
+       <path fill="rgb(0,0,0)" stroke="none" d="M 2,1 C 0,1 0,1 0,1 0,-1 0,-1 0,-1 L 2,-1 2,1 Z"/>
+      </g>
+     </g>
+     <g class="com.sun.star.drawing.PolyPolygonShape">
+      <g id="id10">
+       <rect class="BoundingBox" stroke="none" fill="none" x="0" y="0" width="1" height="1"/>
+       <path fill="rgb(0,0,0)" stroke="none" d="M 0,0 L 0,0 Z"/>
+      </g>
+     </g>
+     <g class="com.sun.star.drawing.PolyPolygonShape">
+      <g id="id11">
+       <rect class="BoundingBox" stroke="none" fill="none" x="0" y="0" width="2" height="1"/>
+      </g>
+     </g>
+     <g class="com.sun.star.drawing.PolyPolygonShape">
+      <g id="id12">
+       <rect class="BoundingBox" stroke="none" fill="none" x="0" y="-1" width="4" height="4"/>
+       <path fill="rgb(0,0,0)" stroke="none" d="M 3,-1 L 3,2 0,2 3,-1 Z"/>
+      </g>
+     </g>
+     <g class="com.sun.star.drawing.PolyPolygonShape">
+      <g id="id13">
+       <rect class="BoundingBox" stroke="none" fill="none" x="0" y="-1" width="4" height="4"/>
+       <path fill="rgb(0,0,0)" stroke="none" d="M 0,-1 L 3,-1 3,2 0,2 0,-1 Z"/>
+      </g>
+     </g>
+     <g class="com.sun.star.drawing.PolyPolygonShape">
+      <g id="id14">
+       <rect class="BoundingBox" stroke="none" fill="none" x="0" y="-1" width="4" height="4"/>
+       <path fill="rgb(0,0,0)" stroke="none" d="M 0,2 L 0,-1 3,2 0,2 Z M 3,2 L 0,-1 0,2 3,2 Z"/>
+      </g>
+     </g>
+     <g class="com.sun.star.drawing.PolyPolygonShape">
+      <g id="id15">
+       <rect class="BoundingBox" stroke="none" fill="none" x="0" y="-1" width="5" height="4"/>
+       <path fill="rgb(0,0,0)" stroke="none" d="M 4,2 L 3,2 0,2 3,2 3,-1 4,2 Z"/>
+      </g>
+     </g>
+     <g class="com.sun.star.drawing.PolyPolygonShape">
+      <g id="id16">
+       <rect class="BoundingBox" stroke="none" fill="none" x="0" y="-1" width="4" height="4"/>
+       <path fill="rgb(0,0,0)" stroke="none" d="M 0,2 L 0,-1 0,2 3,-1 0,2 Z"/>
+      </g>
+     </g>
+     <g class="com.sun.star.drawing.ClosedBezierShape">
+      <g id="id17">
+       <rect class="BoundingBox" stroke="none" fill="none" x="0" y="-1" width="4" height="4"/>
+       <path fill="rgb(0,0,0)" stroke="none" d="M 3,2 C 0,2 0,2 0,2 0,-1 0,-1 0,-1 L 3,-1 3,2 Z"/>
+      </g>
+     </g>
+     <g class="com.sun.star.drawing.PolyPolygonShape">
+      <g id="id18">
+       <rect class="BoundingBox" stroke="none" fill="none" x="0" y="0" width="1" height="1"/>
+       <path fill="rgb(0,0,0)" stroke="none" d="M 0,0 L 0,0 Z"/>
+      </g>
+     </g>
+     <g class="com.sun.star.drawing.OpenBezierShape">
+      <g id="id19">
+       <rect class="BoundingBox" stroke="none" fill="none" x="101" y="-38" width="888" height="1181"/>
+       <path fill="none" stroke="rgb(114,159,207)" stroke-width="300" stroke-linejoin="round" d="M 251,992 C 251,331 838,773 838,112"/>
+      </g>
+     </g>
+     <g class="com.sun.star.drawing.PolyPolygonShape">
+      <g id="id20">
+       <rect class="BoundingBox" stroke="none" fill="none" x="0" y="-1" width="5" height="5"/>
+       <path fill="rgb(0,0,0)" stroke="none" d="M 4,-1 L 4,3 0,3 4,-1 Z"/>
+      </g>
+     </g>
+     <g class="com.sun.star.drawing.PolyPolygonShape">
+      <g id="id21">
+       <rect class="BoundingBox" stroke="none" fill="none" x="0" y="-1" width="5" height="5"/>
+       <path fill="rgb(0,0,0)" stroke="none" d="M 0,-1 L 4,-1 4,3 0,3 0,-1 Z"/>
+      </g>
+     </g>
+     <g class="com.sun.star.drawing.PolyPolygonShape">
+      <g id="id22">
+       <rect class="BoundingBox" stroke="none" fill="none" x="0" y="-1" width="5" height="5"/>
+       <path fill="rgb(0,0,0)" stroke="none" d="M 0,3 L 0,-1 4,3 0,3 Z M 4,3 L 0,-1 0,3 4,3 Z"/>
+      </g>
+     </g>
+     <g class="com.sun.star.drawing.PolyPolygonShape">
+      <g id="id23">
+       <rect class="BoundingBox" stroke="none" fill="none" x="0" y="-1" width="6" height="5"/>
+       <path fill="rgb(0,0,0)" stroke="none" d="M 5,3 L 4,3 0,3 4,3 4,-1 5,3 Z"/>
+      </g>
+     </g>
+     <g class="com.sun.star.drawing.PolyPolygonShape">
+      <g id="id24">
+       <rect class="BoundingBox" stroke="none" fill="none" x="0" y="-1" width="5" height="5"/>
+       <path fill="rgb(0,0,0)" stroke="none" d="M 0,3 L 0,-1 0,3 4,-1 0,3 Z"/>
+      </g>
+     </g>
+     <g class="com.sun.star.drawing.ClosedBezierShape">
+      <g id="id25">
+       <rect class="BoundingBox" stroke="none" fill="none" x="0" y="-1" width="5" height="5"/>
+       <path fill="rgb(0,0,0)" stroke="none" d="M 4,3 C 0,3 0,3 0,3 0,-1 0,-1 0,-1 L 4,-1 4,3 Z"/>
+      </g>
+     </g>
+     <g class="com.sun.star.drawing.PolyPolygonShape">
+      <g id="id26">
+       <rect class="BoundingBox" stroke="none" fill="none" x="0" y="0" width="1" height="1"/>
+       <path fill="rgb(0,0,0)" stroke="none" d="M 0,0 L 0,0 Z"/>
+      </g>
+     </g>
+     <g class="com.sun.star.drawing.PolyPolygonShape">
+      <g id="id27">
+       <rect class="BoundingBox" stroke="none" fill="none" x="0" y="-1" width="6" height="6"/>
+       <path fill="rgb(0,0,0)" stroke="none" d="M 5,-1 L 5,4 0,4 5,-1 Z"/>
+      </g>
+     </g>
+     <g class="com.sun.star.drawing.PolyPolygonShape">
+      <g id="id28">
+       <rect class="BoundingBox" stroke="none" fill="none" x="0" y="-1" width="6" height="6"/>
+       <path fill="rgb(0,0,0)" stroke="none" d="M 0,-1 L 5,-1 5,4 0,4 0,-1 Z"/>
+      </g>
+     </g>
+     <g class="com.sun.star.drawing.PolyPolygonShape">
+      <g id="id29">
+       <rect class="BoundingBox" stroke="none" fill="none" x="0" y="-1" width="6" height="6"/>
+       <path fill="rgb(0,0,0)" stroke="none" d="M 0,4 L 0,-1 5,4 0,4 Z M 5,4 L 0,-1 0,4 5,4 Z"/>
+      </g>
+     </g>
+     <g class="com.sun.star.drawing.PolyPolygonShape">
+      <g id="id30">
+       <rect class="BoundingBox" stroke="none" fill="none" x="0" y="-1" width="7" height="6"/>
+       <path fill="rgb(0,0,0)" stroke="none" d="M 6,4 L 5,4 0,4 5,4 5,-1 6,4 Z"/>
+      </g>
+     </g>
+     <g class="com.sun.star.drawing.PolyPolygonShape">
+      <g id="id31">
+       <rect class="BoundingBox" stroke="none" fill="none" x="0" y="-1" width="6" height="6"/>
+       <path fill="rgb(0,0,0)" stroke="none" d="M 0,4 L 0,-1 0,4 5,-1 0,4 Z"/>
+      </g>
+     </g>
+     <g class="com.sun.star.drawing.ClosedBezierShape">
+      <g id="id32">
+       <rect class="BoundingBox" stroke="none" fill="none" x="0" y="-1" width="6" height="6"/>
+       <path fill="rgb(0,0,0)" stroke="none" d="M 5,4 C 0,4 0,4 0,4 0,-1 0,-1 0,-1 L 5,-1 5,4 Z"/>
+      </g>
+     </g>
+     <g class="com.sun.star.drawing.PolyPolygonShape">
+      <g id="id33">
+       <rect class="BoundingBox" stroke="none" fill="none" x="0" y="0" width="1" height="1"/>
+       <path fill="rgb(0,0,0)" stroke="none" d="M 0,0 L 0,0 Z"/>
+      </g>
+     </g>
+     <g class="com.sun.star.drawing.PolyPolygonShape">
+      <g id="id34">
+       <rect class="BoundingBox" stroke="none" fill="none" x="0" y="-1" width="7" height="7"/>
+       <path fill="rgb(0,0,0)" stroke="none" d="M 6,-1 L 6,5 0,5 6,-1 Z"/>
+      </g>
+     </g>
+     <g class="com.sun.star.drawing.PolyPolygonShape">
+      <g id="id35">
+       <rect class="BoundingBox" stroke="none" fill="none" x="0" y="-1" width="7" height="7"/>
+       <path fill="rgb(0,0,0)" stroke="none" d="M 0,-1 L 6,-1 6,5 0,5 0,-1 Z"/>
+      </g>
+     </g>
+     <g class="com.sun.star.drawing.PolyPolygonShape">
+      <g id="id36">
+       <rect class="BoundingBox" stroke="none" fill="none" x="0" y="-1" width="7" height="7"/>
+       <path fill="rgb(0,0,0)" stroke="none" d="M 0,5 L 0,-1 6,5 0,5 Z M 6,5 L 0,-1 0,5 6,5 Z"/>
+      </g>
+     </g>
+     <g class="com.sun.star.drawing.PolyPolygonShape">
+      <g id="id37">
+       <rect class="BoundingBox" stroke="none" fill="none" x="0" y="-1" width="8" height="7"/>
+       <path fill="rgb(0,0,0)" stroke="none" d="M 7,5 L 6,5 0,5 6,5 6,-1 7,5 Z"/>
+      </g>
+     </g>
+     <g class="com.sun.star.drawing.PolyPolygonShape">
+      <g id="id38">
+       <rect class="BoundingBox" stroke="none" fill="none" x="0" y="-1" width="7" height="7"/>
+       <path fill="rgb(0,0,0)" stroke="none" d="M 0,5 L 0,-1 0,5 6,-1 0,5 Z"/>
+      </g>
+     </g>
+     <g class="com.sun.star.drawing.ClosedBezierShape">
+      <g id="id39">
+       <rect class="BoundingBox" stroke="none" fill="none" x="0" y="-1" width="7" height="7"/>
+       <path fill="rgb(0,0,0)" stroke="none" d="M 6,5 C 0,5 0,5 0,5 0,-1 0,-1 0,-1 L 6,-1 6,5 Z"/>
+      </g>
+     </g>
+     <g class="com.sun.star.drawing.PolyPolygonShape">
+      <g id="id40">
+       <rect class="BoundingBox" stroke="none" fill="none" x="0" y="0" width="1" height="1"/>
+       <path fill="rgb(0,0,0)" stroke="none" d="M 0,0 L 0,0 Z"/>
+      </g>
+     </g>
+     <g class="com.sun.star.drawing.PolyPolygonShape">
+      <g id="id41">
+       <rect class="BoundingBox" stroke="none" fill="none" x="0" y="-1" width="8" height="8"/>
+       <path fill="rgb(0,0,0)" stroke="none" d="M 7,-1 L 7,6 0,6 7,-1 Z"/>
+      </g>
+     </g>
+     <g class="com.sun.star.drawing.PolyPolygonShape">
+      <g id="id42">
+       <rect class="BoundingBox" stroke="none" fill="none" x="0" y="-1" width="8" height="8"/>
+       <path fill="rgb(0,0,0)" stroke="none" d="M 0,-1 L 7,-1 7,6 0,6 0,-1 Z"/>
+      </g>
+     </g>
+     <g class="com.sun.star.drawing.PolyPolygonShape">
+      <g id="id43">
+       <rect class="BoundingBox" stroke="none" fill="none" x="0" y="-1" width="8" height="8"/>
+       <path fill="rgb(0,0,0)" stroke="none" d="M 0,6 L 0,-1 7,6 0,6 Z M 7,6 L 0,-1 0,6 7,6 Z"/>
+      </g>
+     </g>
+     <g class="com.sun.star.drawing.PolyPolygonShape">
+      <g id="id44">
+       <rect class="BoundingBox" stroke="none" fill="none" x="0" y="-1" width="9" height="8"/>
+       <path fill="rgb(0,0,0)" stroke="none" d="M 8,6 L 7,6 0,6 7,6 7,-1 8,6 Z"/>
+      </g>
+     </g>
+     <g class="com.sun.star.drawing.PolyPolygonShape">
+      <g id="id45">
+       <rect class="BoundingBox" stroke="none" fill="none" x="0" y="-1" width="8" height="8"/>
+       <path fill="rgb(0,0,0)" stroke="none" d="M 0,6 L 0,-1 0,6 7,-1 0,6 Z"/>
+      </g>
+     </g>
+     <g class="com.sun.star.drawing.ClosedBezierShape">
+      <g id="id46">
+       <rect class="BoundingBox" stroke="none" fill="none" x="0" y="-1" width="8" height="8"/>
+       <path fill="rgb(0,0,0)" stroke="none" d="M 7,6 C 0,6 0,6 0,6 0,-1 0,-1 0,-1 L 7,-1 7,6 Z"/>
+      </g>
+     </g>
+     <g class="com.sun.star.drawing.PolyPolygonShape">
+      <g id="id47">
+       <rect class="BoundingBox" stroke="none" fill="none" x="0" y="0" width="1" height="1"/>
+       <path fill="rgb(0,0,0)" stroke="none" d="M 0,0 L 0,0 Z"/>
+      </g>
+     </g>
+     <g class="com.sun.star.drawing.PolyPolygonShape">
+      <g id="id48">
+       <rect class="BoundingBox" stroke="none" fill="none" x="0" y="-1" width="9" height="9"/>
+       <path fill="rgb(0,0,0)" stroke="none" d="M 8,-1 L 8,7 0,7 8,-1 Z"/>
+      </g>
+     </g>
+     <g class="com.sun.star.drawing.PolyPolygonShape">
+      <g id="id49">
+       <rect class="BoundingBox" stroke="none" fill="none" x="0" y="-1" width="9" height="9"/>
+       <path fill="rgb(0,0,0)" stroke="none" d="M 0,-1 L 8,-1 8,7 0,7 0,-1 Z"/>
+      </g>
+     </g>
+     <g class="com.sun.star.drawing.PolyPolygonShape">
+      <g id="id50">
+       <rect class="BoundingBox" stroke="none" fill="none" x="0" y="-1" width="9" height="9"/>
+       <path fill="rgb(0,0,0)" stroke="none" d="M 0,7 L 0,-1 8,7 0,7 Z M 8,7 L 0,-1 0,7 8,7 Z"/>
+      </g>
+     </g>
+     <g class="com.sun.star.drawing.PolyPolygonShape">
+      <g id="id51">
+       <rect class="BoundingBox" stroke="none" fill="none" x="0" y="-1" width="10" height="9"/>
+       <path fill="rgb(0,0,0)" stroke="none" d="M 9,7 L 8,7 0,7 8,7 8,-1 9,7 Z"/>
+      </g>
+     </g>
+     <g class="com.sun.star.drawing.PolyPolygonShape">
+      <g id="id52">
+       <rect class="BoundingBox" stroke="none" fill="none" x="0" y="-1" width="9" height="9"/>
+       <path fill="rgb(0,0,0)" stroke="none" d="M 0,7 L 0,-1 0,7 8,-1 0,7 Z"/>
+      </g>
+     </g>
+     <g class="com.sun.star.drawing.ClosedBezierShape">
+      <g id="id53">
+       <rect class="BoundingBox" stroke="none" fill="none" x="0" y="-1" width="9" height="9"/>
+       <path fill="rgb(0,0,0)" stroke="none" d="M 8,7 C 0,7 0,7 0,7 0,-1 0,-1 0,-1 L 8,-1 8,7 Z"/>
+      </g>
+     </g>
+     <g class="com.sun.star.drawing.PolyPolygonShape">
+      <g id="id54">
+       <rect class="BoundingBox" stroke="none" fill="none" x="0" y="0" width="1" height="1"/>
+       <path fill="rgb(0,0,0)" stroke="none" d="M 0,0 L 0,0 Z"/>
+      </g>
+     </g>
+     <g class="com.sun.star.drawing.PolyPolygonShape">
+      <g id="id55">
+       <rect class="BoundingBox" stroke="none" fill="none" x="0" y="-1" width="10" height="10"/>
+       <path fill="rgb(0,0,0)" stroke="none" d="M 9,-1 L 9,8 0,8 9,-1 Z"/>
+      </g>
+     </g>
+     <g class="com.sun.star.drawing.PolyPolygonShape">
+      <g id="id56">
+       <rect class="BoundingBox" stroke="none" fill="none" x="0" y="-1" width="10" height="10"/>
+       <path fill="rgb(0,0,0)" stroke="none" d="M 0,-1 L 9,-1 9,8 0,8 0,-1 Z"/>
+      </g>
+     </g>
+     <g class="com.sun.star.drawing.PolyPolygonShape">
+      <g id="id57">
+       <rect class="BoundingBox" stroke="none" fill="none" x="0" y="-1" width="10" height="10"/>
+       <path fill="rgb(0,0,0)" stroke="none" d="M 0,8 L 0,-1 9,8 0,8 Z M 9,8 L 0,-1 0,8 9,8 Z"/>
+      </g>
+     </g>
+     <g class="com.sun.star.drawing.PolyPolygonShape">
+      <g id="id58">
+       <rect class="BoundingBox" stroke="none" fill="none" x="0" y="-1" width="11" height="10"/>
+       <path fill="rgb(0,0,0)" stroke="none" d="M 10,8 L 9,8 0,8 9,8 9,-1 10,8 Z"/>
+      </g>
+     </g>
+     <g class="com.sun.star.drawing.PolyPolygonShape">
+      <g id="id59">
+       <rect class="BoundingBox" stroke="none" fill="none" x="0" y="-1" width="10" height="10"/>
+       <path fill="rgb(0,0,0)" stroke="none" d="M 0,8 L 0,-1 0,8 9,-1 0,8 Z"/>
+      </g>
+     </g>
+     <g class="com.sun.star.drawing.ClosedBezierShape">
+      <g id="id60">
+       <rect class="BoundingBox" stroke="none" fill="none" x="0" y="-1" width="10" height="10"/>
+       <path fill="rgb(0,0,0)" stroke="none" d="M 9,8 C 0,8 0,8 0,8 0,-1 0,-1 0,-1 L 9,-1 9,8 Z"/>
+      </g>
+     </g>
+     <g class="com.sun.star.drawing.PolyPolygonShape">
+      <g id="id61">
+       <rect class="BoundingBox" stroke="none" fill="none" x="0" y="0" width="1" height="1"/>
+       <path fill="rgb(0,0,0)" stroke="none" d="M 0,0 L 0,0 Z"/>
+      </g>
+     </g>
+     <g class="com.sun.star.drawing.OpenBezierShape">
+      <g id="id62">
+       <rect class="BoundingBox" stroke="none" fill="none" x="246" y="973" width="11" height="23"/>
+       <path fill="none" stroke="rgb(0,0,0)" stroke-width="10" stroke-linejoin="round" d="M 251,990 C 251,986 251,982 251,978"/>
+      </g>
+     </g>
+     <g class="com.sun.star.drawing.OpenBezierShape">
+      <g id="id63">
+       <rect class="BoundingBox" stroke="none" fill="none" x="247" y="887" width="18" height="67"/>
+       <path fill="none" stroke="rgb(0,0,0)" stroke-width="10" stroke-linejoin="round" d="M 252,948 C 253,930 257,909 259,893"/>
+      </g>
+     </g>
+     <g class="com.sun.star.drawing.OpenBezierShape">
+      <g id="id64">
+       <rect class="BoundingBox" stroke="none" fill="none" x="255" y="851" width="15" height="23"/>
+       <path fill="none" stroke="rgb(0,0,0)" stroke-width="10" stroke-linejoin="round" d="M 260,868 C 260,865 264,859 264,856"/>
+      </g>
+     </g>
+     <g class="com.sun.star.drawing.OpenBezierShape">
+      <g id="id65">
+       <rect class="BoundingBox" stroke="none" fill="none" x="261" y="773" width="28" height="66"/>
+       <path fill="none" stroke="rgb(0,0,0)" stroke-width="10" stroke-linejoin="round" d="M 266,833 C 270,814 278,794 283,778"/>
+      </g>
+     </g>
+     <g class="com.sun.star.drawing.OpenBezierShape">
+      <g id="id66">
+       <rect class="BoundingBox" stroke="none" fill="none" x="286" y="736" width="18" height="23"/>
+       <path fill="none" stroke="rgb(0,0,0)" stroke-width="10" stroke-linejoin="round" d="M 291,753 C 292,750 296,744 298,741"/>
+      </g>
+     </g>
+     <g class="com.sun.star.drawing.OpenBezierShape">
+      <g id="id67">
+       <rect class="BoundingBox" stroke="none" fill="none" x="302" y="670" width="43" height="56"/>
+       <path fill="none" stroke="rgb(0,0,0)" stroke-width="10" stroke-linejoin="round" d="M 307,720 C 316,704 329,688 339,675"/>
+      </g>
+     </g>
+     <g class="com.sun.star.drawing.OpenBezierShape">
+      <g id="id68">
+       <rect class="BoundingBox" stroke="none" fill="none" x="351" y="642" width="21" height="20"/>
+       <path fill="none" stroke="rgb(0,0,0)" stroke-width="10" stroke-linejoin="round" d="M 356,656 C 359,654 364,649 366,647"/>
+      </g>
+     </g>
+     <g class="com.sun.star.drawing.OpenBezierShape">
+      <g id="id69">
+       <rect class="BoundingBox" stroke="none" fill="none" x="381" y="595" width="56" height="42"/>
+       <path fill="none" stroke="rgb(0,0,0)" stroke-width="10" stroke-linejoin="round" d="M 386,631 C 399,621 417,609 431,601"/>
+      </g>
+     </g>
+     <g class="com.sun.star.drawing.OpenBezierShape">
+      <g id="id70">
+       <rect class="BoundingBox" stroke="none" fill="none" x="450" y="577" width="23" height="19"/>
+       <path fill="none" stroke="rgb(0,0,0)" stroke-width="10" stroke-linejoin="round" d="M 455,590 C 458,589 464,588 467,583"/>
+      </g>
+     </g>
+     <g class="com.sun.star.drawing.OpenBezierShape">
+      <g id="id71">
+       <rect class="BoundingBox" stroke="none" fill="none" x="486" y="548" width="61" height="32"/>
+       <path fill="none" stroke="rgb(0,0,0)" stroke-width="10" stroke-linejoin="round" d="M 491,574 C 507,568 525,559 541,553"/>
+      </g>
+     </g>
+     <g class="com.sun.star.drawing.OpenBezierShape">
+      <g id="id72">
+       <rect class="BoundingBox" stroke="none" fill="none" x="561" y="534" width="24" height="18"/>
+       <path fill="none" stroke="rgb(0,0,0)" stroke-width="10" stroke-linejoin="round" d="M 566,546 C 569,545 576,540 579,539"/>
+      </g>
+     </g>
+     <g class="com.sun.star.drawing.OpenBezierShape">
+      <g id="id73">
+       <rect class="BoundingBox" stroke="none" fill="none" x="598" y="502" width="60" height="35"/>
+       <path fill="none" stroke="rgb(0,0,0)" stroke-width="10" stroke-linejoin="round" d="M 603,531 C 619,524 637,515 652,507"/>
+      </g>
+     </g>
+     <g class="com.sun.star.drawing.OpenBezierShape">
+      <g id="id74">
+       <rect class="BoundingBox" stroke="none" fill="none" x="670" y="482" width="22" height="19"/>
+       <path fill="none" stroke="rgb(0,0,0)" stroke-width="10" stroke-linejoin="round" d="M 675,495 C 678,493 683,489 686,487"/>
+      </g>
+     </g>
+     <g class="com.sun.star.drawing.OpenBezierShape">
+      <g id="id75">
+       <rect class="BoundingBox" stroke="none" fill="none" x="703" y="431" width="49" height="47"/>
+       <path fill="none" stroke="rgb(0,0,0)" stroke-width="10" stroke-linejoin="round" d="M 708,472 C 720,462 735,448 746,436"/>
+      </g>
+     </g>
+     <g class="com.sun.star.drawing.OpenBezierShape">
+      <g id="id76">
+       <rect class="BoundingBox" stroke="none" fill="none" x="756" y="397" width="21" height="24"/>
+       <path fill="none" stroke="rgb(0,0,0)" stroke-width="10" stroke-linejoin="round" d="M 762,415 C 764,412 769,406 771,403"/>
+      </g>
+     </g>
+     <g class="com.sun.star.drawing.OpenBezierShape">
+      <g id="id77">
+       <rect class="BoundingBox" stroke="none" fill="none" x="778" y="330" width="33" height="58"/>
+       <path fill="none" stroke="rgb(0,0,0)" stroke-width="10" stroke-linejoin="round" d="M 783,382 C 790,368 800,351 805,335"/>
+      </g>
+     </g>
+     <g class="com.sun.star.drawing.OpenBezierShape">
+      <g id="id78">
+       <rect class="BoundingBox" stroke="none" fill="none" x="806" y="289" width="18" height="25"/>
+       <path fill="none" stroke="rgb(0,0,0)" stroke-width="10" stroke-linejoin="round" d="M 812,308 C 813,304 817,298 818,294"/>
+      </g>
+     </g>
+     <g class="com.sun.star.drawing.OpenBezierShape">
+      <g id="id79">
+       <rect class="BoundingBox" stroke="none" fill="none" x="817" y="215" width="21" height="59"/>
+       <path fill="none" stroke="rgb(0,0,0)" stroke-width="10" stroke-linejoin="round" d="M 822,268 C 825,254 830,236 832,220"/>
+      </g>
+     </g>
+     <g class="com.sun.star.drawing.OpenBezierShape">
+      <g id="id80">
+       <rect class="BoundingBox" stroke="none" fill="none" x="827" y="175" width="15" height="24"/>
+       <path fill="none" stroke="rgb(0,0,0)" stroke-width="10" stroke-linejoin="round" d="M 832,193 C 832,190 836,183 836,180"/>
+      </g>
+     </g>
+     <g class="com.sun.star.drawing.OpenBezierShape">
+      <g id="id81">
+       <rect class="BoundingBox" stroke="none" fill="none" x="829" y="107" width="15" height="50"/>
+       <path fill="none" stroke="rgb(0,0,0)" stroke-width="10" stroke-linejoin="round" d="M 834,151 C 838,140 838,125 838,113"/>
+      </g>
+     </g>
+    </g>
+   </g>
+  </g>
+ </g>
+</svg>

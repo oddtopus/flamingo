@@ -905,8 +905,9 @@ class insertPypeLineForm(protopypeForm):
       plname=self.combo.currentText()
       plcolor=FreeCAD.activeDocument().getObjectsByLabel(plname)[0].ViewObject.ShapeColor
       pipeCmd.makePypeLine2(DN=d["PSize"],PRating=self.PRating,OD=float(d["OD"]),thk=float(d["thk"]), pl=plname, color=plcolor)
-    FreeCAD.ActiveDocument.recompute()
     FreeCAD.activeDocument().commitTransaction()
+    FreeCAD.ActiveDocument.recompute()
+    FreeCAD.ActiveDocument.recompute()
   def getBase(self):
     if self.combo.currentText()!="<new>":                                           
       pl=FreeCAD.ActiveDocument.getObjectsByLabel(self.combo.currentText())[0]    

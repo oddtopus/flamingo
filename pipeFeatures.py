@@ -107,7 +107,7 @@ class Elbow(pypeType):
         fp.Shape=sol.makeThickness(planeFaces,-fp.thk,1.e-3)
       else:
         fp.Shape=sol
-      
+
 class Flange(pypeType):
   '''Class for object PType="Flange"
   Flange(obj,[PSize="DN50",FlangeType="SO", D=160, d=60.3,df=132, f=14 t=15,n=4])
@@ -322,36 +322,18 @@ class PypeLine2(pypeType):
       pipes.append(p)
       n=len(pipes)-1
       if n and not frameCmd.isParallel(frameCmd.beamAx(pipes[n]),frameCmd.beamAx(pipes[n-1])):
-        #---Create the curve: method 1---
-        #P=rounded(frameCmd.intersectionCLines(pipes[n-1],pipes[n])) #alternative -> P=pipes[n].Placement.Base
-        #dir1=rounded((frameCmd.beamAx(pipes[n-1]).multiply(pipes[n-1].Height/2)+pipes[n-1].Placement.Base)-P).normalize()
-        #dir2=rounded((frameCmd.beamAx(pipes[n]).multiply(pipes[n].Height/2)+pipes[n].Placement.Base)-P).normalize()
-        #ang=180.0-degrees(dir1.getAngle(dir2))
-        #propList=[fp.PSize,fp.OD,fp.thk,ang,fp.BendRadius]
-        #c=pipeCmd.makeElbow(propList,P,dir1.negative().cross(dir2.negative()))
-        #elbBisect=rounded(frameCmd.beamAx(c,FreeCAD.Vector(1,1,0))).normalize() # if not rounded, it fails with linux when sketch is vertical!(?)
-        #rot=FreeCAD.Rotation(elbBisect,frameCmd.bisect(dir1,dir2))
-        #c.Placement.Rotation=rot.multiply(c.Placement.Rotation)
-        #---Create the curve: method 2---
+        #---Create the curve---
         propList=[fp.PSize,fp.OD,fp.thk,90,fp.BendRadius]
-        c=pipeCmd.makeElbowBetweenThings(edges[n],edges[n-1],propList)  #before was ...(p1,p2,propList)
-        portA=c.Placement.multVec(c.Ports[0])
-        portB=c.Placement.multVec(c.Ports[1])
-        #---Trim the tube: method 1---
-        #for tube in pipes[-2:]:
-        #  vectA=c.Placement.Rotation.multVec(c.Ports[0])
-        #  if frameCmd.isParallel(vectA,frameCmd.beamAx(tube)):
-        #    frameCmd.extendTheBeam(tube,portA)
-        #  else:
-        #    frameCmd.extendTheBeam(tube,portB)
-        #---Trim the tube: method 2---
+        c=pipeCmd.makeElbowBetweenThings(edges[n],edges[n-1],propList)
+        portA,portB=[c.Placement.multVec(port) for port in c.Ports]
+        #---Trim the tube---
         p1,p2=pipes[-2:]
         frameCmd.extendTheBeam(p1,portA)
         frameCmd.extendTheBeam(p2,portB)
         pipeCmd.moveToPyLi(c,fp.Label)
   def execute(self, fp):
     return None
-    
+
 class Ubolt():
   '''Class for object PType="Clamp"
   UBolt(obj,[PSize="DN50",ClampType="U-bolt", C=76, H=109, d=10])
@@ -419,3 +401,119 @@ class Shell():
     tank=box.makeThickness([box.Faces[0],box.Faces[2]],-fp.thk,1.e-3)
     fp.Shape=tank
     
+class PypeRoute(pypeType): # single-route PypeLine
+  '''Class for object PType="PypeRoute"
+  Like PypeLine2 but attempting to make automatic update
+  '''
+  def __init__(self, obj,baseLabel,DN="DN50",PRating="SCH-STD",OD=60.3,thk=3,BR=None, lab=None):
+    print "*** Invoking .__init__() ***"
+    # initialize the parent class
+    super(PypeRoute,self).__init__(obj)
+    # define common properties
+    obj.PType="PypeRoute"
+    obj.PSize=DN
+    obj.PRating=PRating
+    if lab: obj.Label=lab
+    # define specific properties
+    if not BR: BR=0.75*OD
+    obj.addProperty("App::PropertyLength","BendRadius","PypeRoute","the radius of bending").BendRadius=BR
+    obj.addProperty("App::PropertyLength","OD","PypeRoute","Outside diameter").OD=OD
+    obj.addProperty("App::PropertyLength","thk","PypeRoute","Wall thickness").thk=thk
+    obj.addProperty("App::PropertyLink","Base","PypeRoute","The path.")
+    base=FreeCAD.ActiveDocument.getObjectsByLabel(baseLabel)[0]
+    if hasattr(base,"Shape") and base.Shape.Edges: 
+      obj.Base=base
+    else:
+      FreeCAD.Console.PrintError('Base not valid\n')
+    obj.addProperty("App::PropertyLinkList","Tubes","PypeRoute","The tubes of the route.")
+    obj.addProperty("App::PropertyLinkList","Curves","PypeRoute","The curves of the route.")
+    self.Object=obj
+    self.redraw()
+  def onChanged(self, fp, prop):
+    print "*** Invoking pipeFeatures.PypeRoute.onChanged() ***"
+  def execute(self, fp):
+    print "*** Invoking .execute() ***"
+    # Place the tubes
+    i=0
+    tubes=self.Object.Tubes
+    curves=self.Object.Curves
+    edges=self.Object.Base.Shape.Edges
+    for edge in edges:
+      try:
+        tubes[i].Placement.Base=edge.valueAt(0)
+        tubes[i].Placement.Rotation=FreeCAD.Rotation(FreeCAD.Vector(0,0,1),edge.tangentAt(0))
+        tubes[i].Height=edge.Length
+        i+=1
+      except:
+        FreeCAD.Console.PrintError('Insufficient Tubes -> purge and redraw\n')
+        break
+    # Place the curves
+    from math import degrees
+    from DraftVecUtils import rounded
+    from frameCmd import bisect, beamAx
+    i=0
+    for e1,e2 in [(edges[j],edges[j+1]) for j in range(len(curves))]:
+      elb=curves[i]
+      P=e2.valueAt(0)
+      elb.Placement.Base=P
+      d1,d2=[rounded(e.CenterOfMass-P) for e in [e1,e2]]
+      elb.BendAngle=180-degrees(d1.getAngle(d2))
+      edgesBisectb=bisect(d1,d2)
+      elbBisect=rounded(beamAx(elb,FreeCAD.Vector(1,1,0))) #if not rounded, fail in plane xz
+      rot=FreeCAD.Rotation(elbBisect,edgesBisectb)
+      elb.Placement.Rotation=rot.multiply(elb.Placement.Rotation)
+      i+=1
+    pass
+    # Trim the tubes
+    for i in range(len(self.Object.Curves)):
+      DportA,DportB=[self.Object.Curves[i].Placement.Rotation.multVec(port) for port in self.Object.Curves[i].Ports]
+      self.Object.Tubes[i].Height=float(self.Object.Tubes[i].Height)-DportB.Length
+      self.Object.Tubes[i+1].Placement.Base+=DportA
+      i+=1
+  def redraw(self):
+    print "*** Invoking .redraw() ***"
+    edges=self.Object.Base.Shape.Edges
+    from pipeCmd import makePipe, makeElbowBetweenThings
+    #---Create the tubes---
+    tubes=list()
+    for e in edges:
+      t=makePipe([self.Object.PSize,self.Object.OD,self.Object.thk,e.Length],pos=e.valueAt(0),Z=e.tangentAt(0))
+      t.PRating=self.Object.PRating
+      t.PSize=self.Object.PSize
+      tubes.append(t)
+    self.Object.Tubes=tubes
+    #---Create the curves---
+    curves=list()
+    for t in range(len(edges)-1):
+      curves.append(makeElbowBetweenThings(edges[t],edges[t+1])) # openInventor raises error if used with tubes[]
+    self.Object.Curves=curves
+  def purge(self):
+    print "*** Invoking .purge() ***"
+    
+class ViewProviderPypeRoute:
+    def __init__(self,vobj):
+        vobj.Proxy = self
+    def getIcon(self):
+        from os.path import join, dirname, abspath
+        return join(dirname(abspath(__file__)),"icons","route.svg")#":/icons/route.svg"
+    def attach(self, vobj):
+        self.ViewObject = vobj
+        self.Object = vobj.Object
+    def setEdit(self,vobj,mode):
+        return False
+    def unsetEdit(self,vobj,mode):
+        return
+    def __getstate__(self):
+        return None
+    def __setstate__(self,state):
+        return None
+    def claimChildren(self):
+        return self.Object.Tubes + self.Object.Curves
+    def onDelete(self, feature, subelements): # subelements is a tuple of strings
+        try:
+            for f in self.Object.Tubes:
+                f.ViewObject.show()
+        except Exception as err:
+            App.Console.PrintError("Error in onDelete: " + err.message)
+        return True
+

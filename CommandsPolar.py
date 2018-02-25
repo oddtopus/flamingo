@@ -63,7 +63,7 @@ class queryModel:
     form = qForms.QueryForm(FreeCADGui.Selection)
 
   def GetResources(self):
-    return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","query.svg"),'MenuText':'query the model','ToolTip':'Click objects to print infos'}
+    return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","query.svg"),'Accel':"Q,M",'MenuText':'query the model','ToolTip':'Click objects to print infos'}
     
 class moveWorkPlane:
   '''
