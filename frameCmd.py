@@ -237,14 +237,25 @@ def bisect(w1=None,w2=None):
   If no argument is given the function takes the selected edges, if any.
   '''
   if w1==w2==None and len(edges())>=2:
-    w1,w2=[(e.CenterOfMass-FreeCAD.Vector(0,0,0)).normalize() for e in frameCmd.edges()[:2]]
+    w1,w2=[(e.CenterOfMass-FreeCAD.Vector(0,0,0)).normalize() for e in edges()[:2]]
   if w1!=None and w2!=None:
     w1.normalize()
     w2.normalize()
     b=FreeCAD.Vector()
     for i in range(3):
     	b[i]=(w1[i]+w2[i])/2
-    return b
+    return b.normalize()
+    
+def ortho(w1=None,w2=None):
+  '''
+  ortho(w1=None,w2=None)
+  Returns the orthogonal vector to vectors w1 and w2.
+  If no argument is given the function takes the selected edges, if any.
+  '''
+  if w1==w2==None and len(edges())>=2:
+    w1,w2=[e.tangentAt(0) for e in edges()[:2]]
+  if w1!=None and w2!=None:
+    return w1.cross(w2).normalize()
 
 def vec2edge(point,direct):
   '''

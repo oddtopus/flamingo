@@ -171,7 +171,7 @@ def makeElbowBetweenThings(thing1=None, thing2=None, propList=None):
   rot=FreeCAD.Rotation(elbBisect,b)
   elb.Placement.Rotation=rot.multiply(elb.Placement.Rotation)
   # trim the adjacent tubes
-  FreeCAD.activeDocument().recompute() # may delete this row?
+  #FreeCAD.activeDocument().recompute() # may delete this row?
   portA=elb.Placement.multVec(elb.Ports[0])
   portB=elb.Placement.multVec(elb.Ports[1])
   for tube in [t for t in [thing1,thing2] if frameCmd.beams([t])]:
@@ -377,7 +377,7 @@ def makePypeLine2(DN="DN50",PRating="SCH-STD",OD=60.3,thk=3,BR=None, lab="Tubatu
   if not pl:
     a=FreeCAD.ActiveDocument.addObject("Part::FeaturePython",lab)
     pipeFeatures.PypeLine2(a,DN,PRating,OD,thk,BR, lab)
-    a.ViewObject.Proxy=0
+    pipeFeatures.ViewProviderPypeLine(a.ViewObject) # a.ViewObject.Proxy=0
     a.ViewObject.ShapeColor=color
     if len(FreeCADGui.Selection.getSelection())==1:
       obj=FreeCADGui.Selection.getSelection()[0]
@@ -420,16 +420,17 @@ def makeRoute(base=None, DN="DN50",PRating="SCH-STD",OD=60.3,thk=3,BR=None, lab=
     elif frameCmd.edges():
       path=makeW()
       base=path
-  try:
+  if base:
     a=FreeCAD.ActiveDocument.addObject("Part::FeaturePython",lab)
-    pipeFeatures.PypeRoute(a,base.Label,DN,PRating,OD,thk,BR, lab)
+    pipeFeatures.PypeRoute(a,base,DN,PRating,OD,thk,BR)
     pipeFeatures.ViewProviderPypeRoute(a.ViewObject)
-    #a.ViewObject.Proxy=0
-    #a.ViewObject.ShapeColor=color
+    # recompute x 3
+    FreeCAD.ActiveDocument.recompute()
+    FreeCAD.ActiveDocument.recompute()
     FreeCAD.ActiveDocument.recompute()
     return a
-  except:
-    FreeCAD.Console.PrintError('Select a valid Base\n')
+  else:
+    FreeCAD.Console.PrintError('Select a valid path.\n')
   
 def updatePLColor(sel=None, color=None):
   if not sel:

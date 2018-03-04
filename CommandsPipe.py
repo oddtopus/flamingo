@@ -76,14 +76,12 @@ class insertPypeLine:
   def GetResources(self):
     return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","pypeline.svg"),'MenuText':'PypeLine Manager','ToolTip':'Open PypeLine Manager'}
 
-class paintPypeLine: #OBSOLETE
+class insertRoute:
   def Activated (self):
     import pipeCmd
-    FreeCAD.activeDocument().openTransaction('Paint')
-    pipeCmd.updatePLColor()
-    FreeCAD.activeDocument().commitTransaction()
+    pipeCmd.makeRoute()
   def GetResources(self):
-    return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","paint.svg"),'MenuText':'Paint pypeline','ToolTip':'Updates the color of pypes belonging to one pype-line'}
+    return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","route.svg"),'MenuText':'Insert route','ToolTip':'Insert a PypeRoute'}
 
 class breakPipe:
   def Activated (self):
@@ -177,6 +175,7 @@ addCommand('insertCap',insertCap())
 addCommand('insertFlange',insertFlange())
 addCommand('insertUbolt',insertUbolt())
 addCommand('insertPypeLine',insertPypeLine())
+addCommand('insertRoute',insertRoute())
 addCommand('breakPipe',breakPipe())
 addCommand('mateEdges',mateEdges())
 addCommand('extend2intersection',extend2intersection())
