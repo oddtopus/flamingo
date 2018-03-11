@@ -420,6 +420,7 @@ class PypeRoute(pypeType): # single-route PypeLine
     # initialize the parent class
     super(PypeRoute,self).__init__(obj)
     # define common properties
+    #self.Object=obj
     obj.PType="PypeRoute"
     obj.PSize=DN
     obj.PRating=PRating
@@ -431,16 +432,15 @@ class PypeRoute(pypeType): # single-route PypeLine
       FreeCAD.Console.PrintError('Base not valid\n')
     obj.addProperty("App::PropertyLinkList","Tubes","PypeRoute","The tubes of the route.")
     obj.addProperty("App::PropertyLinkList","Curves","PypeRoute","The curves of the route.")
-    self.Object=obj
     # draw elements
-    self.redraw(OD,thk,BR)
+    self.redraw(obj,OD,thk,BR)
   def onChanged(self, fp, prop):
     print "*** Invoking .onChanged() ***"
   def execute(self, fp):
     print "*** Invoking .execute() ***"
-    tubes=self.Object.Tubes
-    curves=self.Object.Curves
-    edges=self.Object.Base.Shape.Edges
+    tubes=fp.Tubes
+    curves=fp.Curves
+    edges=fp.Base.Shape.Edges
     from math import degrees
     from DraftVecUtils import rounded
     from frameCmd import bisect, beamAx, extendTheBeam, ortho
@@ -471,34 +471,34 @@ class PypeRoute(pypeType): # single-route PypeLine
     tubes[-1].Placement.Rotation=FreeCAD.Rotation(FreeCAD.Vector(0,0,1),edges[-1].tangentAt(0))
     tubes[-1].Height=edges[-1].Length
     extendTheBeam(tubes[-1],edges[-1].valueAt(0)+edges[-1].tangentAt(0)*L)
-  def redraw(self,OD=60.3,thk=3,BR=None):
+  def redraw(self,fp,OD=60.3,thk=3,BR=None):
     print "*** Invoking .redraw() ***"
     if not BR: BR=0.75*OD
-    edges=self.Object.Base.Shape.Edges
+    edges=fp.Base.Shape.Edges
     from pipeCmd import makePipe, makeElbowBetweenThings
     #---Create the tubes---
     tubes=list()
     for e in edges:
-      t=makePipe([self.Object.PSize,OD,thk,e.Length],pos=e.valueAt(0),Z=e.tangentAt(0))
-      t.PRating=self.Object.PRating
-      t.PSize=self.Object.PSize
+      t=makePipe([fp.PSize,OD,thk,e.Length],pos=e.valueAt(0),Z=e.tangentAt(0))
+      t.PRating=fp.PRating
+      t.PSize=fp.PSize
       tubes.append(t)
-    self.Object.Tubes=tubes
+    fp.Tubes=tubes
     #---Create the curves---
     curves=list()
     for t in range(len(edges)-1):
-      c=makeElbowBetweenThings(edges[t],edges[t+1],[self.Object.PSize,OD,thk,90,BR])
-      c.PRating=self.Object.PRating
-      c.PSize=self.Object.PSize
+      c=makeElbowBetweenThings(edges[t],edges[t+1],[fp.PSize,OD,thk,90,BR])
+      c.PRating=fp.PRating
+      c.PSize=fp.PSize
       curves.append(c)
-    self.Object.Curves=curves
-  def purge(self):
+    fp.Curves=curves
+  def purge(self,fp):
     print "*** Invoking .purge() ***"
     from copy import copy
-    delTubes=copy(self.Object.Tubes)
-    delCurves=copy(self.Object.Curves)
-    self.Object.Tubes=[]
-    self.Object.Curves=[]
+    delTubes=copy(fp.Tubes)
+    delCurves=copy(fp.Curves)
+    fp.Tubes=[]
+    fp.Curves=[]
     for o in delTubes+delCurves: FreeCAD.ActiveDocument.removeObject(o.Name)
     
 class ViewProviderPypeRoute:

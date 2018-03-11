@@ -129,6 +129,16 @@ class moveHandle:
 
   def GetResources(self):
     return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","moveHandle.svg"),'Accel':"M,H",'MenuText':'Move objects','ToolTip':'Move quickly objects inside viewport'}
+    
+class dpCalc:
+
+  def Activated(self):
+    import fe_ChEDL
+    FreeCADGui.Control.showDialog(fe_ChEDL.dpCalcDialog())
+
+  def GetResources(self):
+    return{'MenuText':'Pressure loss calculator','ToolTip':'Calculate pressure loss in "pypes" using ChEDL libraries.\n See __doc__ of the module for futher information.'}
+
 #---------------------------------------------------------------------------
 # Adds the commands to the FreeCAD command manager
 #---------------------------------------------------------------------------
@@ -140,3 +150,4 @@ addCommand('rotateWorkPlane',rotateWorkPlane())
 addCommand('offsetWorkPlane',offsetWorkPlane())
 addCommand('hackedL',hackedL())
 addCommand('moveHandle',moveHandle())
+addCommand('dpCalc',dpCalc())

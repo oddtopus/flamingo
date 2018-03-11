@@ -442,8 +442,11 @@ def updatePLColor(sel=None, color=None):
         color=pl.ViewObject.ShapeColor
       group=FreeCAD.activeDocument().getObjectsByLabel(pl.Group)[0]
       for o in group.OutList:
-        if hasattr(o,'PType') and o.PType in objToPaint:
-          o.ViewObject.ShapeColor=color
+        if hasattr(o,'PType'):
+          if o.PType in objToPaint: 
+            o.ViewObject.ShapeColor=color
+          elif o.PType == 'PypeRoute':
+            for e in o.Tubes+o.Curves: e.ViewObject.ShapeColor=color
   else:
     FreeCAD.Console.PrintError('Select first one pype line\n')
 
