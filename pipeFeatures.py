@@ -4,17 +4,20 @@ __title__="pypeTools objects"
 __author__="oddtopus"
 __url__="github.com/oddtopus/flamingo"
 __license__="LGPL 3"
+pObjs=['Pipe','Elbow','Reduct','Cap','Flange','Ubolt']
+pMetaObjs=['PypeLine','PypeBranch']
 
-import FreeCAD, Part
+import FreeCAD, Part, frameCmd, pipeCmd
 
 ################ CLASSES ###########################
 
 class pypeType(object):
   def __init__(self,obj):
     obj.Proxy = self
-    obj.addProperty("App::PropertyString","PType","Pipe","Type of tubeFeature").PType
-    obj.addProperty("App::PropertyString","PRating","Pipe","Rating of pipeFeature").PRating
-    obj.addProperty("App::PropertyString","PSize","Pipe","Nominal diameter").PSize
+    obj.addProperty("App::PropertyString","PType","PBase","Type of tubeFeature").PType
+    obj.addProperty("App::PropertyString","PRating","PBase","Rating of pipeFeature").PRating
+    obj.addProperty("App::PropertyString","PSize","PBase","Nominal diameter").PSize
+    obj.addProperty("App::PropertyVectorList","Ports","PBase","Ports position relative to the origin of Shape")
 
 class Pipe(pypeType):
   '''Class for object PType="Pipe"
@@ -49,6 +52,7 @@ class Pipe(pypeType):
       fp.Shape = Part.makeCylinder(fp.OD/2,fp.Height).cut(Part.makeCylinder(fp.ID/2,fp.Height))
     else:
       fp.Shape = Part.makeCylinder(fp.OD/2,fp.Height)
+    fp.Ports=[FreeCAD.Vector(),FreeCAD.Vector(0,0,float(fp.Height))]
     
 class Elbow(pypeType):
   '''Class for object PType="Elbow"
@@ -73,7 +77,7 @@ class Elbow(pypeType):
     obj.addProperty("App::PropertyAngle","BendAngle","Elbow","Bend Angle").BendAngle=BA
     obj.addProperty("App::PropertyLength","BendRadius","Elbow","Bend Radius").BendRadius=BR
     obj.addProperty("App::PropertyString","Profile","Elbow","Section dim.").Profile=str(obj.OD)+"x"+str(obj.thk)
-    obj.addProperty("App::PropertyVectorList","Ports","Elbow","Ports relative position").Ports=[FreeCAD.Vector(1,0,0),FreeCAD.Vector(0,1,0)]
+    #obj.Ports=[FreeCAD.Vector(1,0,0),FreeCAD.Vector(0,1,0)]
     self.execute(obj)
   def onChanged(self, fp, prop):
     if prop=='ID' and fp.ID<fp.OD:
@@ -411,27 +415,27 @@ class Shell():
     tank=box.makeThickness([box.Faces[0],box.Faces[2]],-fp.thk,1.e-3)
     fp.Shape=tank
     
-class PypeRoute(pypeType): # single-route PypeLine
-  '''Class for object PType="PypeRoute"
+class PypeBranch(pypeType): # single-branch PypeLine
+  '''Class for object PType="PypeBranch"
   Like PypeLine2 but attempting to make automatic update
   '''
   def __init__(self, obj,base,DN="DN50",PRating="SCH-STD",OD=60.3,thk=3,BR=None):
     print "*** Invoking .__init__() ***"
     # initialize the parent class
-    super(PypeRoute,self).__init__(obj)
+    super(PypeBranch,self).__init__(obj)
     # define common properties
     #self.Object=obj
-    obj.PType="PypeRoute"
+    obj.PType="PypeBranch"
     obj.PSize=DN
     obj.PRating=PRating
     # define specific properties
-    obj.addProperty("App::PropertyLink","Base","PypeRoute","The path.")
+    obj.addProperty("App::PropertyLink","Base","PypeBranch","The path.")
     if hasattr(base,"Shape") and base.Shape.Edges: 
       obj.Base=base
     else:
       FreeCAD.Console.PrintError('Base not valid\n')
-    obj.addProperty("App::PropertyLinkList","Tubes","PypeRoute","The tubes of the route.")
-    obj.addProperty("App::PropertyLinkList","Curves","PypeRoute","The curves of the route.")
+    obj.addProperty("App::PropertyLinkList","Tubes","PypeBranch","The tubes of the branch.")
+    obj.addProperty("App::PropertyLinkList","Curves","PypeBranch","The curves of the branch.")
     # draw elements
     self.redraw(obj,OD,thk,BR)
   def onChanged(self, fp, prop):
@@ -448,29 +452,39 @@ class PypeRoute(pypeType): # single-route PypeLine
     L=0
     portA,portB=[FreeCAD.Vector()]*2
     while i<len(curves) and i<len(edges):
-      e1,e2=edges[i:i+2]
-      P=e2.valueAt(0)
-      curves[i].Placement.Base=P
-      d1,d2=[rounded(e.CenterOfMass-P) for e in [e1,e2]]
-      curves[i].BendAngle=180-degrees(d1.getAngle(d2))
-      Z=rounded(ortho(d1,d2))  #if not rounded makes the program loop
-      rot1=FreeCAD.Rotation(curves[i].Placement.Rotation.multVec(FreeCAD.Vector(0,0,1)),Z)
-      curves[i].Placement.Rotation=rot1.multiply(curves[i].Placement.Rotation)
-      edgesBisectb=bisect(d1,d2)
-      elbBisect=rounded(beamAx(curves[i],FreeCAD.Vector(1,1,0))) #if not rounded, fail in plane xz
-      rot2=FreeCAD.Rotation(elbBisect,edgesBisectb)
-      curves[i].Placement.Rotation=rot2.multiply(curves[i].Placement.Rotation)
-      tubes[i].Placement.Base=e1.valueAt(0)
-      tubes[i].Placement.Rotation=FreeCAD.Rotation(FreeCAD.Vector(0,0,1),e1.tangentAt(0))
-      tubes[i].Height=e1.Length
-      if i: extendTheBeam(tubes[i],e1.valueAt(0)+e1.tangentAt(0)*L)
-      L=curves[i].Ports[0].Length
-      extendTheBeam(tubes[i],P-e1.tangentAt(0)*L)
+      v1,v2=[e.tangentAt(0) for e in edges[i:i+2]]
+      P=frameCmd.intersectionCLines(*edges[i:i+2])
+      pipeCmd.placeTheElbow(curves[i],v1,v2,P)
+      #e1,e2=edges[i:i+2]
+      #P=e2.valueAt(0)
+      #curves[i].Placement.Base=P
+      #d1,d2=[rounded(e.CenterOfMass-P) for e in [e1,e2]]
+      #curves[i].BendAngle=180-degrees(d1.getAngle(d2))
+      #Z=rounded(ortho(d1,d2))  #if not rounded makes the program loop
+      #rot1=FreeCAD.Rotation(curves[i].Placement.Rotation.multVec(FreeCAD.Vector(0,0,1)),Z)
+      #curves[i].Placement.Rotation=rot1.multiply(curves[i].Placement.Rotation)
+      #edgesBisectb=bisect(d1,d2)
+      #elbBisect=rounded(beamAx(curves[i],FreeCAD.Vector(1,1,0))) #if not rounded, fail in plane xz
+      #rot2=FreeCAD.Rotation(elbBisect,edgesBisectb)
+      #curves[i].Placement.Rotation=rot2.multiply(curves[i].Placement.Rotation)
+      if not i:
+        tubes[i].Placement.Base=edges[i].valueAt(0)
+      else:
+        tubes[i].Placement.Base=pipeCmd.actualPorts(curves[i-1])[1]
+      tubes[i].Placement.Rotation=FreeCAD.Rotation(FreeCAD.Vector(0,0,1),edges[i].tangentAt(0))
+      #L=tubes[i].Placement.Base-pipeCmd.actualPorts(curves[i])[0]
+      L=min([(tubes[i].Placement.Base-port).Length for port in pipeCmd.actualPorts(curves[i])])
+      tubes[i].Height=L #.Length
+      #if i: extendTheBeam(tubes[i],e1.valueAt(0)+e1.tangentAt(0)*L)
+      #L=curves[i].Ports[0].Length
+      #extendTheBeam(tubes[i],P-e1.tangentAt(0)*L)
       i+=1
-    tubes[-1].Placement.Base=edges[-1].valueAt(0)
+    tubes[-1].Placement.Base=pipeCmd.actualPorts(curves[-1])[1]
     tubes[-1].Placement.Rotation=FreeCAD.Rotation(FreeCAD.Vector(0,0,1),edges[-1].tangentAt(0))
-    tubes[-1].Height=edges[-1].Length
-    extendTheBeam(tubes[-1],edges[-1].valueAt(0)+edges[-1].tangentAt(0)*L)
+    L=tubes[-1].Placement.Base-edges[i].valueAt(edges[i].LastParameter)
+    tubes[-1].Height=L.Length
+    #tubes[-1].Height=edges[-1].Length
+    #extendTheBeam(tubes[-1],edges[-1].valueAt(0)+edges[-1].tangentAt(0)*L)
   def redraw(self,fp,OD=60.3,thk=3,BR=None):
     print "*** Invoking .redraw() ***"
     if not BR: BR=0.75*OD
@@ -501,12 +515,12 @@ class PypeRoute(pypeType): # single-route PypeLine
     fp.Curves=[]
     for o in delTubes+delCurves: FreeCAD.ActiveDocument.removeObject(o.Name)
     
-class ViewProviderPypeRoute:
+class ViewProviderPypeBranch:
   def __init__(self,vobj):
     vobj.Proxy = self
   def getIcon(self):
     from os.path import join, dirname, abspath
-    return join(dirname(abspath(__file__)),"icons","route.svg")#":/icons/route.svg"
+    return join(dirname(abspath(__file__)),"icons","branch.svg")
   def attach(self, vobj):
     self.ViewObject = vobj
     self.Object = vobj.Object

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-#  dp.py
+#  fe_ChEDL.py
 #  
 #  Copyright 2018 (oddtopus)
 #  
@@ -21,15 +21,15 @@
 #  
 #(c) 2018 R. T. LGPL3
 
-__title__="dp"
+__title__="Front end for ChEDL"
 __author__="oddtopus"
 __url__="github.com/oddtopus"
 __license__="LGPL 3"
 __doc__='''
 Frontend in FreeCAD of the python libraries "ChEDL":  
-\tCaleb Bell (2016). fluids: Fluid dynamics component of Chemical Engineering Design Library (ChEDL)
+Caleb Bell (2016). fluids: Fluid dynamics component of Chemical Engineering Design Library (ChEDL)
 https://github.com/CalebBell/fluids.
-\tCaleb Bell (2016). thermo: Chemical properties component of Chemical Engineering Design Library (ChEDL)
+Caleb Bell (2016). thermo: Chemical properties component of Chemical Engineering Design Library (ChEDL)
 https://github.com/CalebBell/thermo.
 '''  
 import FreeCAD,FreeCADGui
@@ -49,7 +49,7 @@ class dpCalcDialog:
     dialogPath=join(dirname(abspath(__file__)),"dialogs","dp.ui")
     self.form=FreeCADGui.PySideUic.loadUi(dialogPath)
     self.form.comboFluid.addItems(['water'])
-    self .form.comboWhat.addItems([o.Label for o in FreeCAD.ActiveDocument.Objects if hasattr(o,'PType') and o.PType=='PypeRoute' ])
+    self .form.comboWhat.addItems([o.Label for o in FreeCAD.ActiveDocument.Objects if hasattr(o,'PType') and o.PType=='PypeBranch' ])
     self.form.editFlow.setValidator(QDoubleValidator())
     self.form.editFlow.setText('1')
     self.form.editRough.setValidator(QDoubleValidator())
@@ -63,7 +63,7 @@ class dpCalcDialog:
       elements = FreeCADGui.Selection.getSelection()
     else:
       o=FreeCAD.ActiveDocument.getObjectsByLabel(self.form.comboWhat.currentText())[0]
-      if hasattr(o,'PType') and o.PType=='PypeRoute':
+      if hasattr(o,'PType') and o.PType=='PypeBranch':
         elements=o.Tubes+o.Curves
     for o in elements:
       if hasattr(o,'PType') and o.PType in ['Pipe','Elbow']:
@@ -88,6 +88,3 @@ class dpCalcDialog:
       if Dp>200: result=' = %.3f bar'%(Dp/100000)
       else: result=' = %.2e bar'%(Dp/100000)
       self.form.labResult.setText(result)
-
-def dpCalculator():
-  FreeCADGui.Control.showDialog(dpCalcDialog())

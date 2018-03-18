@@ -8,6 +8,7 @@ __license__="LGPL 3"
 import FreeCAD, FreeCADGui, Part, frameCmd, pipeFeatures
 from DraftVecUtils import rounded
 objToPaint=['Pipe','Elbow','Reduct','Flange','Cap']
+from math import degrees
 
 ############### AUX FUNCTIONS ###################### 
 
@@ -64,6 +65,9 @@ def moveToPyLi(obj,plName):
   group.addObject(obj)
   if hasattr(obj,'PType') and obj.PType in objToPaint:
     obj.ViewObject.ShapeColor=pl.ViewObject.ShapeColor
+
+def actualPorts(o):
+  if hasattr(o,'Ports') and hasattr(o,'Placement'): return [rounded(o.Placement.multVec(p)) for p in o.Ports]
 
 ################## COMMANDS ########################
 
@@ -149,7 +153,6 @@ def makeElbowBetweenThings(thing1=None, thing2=None, propList=None):
   Default is "DN50 (SCH-STD)"
   Remember: property PRating must be defined afterwards
   '''
-  from math import degrees
   if not (thing1 and thing2):
     thing1,thing2=frameCmd.edges()[:2]
   P=frameCmd.intersectionCLines(thing1,thing2)
@@ -401,10 +404,10 @@ def makePypeLine2(DN="DN50",PRating="SCH-STD",OD=60.3,thk=3,BR=None, lab="Tubatu
     FreeCAD.Console.PrintWarning("Objects added to pypeline's group "+a.Group+"\n")
   return a
 
-def makeRoute(base=None, DN="DN50",PRating="SCH-STD",OD=60.3,thk=3,BR=None, lab="Traccia", color=(0.8,0.8,0.8)):
+def makeBranch(base=None, DN="DN50",PRating="SCH-STD",OD=60.3,thk=3,BR=None, lab="Traccia", color=(0.8,0.8,0.8)):
   '''
-  makeRoute(base=None, DN="DN50",PRating="SCH-STD",OD=60.3,thk=3,BR=None, lab="Traccia" color=(0.8,0.8,0.8))
-  Draft function for PypeRoute.
+  makeBranch(base=None, DN="DN50",PRating="SCH-STD",OD=60.3,thk=3,BR=None, lab="Traccia" color=(0.8,0.8,0.8))
+  Draft function for PypeBranch.
   '''
   if not BR:
     BR=0.75*OD
@@ -422,10 +425,9 @@ def makeRoute(base=None, DN="DN50",PRating="SCH-STD",OD=60.3,thk=3,BR=None, lab=
       base=path
   if base:
     a=FreeCAD.ActiveDocument.addObject("Part::FeaturePython",lab)
-    pipeFeatures.PypeRoute(a,base,DN,PRating,OD,thk,BR)
-    pipeFeatures.ViewProviderPypeRoute(a.ViewObject)
-    # recompute x 3
-    FreeCAD.ActiveDocument.recompute()
+    pipeFeatures.PypeBranch(a,base,DN,PRating,OD,thk,BR)
+    pipeFeatures.ViewProviderPypeBranch(a.ViewObject)
+    # recompute x 2
     FreeCAD.ActiveDocument.recompute()
     FreeCAD.ActiveDocument.recompute()
     return a
@@ -445,7 +447,7 @@ def updatePLColor(sel=None, color=None):
         if hasattr(o,'PType'):
           if o.PType in objToPaint: 
             o.ViewObject.ShapeColor=color
-          elif o.PType == 'PypeRoute':
+          elif o.PType == 'PypeBranch':
             for e in o.Tubes+o.Curves: e.ViewObject.ShapeColor=color
   else:
     FreeCAD.Console.PrintError('Select first one pype line\n')
@@ -525,32 +527,32 @@ def rotateTheTubeEdge(ang=45):
     newPos=frameCmd.edges()[0].centerOfCurvatureAt(0)
     obj.Placement.move(originalPos-newPos)
 
-def flattenTheTube(obj=None,v1=None,v2=None,X=None):
+def placeTheElbow(c,v1=None,v2=None,P=None):
   '''
-  flattenTheTube(obj=None,v1=None,v2=None, X=None)
-  Put obj in the same plane defined by vectors v1 and v2 and move it to X.
-    obj: the object to be rotated
-    v1, v2: the vectors of the plane
-    X: the Placement.Base
-  If no parameter is defined: v1, v2 are the axis of the first two beams 
-  in the selections set, X is their intersection and obj is the first other
-  object in the selection set. 
+  placeTheElbow(c,v1,v2,P=None)
+  Puts the curve C between vectors v1 and v2.
+  If point P is given, translates it in there.
+  NOTE: v1 and v2 oriented in the same direction along the path!
   '''
-  if None in [obj,v1,v2]:
-    try:
-      sel=FreeCADGui.Selection.getSelection()
-      t1,t2=frameCmd.beams()[:2]
-      v1=frameCmd.beamAx(t1)
-      v2=frameCmd.beamAx(t2)
-      sel.remove(t1)
-      sel.remove(t2)
-      obj=sel[0]
-      X = frameCmd.intersectionCLines(t1,t2)
-    except:
-      FreeCAD.Console.PrintError('Not enough arguments\n')
-      return
-  obj.Placement.Rotation = FreeCAD.Rotation(frameCmd.beamAx(obj),v1.cross(v2)).multiply(obj.Placement.Rotation)
-  obj.Placement.Base = X
+  if not (v1 and v2):
+    v1,v2=[e.tangentAt(0) for e in frameCmd.edges()]
+    P=frameCmd.intersectionCLines(*frameCmd.edges())
+  if hasattr(c,'PType') and c.PType=='Elbow' and v1 and v2:
+    v1.normalize()
+    v2.normalize()
+    ortho=rounded(frameCmd.ortho(v1,v2))
+    bisect=rounded(v2-v1)
+    #bisect.normalize()
+    rot1=FreeCAD.Rotation(rounded(frameCmd.beamAx(c,FreeCAD.Vector(0,0,1))),ortho)
+    c.Placement.Rotation=rot1.multiply(c.Placement.Rotation)
+    rot2=FreeCAD.Rotation(rounded(frameCmd.beamAx(c,FreeCAD.Vector(1,1,0))),bisect)
+    c.Placement.Rotation=rot2.multiply(c.Placement.Rotation)
+    if not P:
+      P=c.Placement.Base
+    c.Placement.Base=P
+    ang=degrees(v1.getAngle(v2))
+    c.BendAngle=ang
+    #FreeCAD.ActiveDocument.recompute()
     
 def extendTheTubes2intersection(pipe1=None,pipe2=None,both=True):
   '''

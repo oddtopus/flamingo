@@ -76,12 +76,12 @@ class insertPypeLine:
   def GetResources(self):
     return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","pypeline.svg"),'MenuText':'PypeLine Manager','ToolTip':'Open PypeLine Manager'}
 
-class insertRoute:
+class insertBranch:
   def Activated (self):
     import pipeCmd
-    pipeCmd.makeRoute()
+    pipeCmd.makeBranch()
   def GetResources(self):
-    return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","route.svg"),'MenuText':'Insert route','ToolTip':'Insert a PypeRoute'}
+    return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","branch.svg"),'MenuText':'Insert a branch','ToolTip':'Insert a PypeBranch'}
 
 class breakPipe:
   def Activated (self):
@@ -175,7 +175,7 @@ addCommand('insertCap',insertCap())
 addCommand('insertFlange',insertFlange())
 addCommand('insertUbolt',insertUbolt())
 addCommand('insertPypeLine',insertPypeLine())
-addCommand('insertRoute',insertRoute())
+addCommand('insertBranch',insertBranch())
 addCommand('breakPipe',breakPipe())
 addCommand('mateEdges',mateEdges())
 addCommand('extend2intersection',extend2intersection())

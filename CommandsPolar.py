@@ -137,7 +137,7 @@ class dpCalc:
     FreeCADGui.Control.showDialog(fe_ChEDL.dpCalcDialog())
 
   def GetResources(self):
-    return{'MenuText':'Pressure loss calculator','ToolTip':'Calculate pressure loss in "pypes" using ChEDL libraries.\n See __doc__ of the module for futher information.'}
+    return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","delta.svg"),'MenuText':'Pressure loss calculator','ToolTip':'Calculate pressure loss in "pypes" using ChEDL libraries.\n See __doc__ of the module for futher information.'}
 
 #---------------------------------------------------------------------------
 # Adds the commands to the FreeCAD command manager

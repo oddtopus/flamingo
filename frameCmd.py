@@ -241,9 +241,10 @@ def bisect(w1=None,w2=None):
   if w1!=None and w2!=None:
     w1.normalize()
     w2.normalize()
+    #b=w2-w1
     b=FreeCAD.Vector()
     for i in range(3):
-    	b[i]=(w1[i]+w2[i])/2
+      b[i]=(w1[i]+w2[i])/2
     return b.normalize()
     
 def ortho(w1=None,w2=None):
