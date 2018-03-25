@@ -60,14 +60,40 @@ def isElbow(obj):
   return hasattr(obj,'PType') and obj.PType=='Elbow'
   
 def moveToPyLi(obj,plName):
+  '''
+  Move obj to the group of pypeLine plName
+  '''
   pl=FreeCAD.ActiveDocument.getObjectsByLabel(plName)[0]
   group=FreeCAD.ActiveDocument.getObjectsByLabel(str(pl.Group))[0]
   group.addObject(obj)
   if hasattr(obj,'PType') and obj.PType in objToPaint:
     obj.ViewObject.ShapeColor=pl.ViewObject.ShapeColor
 
-def actualPorts(o):
+def portsPos(o):
+  '''
+  portsPos(o)
+  Returns the position of Ports of the pype-object o
+  '''
   if hasattr(o,'Ports') and hasattr(o,'Placement'): return [rounded(o.Placement.multVec(p)) for p in o.Ports]
+
+def portsDir(o):
+  '''
+  portsDir(o)
+  Returns the orientation of Ports of the pype-object o
+  '''
+  dirs=list()
+  two_ways=['Pipe','Reduct','Flange']
+  if hasattr(o,'PType'):
+    if o.PType in two_ways:
+      dirs=[FreeCAD.Vector(0,0,1),FreeCAD.Vector(0,0,-1)]
+    elif hasattr(o,'Ports') and hasattr(o,'Placement'): 
+      dirs=list()
+      for p in o.Ports:
+        if p.Length:
+          dirs.append(rounded(o.Placement.Rotation.multVec(p).normalize()))
+        else:
+          dirs.append(rounded(o.Placement.Rotation.multVec(FreeCAD.Vector(0,0,-1)).normalize()))
+  return dirs
 
 ################## COMMANDS ########################
 
@@ -427,9 +453,6 @@ def makeBranch(base=None, DN="DN50",PRating="SCH-STD",OD=60.3,thk=3,BR=None, lab
     a=FreeCAD.ActiveDocument.addObject("Part::FeaturePython",lab)
     pipeFeatures.PypeBranch(a,base,DN,PRating,OD,thk,BR)
     pipeFeatures.ViewProviderPypeBranch(a.ViewObject)
-    # recompute x 2
-    FreeCAD.ActiveDocument.recompute()
-    FreeCAD.ActiveDocument.recompute()
     return a
   else:
     FreeCAD.Console.PrintError('Select a valid path.\n')

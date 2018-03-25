@@ -160,7 +160,8 @@ class arrow(object):
     if path:
       for n in path: 
         if str(n.getName())==self.name: 
-          FreeCAD.Console.PrintMessage("You hit the %s\n"%self.name)
+          FreeCAD.Console.PrintMessage("You hit the %s\n"%self.name) #replace here the action to perform
+    self.closeArrow()
 
 class arrow_move(arrow):
   '''

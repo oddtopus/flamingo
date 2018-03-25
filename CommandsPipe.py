@@ -79,7 +79,8 @@ class insertPypeLine:
 class insertBranch:
   def Activated (self):
     import pipeCmd
-    pipeCmd.makeBranch()
+    #pipeCmd.makeBranch()
+    pipeFormObj=pipeForms.insertBranchForm()
   def GetResources(self):
     return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","branch.svg"),'MenuText':'Insert a branch','ToolTip':'Insert a PypeBranch'}
 

@@ -973,6 +973,60 @@ class insertPypeLineForm(protopypeForm):
         plist.close()
         FreeCAD.Console.PrintMessage('Data saved in %s.\n' %f)
     
+class insertBranchForm(protopypeForm):
+  '''
+  Dialog to insert branches.
+  Note: Elbow created within this dialog have a standard bending radius of 
+  3/4 x OD, corresponding to a 3D curve.  
+  '''
+  def __init__(self):
+    super(insertBranchForm,self).__init__("Insert a branch","Pipe","SCH-STD","branch.svg")
+    self.sizeList.setCurrentRow(0)
+    self.ratingList.setCurrentRow(0)
+    self.btn1.clicked.connect(self.insert)
+    self.combo.activated[str].connect(self.summary)
+    self.edit1=QLineEdit()
+    self.edit1.setPlaceholderText('<name>')
+    self.edit1.setAlignment(Qt.AlignHCenter)
+    self.secondCol.layout().addWidget(self.edit1)
+    #self.btn2=QPushButton('Get Profile')
+    #self.firstCol.layout().addWidget(self.btn2)
+    #self.btn2.clicked.connect(self.apply)
+    self.color=0.8,0.8,0.8
+    self.btn1.setDefault(True)
+    self.btn1.setFocus()
+    self.show()
+  def summary(self,pl=None):
+    if self.combo.currentText()!="<none>":
+      pl=FreeCAD.ActiveDocument.getObjectsByLabel(self.combo.currentText())[0]
+      FreeCAD.Console.PrintMessage("\n%s: %s - %s\nProfile: %.1fx%.1f\nRGB color: %.3f, %.3f, %.3f\n"%(pl.Label, pl.PSize, pl.PRating, pl.OD, pl.thk, pl.ViewObject.ShapeColor[0], pl.ViewObject.ShapeColor[1], pl.ViewObject.ShapeColor[2]))
+      if pl.Base:
+        FreeCAD.Console.PrintMessage('Path: %s\n'%pl.Base.Label)
+      else:
+        FreeCAD.Console.PrintMessage('Path not defined\n')
+  #def apply(self):
+    #d=self.pipeDictList[self.sizeList.currentRow()]
+    #if self.combo.currentText()!="<new>":                                           
+      #pl=FreeCAD.ActiveDocument.getObjectsByLabel(self.combo.currentText())[0]
+      #pl.PSize=d["PSize"]
+      #pl.PRating=self.PRating
+      #pl.OD=float(d["OD"])
+      #pl.thk=float(d["thk"])
+      #self.summary()
+    #else:
+      #FreeCAD.Console.PrintError('Select a PypeLine to apply first\n')
+  def insert(self):
+    d=self.pipeDictList[self.sizeList.currentRow()]
+    FreeCAD.activeDocument().openTransaction('Insert pype-branch')
+    plLabel=self.edit1.text()
+    if not plLabel: plLabel="Traccia"
+    a=pipeCmd.makeBranch(DN=d["PSize"],PRating=self.PRating,OD=float(d["OD"]),thk=float(d["thk"]), lab=plLabel, color=self.color)
+    if self.combo.currentText()!='<none>':
+      pipeCmd.moveToPyLi(a,self.combo.currentText())
+    FreeCAD.activeDocument().commitTransaction()
+    FreeCAD.ActiveDocument.recompute()
+    FreeCAD.ActiveDocument.recompute()
+    
 class breakForm(QWidget):
   '''
   Dialog to break one pipe and create a gap.

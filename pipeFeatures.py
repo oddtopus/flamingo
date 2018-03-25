@@ -4,8 +4,8 @@ __title__="pypeTools objects"
 __author__="oddtopus"
 __url__="github.com/oddtopus/flamingo"
 __license__="LGPL 3"
-pObjs=['Pipe','Elbow','Reduct','Cap','Flange','Ubolt']
-pMetaObjs=['PypeLine','PypeBranch']
+objs=['Pipe','Elbow','Reduct','Cap','Flange','Ubolt']
+metaObjs=['PypeLine','PypeBranch']
 
 import FreeCAD, Part, frameCmd, pipeCmd
 
@@ -18,6 +18,7 @@ class pypeType(object):
     obj.addProperty("App::PropertyString","PRating","PBase","Rating of pipeFeature").PRating
     obj.addProperty("App::PropertyString","PSize","PBase","Nominal diameter").PSize
     obj.addProperty("App::PropertyVectorList","Ports","PBase","Ports position relative to the origin of Shape")
+    obj.addProperty("App::PropertyFloat","Kv","PBase","Flow factor (m3/h/bar)").Kv
 
 class Pipe(pypeType):
   '''Class for object PType="Pipe"
@@ -153,6 +154,7 @@ class Flange(pypeType):
         base=base.cut(hole)
         hole.rotate(FreeCAD.Vector(0,0,0),FreeCAD.Vector(0,0,1),360.0/fp.n)
     fp.Shape = base.extrude(FreeCAD.Vector(0,0,fp.t))
+    fp.Ports=[FreeCAD.Vector(),FreeCAD.Vector(0,0,float(fp.t))]
 
 class Reduct(pypeType):
   '''Class for object PType="Reduct"
@@ -207,6 +209,7 @@ class Reduct(pypeType):
       fp.Profile=str(fp.OD)+"x"+str(fp.OD2)
       if fp.conc:
         fp.Shape = Part.makeCone(fp.OD/2,fp.OD2/2,fp.Height).cut(Part.makeCone(fp.OD/2-fp.thk,fp.OD2/2-fp.thk2,fp.Height))
+        fp.Ports=[FreeCAD.Vector(),FreeCAD.Vector(0,0,float(fp.Height))]
       else:
         C=Part.makeCircle(fp.OD/2,FreeCAD.Vector(0,0,0),FreeCAD.Vector(0,0,1))
         c=Part.makeCircle(fp.OD2/2,FreeCAD.Vector(0,0,0),FreeCAD.Vector(0,0,1))
@@ -218,6 +221,7 @@ class Reduct(pypeType):
         c=Part.makeCircle(fp.OD2/2-fp.thk2,FreeCAD.Vector(0,0,0),FreeCAD.Vector(0,0,1))
         c.translate(FreeCAD.Vector((fp.OD-fp.OD2)/2,0,fp.Height))
         fp.Shape=sol.cut(Part.makeLoft([c,C],True))
+        fp.Ports=[FreeCAD.Vector(),FreeCAD.Vector((fp.OD-fp.OD2)/2,0,float(fp.Height))]
     
 class Cap(pypeType):
   '''Class for object PType="Cap"
@@ -254,6 +258,7 @@ class Cap(pypeType):
     cut=fil.cut(Part.makeCylinder(D*1.1,D*2,FreeCAD.Vector(0,0,0),FreeCAD.Vector(0,0,-1)))
     cap=cut.makeThickness([f for f in cut.Faces if type(f.Surface)==Part.Plane],-s,1.e-3)
     fp.Shape = cap
+    fp.Ports=[FreeCAD.Vector()]
     
 class PypeLine2(pypeType):
   '''Class for object PType="PypeLine2"
@@ -470,16 +475,16 @@ class PypeBranch(pypeType): # single-branch PypeLine
       if not i:
         tubes[i].Placement.Base=edges[i].valueAt(0)
       else:
-        tubes[i].Placement.Base=pipeCmd.actualPorts(curves[i-1])[1]
+        tubes[i].Placement.Base=pipeCmd.portsPos(curves[i-1])[1]
       tubes[i].Placement.Rotation=FreeCAD.Rotation(FreeCAD.Vector(0,0,1),edges[i].tangentAt(0))
-      #L=tubes[i].Placement.Base-pipeCmd.actualPorts(curves[i])[0]
-      L=min([(tubes[i].Placement.Base-port).Length for port in pipeCmd.actualPorts(curves[i])])
+      #L=tubes[i].Placement.Base-pipeCmd.portsPos(curves[i])[0]
+      L=min([(tubes[i].Placement.Base-port).Length for port in pipeCmd.portsPos(curves[i])])
       tubes[i].Height=L #.Length
       #if i: extendTheBeam(tubes[i],e1.valueAt(0)+e1.tangentAt(0)*L)
       #L=curves[i].Ports[0].Length
       #extendTheBeam(tubes[i],P-e1.tangentAt(0)*L)
       i+=1
-    tubes[-1].Placement.Base=pipeCmd.actualPorts(curves[-1])[1]
+    tubes[-1].Placement.Base=pipeCmd.portsPos(curves[-1])[1]
     tubes[-1].Placement.Rotation=FreeCAD.Rotation(FreeCAD.Vector(0,0,1),edges[-1].tangentAt(0))
     L=tubes[-1].Placement.Base-edges[i].valueAt(edges[i].LastParameter)
     tubes[-1].Height=L.Length
