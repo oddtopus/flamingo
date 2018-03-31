@@ -166,6 +166,19 @@ class raiseup:
   def GetResources(self):
     return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","raiseup.svg"),'MenuText':'Raise-up the support','ToolTip':'Raise the support to the pipe'}
 
+class joinPype:
+  '''
+  
+  '''
+  def Activated(self):
+    import FreeCAD, FreeCADGui, pipeObservers
+    s=pipeObservers.joinObserver()
+    FreeCADGui.Selection.addObserver(s)
+    
+  def GetResources(self):
+    return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","join.svg"),'MenuText':'Join pypes','ToolTip':'Select the part-pype and the port'} 
+
+
 #---------------------------------------------------------------------------
 # Adds the commands to the FreeCAD command manager
 #---------------------------------------------------------------------------
@@ -179,6 +192,7 @@ addCommand('insertPypeLine',insertPypeLine())
 addCommand('insertBranch',insertBranch())
 addCommand('breakPipe',breakPipe())
 addCommand('mateEdges',mateEdges())
+addCommand('joinPype',joinPype())
 addCommand('extend2intersection',extend2intersection())
 addCommand('extend1intersection',extend1intersection())
 addCommand('laydown',laydown())

@@ -42,6 +42,13 @@ try:
   from fluids import friction,fittings, Reynolds, K_from_f, dP_from_K
   from thermo import Chemical
 except:
+  QMessageBox.warning(None,'Missing python module','''
+  Please first install "fluids" and "thermo" libraries from ChEDL:\n\n
+  \tpip install thermo, fluids\n\n
+  Caleb Bell (2016). fluids: Fluid dynamics component of Chemical Engineering Design Library (ChEDL)\n
+  https://github.com/CalebBell/fluids.\n
+  Caleb Bell (2016). thermo: Chemical properties component of Chemical Engineering Design Library (ChEDL)\n
+  https://github.com/CalebBell/thermo.''')
   FreeCAD.Console.PrintError('Please first install "fluids" and "thermo" libraries from ChEDL\n')
 
 class dpCalcDialog:

@@ -20,3 +20,9 @@ For convenience Flamingo tools are grouped in three toolbars/menus + one utility
 .../flamingo/tutorials/tutorialEagle.pdf
 * Finally the "Utils" toolbar provides some functionality to query the objects in the model and their distance, to move/rotate the work plane and a little hack of the DWire creation dialog of Draft module, which allow to change the WP position on-the-fly.
 
+If you wish to use, modify or merge in your code the contents of this repository, the appropriate credit is
+
+    contribution from flamingo (2016-2018, LGPL3) by oddtopus
+    https://github.com/oddtopus/flamingo
+
+

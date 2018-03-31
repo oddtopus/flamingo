@@ -425,7 +425,6 @@ class PypeBranch(pypeType): # single-branch PypeLine
   Like PypeLine2 but attempting to make automatic update
   '''
   def __init__(self, obj,base,DN="DN50",PRating="SCH-STD",OD=60.3,thk=3,BR=None):
-    print "*** Invoking .__init__() ***"
     # initialize the parent class
     super(PypeBranch,self).__init__(obj)
     # define common properties
@@ -444,9 +443,8 @@ class PypeBranch(pypeType): # single-branch PypeLine
     # draw elements
     self.redraw(obj,OD,thk,BR)
   def onChanged(self, fp, prop):
-    print "*** Invoking .onChanged() ***"
+    pass
   def execute(self, fp):
-    print "*** Invoking .execute() ***"
     tubes=fp.Tubes
     curves=fp.Curves
     edges=fp.Base.Shape.Edges
@@ -458,40 +456,21 @@ class PypeBranch(pypeType): # single-branch PypeLine
     portA,portB=[FreeCAD.Vector()]*2
     while i<len(curves) and i<len(edges):
       v1,v2=[e.tangentAt(0) for e in edges[i:i+2]]
-      P=frameCmd.intersectionCLines(*edges[i:i+2])
+      P=edges[i+1].valueAt(0) #frameCmd.intersectionCLines(*edges[i:i+2])
       pipeCmd.placeTheElbow(curves[i],v1,v2,P)
-      #e1,e2=edges[i:i+2]
-      #P=e2.valueAt(0)
-      #curves[i].Placement.Base=P
-      #d1,d2=[rounded(e.CenterOfMass-P) for e in [e1,e2]]
-      #curves[i].BendAngle=180-degrees(d1.getAngle(d2))
-      #Z=rounded(ortho(d1,d2))  #if not rounded makes the program loop
-      #rot1=FreeCAD.Rotation(curves[i].Placement.Rotation.multVec(FreeCAD.Vector(0,0,1)),Z)
-      #curves[i].Placement.Rotation=rot1.multiply(curves[i].Placement.Rotation)
-      #edgesBisectb=bisect(d1,d2)
-      #elbBisect=rounded(beamAx(curves[i],FreeCAD.Vector(1,1,0))) #if not rounded, fail in plane xz
-      #rot2=FreeCAD.Rotation(elbBisect,edgesBisectb)
-      #curves[i].Placement.Rotation=rot2.multiply(curves[i].Placement.Rotation)
       if not i:
         tubes[i].Placement.Base=edges[i].valueAt(0)
       else:
         tubes[i].Placement.Base=pipeCmd.portsPos(curves[i-1])[1]
       tubes[i].Placement.Rotation=FreeCAD.Rotation(FreeCAD.Vector(0,0,1),edges[i].tangentAt(0))
-      #L=tubes[i].Placement.Base-pipeCmd.portsPos(curves[i])[0]
       L=min([(tubes[i].Placement.Base-port).Length for port in pipeCmd.portsPos(curves[i])])
       tubes[i].Height=L #.Length
-      #if i: extendTheBeam(tubes[i],e1.valueAt(0)+e1.tangentAt(0)*L)
-      #L=curves[i].Ports[0].Length
-      #extendTheBeam(tubes[i],P-e1.tangentAt(0)*L)
       i+=1
     tubes[-1].Placement.Base=pipeCmd.portsPos(curves[-1])[1]
     tubes[-1].Placement.Rotation=FreeCAD.Rotation(FreeCAD.Vector(0,0,1),edges[-1].tangentAt(0))
     L=tubes[-1].Placement.Base-edges[i].valueAt(edges[i].LastParameter)
     tubes[-1].Height=L.Length
-    #tubes[-1].Height=edges[-1].Length
-    #extendTheBeam(tubes[-1],edges[-1].valueAt(0)+edges[-1].tangentAt(0)*L)
   def redraw(self,fp,OD=60.3,thk=3,BR=None):
-    print "*** Invoking .redraw() ***"
     if not BR: BR=0.75*OD
     edges=fp.Base.Shape.Edges
     from pipeCmd import makePipe, makeElbowBetweenThings
@@ -512,7 +491,6 @@ class PypeBranch(pypeType): # single-branch PypeLine
       curves.append(c)
     fp.Curves=curves
   def purge(self,fp):
-    print "*** Invoking .purge() ***"
     from copy import copy
     delTubes=copy(fp.Tubes)
     delCurves=copy(fp.Curves)

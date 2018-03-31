@@ -85,7 +85,7 @@ def portsDir(o):
   two_ways=['Pipe','Reduct','Flange']
   if hasattr(o,'PType'):
     if o.PType in two_ways:
-      dirs=[FreeCAD.Vector(0,0,1),FreeCAD.Vector(0,0,-1)]
+      dirs=[o.Placement.Rotation.multVec(p) for p in [FreeCAD.Vector(0,0,-1),FreeCAD.Vector(0,0,1)]]
     elif hasattr(o,'Ports') and hasattr(o,'Placement'): 
       dirs=list()
       for p in o.Ports:
@@ -355,31 +355,6 @@ def makeW():
     else: points.append(edges[0].valueAt(0))
     if first.valueAt(0)==points[0]: points.insert(0,first.valueAt(first.LastParameter))
     else: points.insert(0,first.valueAt(0)) # END
-    #P0=edges[0].valueAt(0)
-    #P1=edges[0].valueAt(edges[0].LastParameter)
-    #Pint=frameCmd.intersectionCLines(edges[0],edges[1])
-    #d0=Pint-P0
-    #d1=Pint-P1
-    #if d1.Length>d0.Length:
-      #P0=P1
-    #eds=list()
-    #for i in range(len(edges)-1):
-      #P1=frameCmd.intersectionCLines(edges[i],edges[i+1])
-      #eds.append(Part.Edge(Part.Line(P0,P1)))
-      #P0=P1
-    #P1=edges[-1].valueAt(edges[-1].LastParameter)
-    #P2=edges[-1].valueAt(0)
-    #d1=P1-P0
-    #d2=P2-P0
-    #if d1.Length<d2.Length:
-      #P1=P2
-    #eds.append(Part.Edge(Part.Line(P0,P1)))
-    #for e in eds:
-      #print(type(e))
-    #w=Part.Wire(eds)
-    #points=[e.valueAt(0) for e in w.Edges]
-    #last=e.Edges[-1]
-    #points.append(last.valueAt(last.LastParameter))
     from Draft import makeWire
     try:
       p=makeWire(points)
@@ -389,8 +364,12 @@ def makeW():
     p.Label='Path'
     drawAsCenterLine(p)
     return p
+  elif FreeCADGui.Selection.getSelection():
+    obj=FreeCADGui.Selection.getSelection()[0]
+    if hasattr(obj,'Shape') and type(obj.Shape)==Part.Wire:
+      drawAsCenterLine(obj)
+    return obj
   else:
-    FreeCAD.Console.PrintError('Not enough edges/n')
     return None
 
 def makePypeLine2(DN="DN50",PRating="SCH-STD",OD=60.3,thk=3,BR=None, lab="Tubatura", pl=None, color=(0.8,0.8,0.8)):
@@ -559,13 +538,16 @@ def placeTheElbow(c,v1=None,v2=None,P=None):
   '''
   if not (v1 and v2):
     v1,v2=[e.tangentAt(0) for e in frameCmd.edges()]
-    P=frameCmd.intersectionCLines(*frameCmd.edges())
+    try:
+      P=frameCmd.intersectionCLines(*frameCmd.edges())
+    except: pass
   if hasattr(c,'PType') and c.PType=='Elbow' and v1 and v2:
     v1.normalize()
     v2.normalize()
     ortho=rounded(frameCmd.ortho(v1,v2))
     bisect=rounded(v2-v1)
-    #bisect.normalize()
+    ang=degrees(v1.getAngle(v2))
+    c.BendAngle=ang
     rot1=FreeCAD.Rotation(rounded(frameCmd.beamAx(c,FreeCAD.Vector(0,0,1))),ortho)
     c.Placement.Rotation=rot1.multiply(c.Placement.Rotation)
     rot2=FreeCAD.Rotation(rounded(frameCmd.beamAx(c,FreeCAD.Vector(1,1,0))),bisect)
@@ -573,9 +555,6 @@ def placeTheElbow(c,v1=None,v2=None,P=None):
     if not P:
       P=c.Placement.Base
     c.Placement.Base=P
-    ang=degrees(v1.getAngle(v2))
-    c.BendAngle=ang
-    #FreeCAD.ActiveDocument.recompute()
     
 def extendTheTubes2intersection(pipe1=None,pipe2=None,both=True):
   '''
@@ -665,4 +644,23 @@ def rotateTheElbowPort(curve=None, port=0, ang=45):
       FreeCAD.Console.PrintError('Please select something before.\n')
   rotateTheTubeAx(curve,curve.Ports[port],ang)
   
-  
+def join(obj1,port1,obj2,port2):
+  '''
+  join(obj1,port1,obj2,port2)
+  \t obj1, obj2 = two "Pype" parts
+  \t port1, port2 = their respective ports to join
+  '''  
+  if hasattr(obj1,'PType') and hasattr(obj2,'PType'):
+    if port1>len(obj1.Ports)-1 or port2>len(obj2.Ports)-1:
+      FreeCAD.Console.PrintError('Wrong port(s) number\n')
+    else:
+      v1=portsDir(obj1)[port1]
+      v2=portsDir(obj2)[port2]
+      rot=FreeCAD.Rotation(v2,v1.negative())
+      obj2.Placement.Rotation=rot.multiply(obj2.Placement.Rotation)
+      p1=portsPos(obj1)[port1]
+      p2=portsPos(obj2)[port2]
+      obj2.Placement.move(p1-p2)
+  else:
+    FreeCAD.Console.PrintError('Object(s) are not pypes\n')
+    

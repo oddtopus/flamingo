@@ -120,7 +120,7 @@ static char * image[] =
     self.appendToolbar("frameTools",list4)
     Log ('Loading Frame tools: done\n')
     import CommandsPipe
-    list5=["insertPipe","insertElbow","insertReduct","insertCap","insertFlange","insertUbolt","insertPypeLine","insertBranch","breakPipe","mateEdges","extend2intersection","extend1intersection","laydown","raiseup"]
+    list5=["insertPipe","insertElbow","insertReduct","insertCap","insertFlange","insertUbolt","insertPypeLine","insertBranch","breakPipe","mateEdges","joinPype","extend2intersection","extend1intersection","laydown","raiseup"]
     self.appendToolbar("pipeTools",list5)
     Log ('Loading Pipe tools: done\n')
     menu1 = ["Frame tools"]
