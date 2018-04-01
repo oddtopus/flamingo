@@ -78,7 +78,7 @@ class insertPypeLine:
 
 class insertBranch:
   def Activated (self):
-    import pipeCmd
+    import pipeForms
     #pipeCmd.makeBranch()
     pipeFormObj=pipeForms.insertBranchForm()
   def GetResources(self):
@@ -101,16 +101,39 @@ class mateEdges:
   def GetResources(self):
     return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","mate.svg"),'MenuText':'Mate pipes edges','ToolTip':'Mate two terminations through their edges'}
 
-class flat: # SUSPENDED
+class flat:  # tool implemented with pipeCmd.placeTheElbow()
   def Activated (self):
-    import pipeCmd, frameCmd
-    FreeCAD.activeDocument().openTransaction('Flatten')
-    if len(frameCmd.beams())>=2:
-      pipeCmd.flattenTheTube()
-    FreeCAD.activeDocument().recompute()
-    FreeCAD.activeDocument().commitTransaction()
+    import frameCmd, pipeCmd
+    if len(frameCmd.beams())>1:
+      p1,p2=frameCmd.beams()[:2]
+      try:
+        P=frameCmd.intersectionCLines(p1,p2)
+        com1=p1.Shape.Solids[0].CenterOfMass
+        com2=p2.Shape.Solids[0].CenterOfMass
+        v1=P-com1
+        v2=com2-P
+        curves=[e for e in FreeCADGui.Selection.getSelection() if hasattr(e,'PType') and hasattr(e,'BendAngle')]
+        if curves:
+          FreeCAD.ActiveDocument.openTransaction('Place one curve')
+          pipeCmd.placeTheElbow(curves[0],v1,v2,P)
+          FreeCAD.ActiveDocument.recompute()
+          port1,port2=pipeCmd.portsPos(curves[0])
+          if (com1-port1).Length<(com1-port2).Length:
+            frameCmd.extendTheBeam(p1,port1)
+            frameCmd.extendTheBeam(p2,port2)
+          else:
+            frameCmd.extendTheBeam(p1,port2)
+            frameCmd.extendTheBeam(p2,port1)
+          FreeCAD.ActiveDocument.recompute()
+          FreeCAD.ActiveDocument.commitTransaction()
+        else:
+          FreeCAD.Console.PrintError('Select also at least one elbow')
+      except:
+        FreeCAD.Console.PrintError('Intersection point not found\n')
+    else:
+      FreeCAD.Console.PrintError('Select two intersecting pipes\n')
   def GetResources(self):
-    return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","flat.svg"),'MenuText':'Put in the plane','ToolTip':'Put the selected component in the plane defined by the axis of two pipes or beams'}
+    return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","flat.svg"),'MenuText':'Fit one elbow','ToolTip':'Place the elbow between two pipes or beams'}
 
 class extend2intersection:
   def Activated (self):
@@ -193,6 +216,7 @@ addCommand('insertBranch',insertBranch())
 addCommand('breakPipe',breakPipe())
 addCommand('mateEdges',mateEdges())
 addCommand('joinPype',joinPype())
+addCommand('flat',flat())
 addCommand('extend2intersection',extend2intersection())
 addCommand('extend1intersection',extend1intersection())
 addCommand('laydown',laydown())

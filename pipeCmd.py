@@ -541,7 +541,7 @@ def placeTheElbow(c,v1=None,v2=None,P=None):
     try:
       P=frameCmd.intersectionCLines(*frameCmd.edges())
     except: pass
-  if hasattr(c,'PType') and c.PType=='Elbow' and v1 and v2:
+  if hasattr(c,'PType') and hasattr(c,'BendAngle') and v1 and v2:
     v1.normalize()
     v2.normalize()
     ortho=rounded(frameCmd.ortho(v1,v2))
@@ -555,7 +555,7 @@ def placeTheElbow(c,v1=None,v2=None,P=None):
     if not P:
       P=c.Placement.Base
     c.Placement.Base=P
-    
+
 def extendTheTubes2intersection(pipe1=None,pipe2=None,both=True):
   '''
   Does what it says; also with beams.
@@ -663,4 +663,3 @@ def join(obj1,port1,obj2,port2):
       obj2.Placement.move(p1-p2)
   else:
     FreeCAD.Console.PrintError('Object(s) are not pypes\n')
-    
