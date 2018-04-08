@@ -73,16 +73,17 @@ class joinObserver(frameObserverPrototype):
       FreeCADGui.Selection.removeObserver(self)
   def addSelection(self,doc,obj,sub,pnt):
     sel=FreeCADGui.Selection.getSelection()[0]
+    scale=min(sel.Shape.BoundBox.XLength,sel.Shape.BoundBox.YLength,sel.Shape.BoundBox.ZLength)*1.1
     FreeCADGui.Selection.clearSelection()
     if hasattr(sel,'PType') and not pipeCmd.o1:
       pipeCmd.o1=sel
       for i in range(len(sel.Ports)):
         name='obj1_port'+str(i)
-        pipeCmd.arrows1.append(arrow_insert(name,sel,i,min(sel.Shape.BoundBox.XLength,sel.Shape.BoundBox.YLength,sel.Shape.BoundBox.ZLength)/2))
+        pipeCmd.arrows1.append(arrow_insert(name,sel,i,scale))
     elif hasattr(sel,'PType') and not pipeCmd.o2:
       pipeCmd.o2=sel
       for i in range(len(sel.Ports)):
         name='obj2_port'+str(i)
-        a=arrow_insert(name,sel,i)
+        a=arrow_insert(name,sel,i,scale)
         a.color.rgb=0,0,.8
         pipeCmd.arrows2.append(a)

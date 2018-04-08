@@ -92,6 +92,8 @@ class dpCalcDialog:
           Dp+=dP_from_K(K,rho=fluid.rhol,V=v)
         elif o.PType=='Reduct':
           pass
+      elif hasattr(o,'Kv') and o.Kv>0:
+        Dp+=(Q*3600/o.Kv)**2*100000
       if Dp>200: result=' = %.3f bar'%(Dp/100000)
       else: result=' = %.2e bar'%(Dp/100000)
       self.form.labResult.setText(result)

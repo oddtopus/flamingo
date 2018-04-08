@@ -8,6 +8,7 @@ objs=['Pipe','Elbow','Reduct','Cap','Flange','Ubolt']
 metaObjs=['PypeLine','PypeBranch']
 
 import FreeCAD, Part, frameCmd, pipeCmd
+from copy import copy
 
 ################ CLASSES ###########################
 
@@ -428,7 +429,6 @@ class PypeBranch(pypeType): # single-branch PypeLine
     # initialize the parent class
     super(PypeBranch,self).__init__(obj)
     # define common properties
-    #self.Object=obj
     obj.PType="PypeBranch"
     obj.PSize=DN
     obj.PRating=PRating
@@ -472,7 +472,7 @@ class PypeBranch(pypeType): # single-branch PypeLine
     tubes[-1].Height=L.Length
   def redraw(self,fp,OD=60.3,thk=3,BR=None):
     if not BR: BR=0.75*OD
-    edges=fp.Base.Shape.Edges
+    edges=copy(fp.Base.Shape.Edges)
     from pipeCmd import makePipe, makeElbowBetweenThings
     #---Create the tubes---
     tubes=list()
@@ -491,7 +491,6 @@ class PypeBranch(pypeType): # single-branch PypeLine
       curves.append(c)
     fp.Curves=curves
   def purge(self,fp):
-    from copy import copy
     delTubes=copy(fp.Tubes)
     delCurves=copy(fp.Curves)
     fp.Tubes=[]

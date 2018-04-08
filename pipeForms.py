@@ -6,6 +6,7 @@ __url__="github.com/oddtopus/flamingo"
 __license__="LGPL 3"
 
 import FreeCAD,FreeCADGui,Part, csv
+pq=FreeCAD.Units.parseQuantity
 import frameCmd, pipeCmd
 #from frameForms import prototypeForm
 from os import listdir
@@ -163,7 +164,7 @@ class insertPipeForm(protopypeForm):
       self.H=float(self.edit1.text())
     self.sli.setValue(100)
     if len(frameCmd.edges())==0: #..no edges selected
-      propList=[d['PSize'],float(d['OD']),float(d['thk']),self.H]
+      propList=[d['PSize'],float(pq(d['OD'])),float(pq(d['thk'])),self.H]
       vs=[v for sx in FreeCADGui.Selection.getSelectionEx() for so in sx.SubObjects for v in so.Vertexes]
       if len(vs)==0: # ...no vertexes selected
         self.lastPipe=pipeCmd.makePipe(propList)
@@ -181,7 +182,7 @@ class insertPipeForm(protopypeForm):
         if hasattr(o,'PSize') and hasattr(o,'OD') and hasattr(o,'thk'):
           propList=[o.PSize,o.OD,o.thk,self.H]
         else:
-          propList=[d['PSize'],float(d['OD']),float(d['thk']),self.H]
+          propList=[d['PSize'],float(pq(d['OD'])),float(pq(d['thk'])),self.H]
         for edge in frameCmd.edges([objex]): # ...one or more edges...
           if edge.curvatureAt(0)==0: # ...straight edges
             pL=propList
@@ -212,8 +213,8 @@ class insertPipeForm(protopypeForm):
       d=self.pipeDictList[self.sizeList.currentRow()]
       if hasattr(obj,'PType') and obj.PType==self.PType:
         obj.PSize=d['PSize']
-        obj.OD=d['OD']
-        obj.thk=d['thk']
+        obj.OD=pq(d['OD'])
+        obj.thk=pq(d['thk'])
         obj.PRating=self.PRating
         if self.edit1.text():
           obj.Height=self.H
@@ -293,10 +294,10 @@ class insertElbowForm(protopypeForm):
         self.edit1.setText("180")
       ang=float(self.edit1.text())
     except:
-      ang=float(d['BendAngle'])
+      ang=float(pq(d['BendAngle']))
     selex=FreeCADGui.Selection.getSelectionEx()
     if len(selex)==0:     # no selection -> insert one elbow at origin
-      propList=[d['PSize'],float(d['OD']),float(d['thk']),ang,float(d['BendRadius'])]
+      propList=[d['PSize'],float(pq(d['OD'])),float(pq(d['thk'])),ang,float(pq(d['BendRadius']))]
       FreeCAD.activeDocument().openTransaction('Insert elbow in (0,0,0)')
       self.lastElbow=pipeCmd.makeElbow(propList)
       if self.combo.currentText()!='<none>':
@@ -310,12 +311,12 @@ class insertElbowForm(protopypeForm):
         BR=None
         for prop in self.pipeDictList:
           if prop['PSize']==DN:
-            BR=float(prop['BendRadius'])
+            BR=float(pq(prop['BendRadius']))
         if BR==None:
           BR=1.5*OD/2
         propList=[DN,OD,thk,ang,BR]
       else:
-        propList=[d['PSize'],float(d['OD']),float(d['thk']),ang,float(d['BendRadius'])]
+        propList=[d['PSize'],float(pq(d['OD'])),float(pq(d['thk'])),ang,float(pq(d['BendRadius']))]
       if selex[0].SubObjects[0].ShapeType=="Vertex":   # ...on vertex
         FreeCAD.activeDocument().openTransaction('Insert elbow on vertex')
         self.lastElbow=pipeCmd.makeElbow(propList,selex[0].SubObjects[0].Point)
@@ -325,21 +326,15 @@ class insertElbowForm(protopypeForm):
       elif selex[0].SubObjects[0].ShapeType=="Edge" and  selex[0].SubObjects[0].curvatureAt(0)!=0: # ...on center of curved edge
         P=selex[0].SubObjects[0].centerOfCurvatureAt(0)
         N=selex[0].SubObjects[0].normalAt(0).cross(selex[0].SubObjects[0].tangentAt(0)).normalize()
-        #Z=None
-        #if self.lastElbow:
-        #  Z=frameCmd.beamAx(self.lastElbow) # stores orientation of previous curve
         FreeCAD.activeDocument().openTransaction('Insert elbow on curved edge')
         self.lastElbow=pipeCmd.makeElbow(propList,P) # ,Z)
         if pipeCmd.isPipe(selex[0].Object):
-          print 'isPipe'
           ax=selex[0].Object.Shape.Solids[0].CenterOfMass-P
           rot=FreeCAD.Rotation(self.lastElbow.Ports[0],ax)
           self.lastElbow.Placement.Rotation=rot.multiply(self.lastElbow.Placement.Rotation)
-          #self.lastElbow.Placement.Rotation=FreeCAD.Rotation(ax,self.lastElbow.Ports[0])
           Port0=pipeCmd.getElbowPort(self.lastElbow)
           self.lastElbow.Placement.move(P-Port0)
         elif pipeCmd.isElbow(selex[0].Object):
-          print 'isElbow'
           p0,p1=[selex[0].Object.Placement.Rotation.multVec(p) for p in selex[0].Object.Ports]
           if frameCmd.isParallel(p0,N):
             self.lastElbow.Placement.Rotation=FreeCAD.Rotation(self.lastElbow.Ports[0],p0*-1)
@@ -347,15 +342,9 @@ class insertElbowForm(protopypeForm):
             self.lastElbow.Placement.Rotation=FreeCAD.Rotation(self.lastElbow.Ports[0],p1*-1)
           self.lastElbow.Placement.move(P-pipeCmd.getElbowPort(self.lastElbow))
         else:
-          print 'else'
           rot=FreeCAD.Rotation(self.lastElbow.Ports[0],N)
           self.lastElbow.Placement.Rotation=rot.multiply(self.lastElbow.Placement.Rotation)
           self.lastElbow.Placement.move(self.lastElbow.Placement.Rotation.multVec(self.lastElbow.Ports[0])*-1)
-        #if Z:
-        #  from math import pi
-        #  ang=Z.getAngle(frameCmd.beamAx(self.lastElbow))/pi*180 #not enough accurate!!
-        #  rotAx=Part.Edge(Part.Line(P,P+self.lastElbow.Placement.Rotation.multVec(self.lastElbow.Ports[0])))
-        #  frameCmd.rotateTheBeamAround(self.lastElbow,rotAx,ang)
         if self.combo.currentText()!='<none>':
           pipeCmd.moveToPyLi(self.lastElbow,self.combo.currentText())
         FreeCAD.activeDocument().recompute()
@@ -383,13 +372,13 @@ class insertElbowForm(protopypeForm):
       try:
         #create the feature
         if None in [DN,OD,thk,PRating]:
-          propList=[d['PSize'],float(d['OD']),float(d['thk']),ang,float(d['BendRadius'])]
+          propList=[d['PSize'],float(pq(d['OD'])),float(pq(d['thk'])),ang,float(pq(d['BendRadius']))]
           self.lastElbow=pipeCmd.makeElbowBetweenThings(*things[:2],propList=propList)
           self.lastElbow.PRating=self.ratingList.item(self.ratingList.currentRow()).text()
         else:
           for prop in self.pipeDictList:
             if prop['PSize']==DN:
-              BR=float(prop['BendRadius'])
+              BR=float(pq(prop['BendRadius']))
           if BR==None:
             BR=1.5*OD/2
           propList=[DN,OD,thk,ang,BR]
@@ -425,13 +414,13 @@ class insertElbowForm(protopypeForm):
       d=self.pipeDictList[self.sizeList.currentRow()]
       if hasattr(obj,'PType') and obj.PType==self.PType:
         obj.PSize=d['PSize']
-        obj.OD=d['OD']
-        obj.thk=d['thk']
+        obj.OD=pq(d['OD'])
+        obj.thk=pq(d['thk'])
         try:
           obj.BendAngle=float(self.edit1.text())
         except:
           pass
-        obj.BendRadius=d['BendRadius']
+        obj.BendRadius=pq(d['BendRadius'])
         obj.PRating=self.PRating
         FreeCAD.activeDocument().recompute()
   def reverse(self):
@@ -481,7 +470,7 @@ class insertFlangeForm(protopypeForm):
           break
     else:
       d=self.pipeDictList[self.sizeList.currentRow()]
-    propList=[d['PSize'],d['FlangeType'],float(d['D']),float(d['d']),float(d['df']),float(d['f']),float(d['t']),int(d['n'])]
+    propList=[d['PSize'],d['FlangeType'],float(pq(d['D'])),float(pq(d['d'])),float(pq(d['df'])),float(pq(d['f'])),float(pq(d['t'])),int(d['n'])]
     FreeCAD.activeDocument().openTransaction('Insert flange')
     if len(frameCmd.edges())==0:
       vs=[v for sx in FreeCADGui.Selection.getSelectionEx() for so in sx.SubObjects for v in so.Vertexes]
@@ -524,12 +513,12 @@ class insertFlangeForm(protopypeForm):
       if hasattr(obj,'PType') and obj.PType==self.PType:
         obj.PSize=d['PSize']
         obj.FlangeType=d['FlangeType']
-        obj.D=d['D']
-        obj.d=d['d']
-        obj.df=d['df']
-        obj.f=d['f']
-        obj.t=d['t']
-        obj.n=int(d['n'])
+        obj.D=float(pq(d['D']))
+        obj.d=float(pq(d['d']))
+        obj.df=float(pq(d['df']))
+        obj.f=float(pq(d['f']))
+        obj.t=float(pq(d['t']))
+        obj.n=int(pq(d['n']))
         obj.PRating=self.PRating
         FreeCAD.activeDocument().recompute()
 
@@ -576,14 +565,14 @@ class insertReductForm(protopypeForm):
   def applyProp(self):
     r=self.pipeDictList[self.sizeList.currentRow()]
     DN=r['PSize']
-    OD1=float(r['OD'])
-    OD2=float(self.OD2list.currentItem().text())
-    thk1=float(r['thk'])
+    OD1=float(pq(r['OD']))
+    OD2=float(pq(self.OD2list.currentItem().text()))
+    thk1=float(pq(r['thk']))
     try:
-      thk2=float(r['thk2'].split('>')[self.OD2list.currentRow()])
+      thk2=float(pq(r['thk2'].split('>')[self.OD2list.currentRow()]))
     except:
       thk2=thk1
-    H=r['H']
+    H=pq(r['H'])
     reductions=[red for red in FreeCADGui.Selection.getSelection() if hasattr(red,'PType') and red.PType=='Reduct']
     if len(reductions):
       for reduct in reductions:
@@ -629,17 +618,17 @@ class insertReductForm(protopypeForm):
       OD2=float(p2.OD)
       thk1=float(p1.thk)
       thk2=float(p2.thk)
-      H=float(self.findDN(DN)['H'])
+      H=float(pq(self.findDN(DN)['H']))
       Z=p2.Shape.Solids[0].CenterOfMass-p1.Shape.Solids[0].CenterOfMass
       Z.normalize()
       pos=p1.Shape.Solids[0].CenterOfMass+Z*float(p1.Height/2)
     elif len(pipes)>0:            # if 1 pipe is selected...
       DN=pipes[0].PSize
       OD1=float(pipes[0].OD)
-      OD2=float(self.OD2list.currentItem().text())
+      OD2=float(pq(self.OD2list.currentItem().text()))
       thk1=float(pipes[0].thk)
-      thk2=float(r['thk2'].split('>')[self.OD2list.currentRow()])
-      H=float(self.findDN(DN)['H'])
+      thk2=float(pq(r['thk2'].split('>')[self.OD2list.currentRow()]))
+      H=float(pq(self.findDN(DN)['H']))
       curves=[e for e in frameCmd.edges() if e.curvatureAt(0)>0]
       if len(curves): #...and 1 curve is selected...
         pos=curves[0].centerOfCurvatureAt(0)
@@ -648,14 +637,14 @@ class insertReductForm(protopypeForm):
       Z= pos-pipes[0].Shape.Solids[0].CenterOfMass
     else:                         # if no pipe is selected...
       DN=r['PSize']
-      OD1=float(r['OD'])
-      OD2=float(self.OD2list.currentItem().text())
-      thk1=float(r['thk'])
+      OD1=float(pq(r['OD']))
+      OD2=float(pq(self.OD2list.currentItem().text()))
+      thk1=float(pq(r['thk']))
       try:
-        thk2=float(r['thk2'].split('>')[self.OD2list.currentRow()])
+        thk2=float(pq(r['thk2'].split('>')[self.OD2list.currentRow()]))
       except:
         thk2=thk1
-      H=r['H']
+      H=pq(r['H'])
       if frameCmd.edges():    #...but 1 curve is selected...
         edge=frameCmd.edges()[0]
         if edge.curvatureAt(0)>0:
@@ -732,7 +721,7 @@ class insertUboltForm(protopypeForm):
     selex=FreeCADGui.Selection.getSelectionEx()
     if len(selex)==0:
       d=self.pipeDictList[self.sizeList.currentRow()]
-      propList=[d['PSize'],self.PRating,float(d['C']),float(d['H']),float(d['d'])]
+      propList=[d['PSize'],self.PRating,float(pq(d['C'])),float(pq(d['H'])),float(pq(d['d']))]
       FreeCAD.activeDocument().openTransaction('Insert clamp in (0,0,0)')
       ub=pipeCmd.makeUbolt(propList)
       if self.combo.currentText()!='<none>':
@@ -748,9 +737,9 @@ class insertUboltForm(protopypeForm):
             d=d[0]
           else:
             d=self.pipeDictList[self.sizeList.currentRow()]
-          propList=[d['PSize'],self.PRating,float(d['C']),float(d['H']),float(d['d'])]
+          propList=[d['PSize'],self.PRating,float(pq(d['C'])),float(pq(d['H'])),float(pq(d['d']))]
           H=float(objex.Object.Height)
-          gap=H-float(d['C'])
+          gap=H-float(pq(d['C']))
           steps=[gap*self.cb1.isChecked(),H/2*self.cb2.isChecked(),(H-gap)*self.cb3.isChecked()]
           for s in steps:
             if s:
@@ -798,7 +787,7 @@ class insertCapForm(protopypeForm):
     d=self.pipeDictList[self.sizeList.currentRow()]
     FreeCAD.activeDocument().openTransaction('Insert cap')
     if len(frameCmd.edges())==0:
-      propList=[d['PSize'],float(d['OD']),float(d['thk'])]
+      propList=[d['PSize'],float(pq(d['OD'])),float(pq(d['thk']))]
       vs=[v for sx in FreeCADGui.Selection.getSelectionEx() for so in sx.SubObjects for v in so.Vertexes]
       if len(vs)==0:   # nothing is selected
         self.lastCap=pipeCmd.makeCap(propList)
@@ -818,7 +807,7 @@ class insertCapForm(protopypeForm):
             propList=[objs[0].PSize,objs[0].OD,objs[0].thk]
             Z=edge.centerOfCurvatureAt(0)-objs[0].Shape.Solids[0].CenterOfMass
           else:            # ...no pype objects are selected
-            propList=[d['PSize'],float(d['OD']),float(d['thk'])]
+            propList=[d['PSize'],float(pq(d['OD'])),float(pq(d['thk']))]
             Z=edge.tangentAt(0).cross(edge.normalAt(0))
           self.lastCap=pipeCmd.makeCap(propList,edge.centerOfCurvatureAt(0),Z)
         if self.combo.currentText()!='<none>':
@@ -830,8 +819,8 @@ class insertCapForm(protopypeForm):
       d=self.pipeDictList[self.sizeList.currentRow()]
       if hasattr(obj,'PType') and obj.PType==self.PType:
         obj.PSize=d['PSize']
-        obj.OD=d['OD']
-        obj.thk=d['thk']
+        obj.OD=pq(d['OD'])
+        obj.thk=pq(d['thk'])
         obj.PRating=self.PRating
         FreeCAD.activeDocument().recompute()
 
