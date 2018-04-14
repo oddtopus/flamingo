@@ -556,6 +556,32 @@ def placeTheElbow(c,v1=None,v2=None,P=None):
       P=c.Placement.Base
     c.Placement.Base=P
 
+def placeoTherElbow(c,v1=None,v2=None,P=None):
+  '''
+  Like placeTheElbow() but with more math.
+  '''
+  if not (v1 and v2):
+    v1,v2=[e.tangentAt(0) for e in frameCmd.edges()]
+    try:
+      P=frameCmd.intersectionCLines(*frameCmd.edges())
+    except: pass
+  if hasattr(c,'PType') and hasattr(c,'BendAngle') and v1 and v2:
+    v1.normalize()
+    v2.normalize()
+    ortho=rounded(frameCmd.ortho(v1,v2))
+    bisect=rounded(v2-v1)
+    cBisect=rounded(c.Ports[1]+c.Ports[0]) # math
+    cZ=c.Ports[0].cross(c.Ports[1]) # more math
+    ang=degrees(v1.getAngle(v2))
+    c.BendAngle=ang
+    rot1=FreeCAD.Rotation(rounded(frameCmd.beamAx(c,cZ)),ortho)
+    c.Placement.Rotation=rot1.multiply(c.Placement.Rotation)
+    rot2=FreeCAD.Rotation(rounded(frameCmd.beamAx(c,cBisect)),bisect)
+    c.Placement.Rotation=rot2.multiply(c.Placement.Rotation)
+    if not P:
+      P=c.Placement.Base
+    c.Placement.Base=P
+
 def extendTheTubes2intersection(pipe1=None,pipe2=None,both=True):
   '''
   Does what it says; also with beams.

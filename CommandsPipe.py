@@ -115,7 +115,7 @@ class flat:  # tool implemented with pipeCmd.placeTheElbow()
         curves=[e for e in FreeCADGui.Selection.getSelection() if hasattr(e,'PType') and hasattr(e,'BendAngle')]
         if curves:
           FreeCAD.ActiveDocument.openTransaction('Place one curve')
-          pipeCmd.placeTheElbow(curves[0],v1,v2,P)
+          pipeCmd.placeoTherElbow(curves[0],v1,v2,P)
           FreeCAD.ActiveDocument.recompute()
           port1,port2=pipeCmd.portsPos(curves[0])
           if (com1-port1).Length<(com1-port2).Length:
