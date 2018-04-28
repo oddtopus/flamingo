@@ -108,7 +108,60 @@ class protopypeForm(QWidget):
         result=row
         break
     return result
-    
+
+class redrawDialog(QDialog):
+  def __init__(self):
+    super(redrawDialog,self).__init__()
+    self.setWindowTitle("Redraw PypeLines")
+    self.resize(200, 350)
+    self.verticalLayout = QVBoxLayout(self)
+    self.scrollArea = QScrollArea(self)
+    self.scrollArea.setWidgetResizable(True)
+    self.scrollAreaWidgetContents = QWidget()
+    self.scrollAreaWidgetContents.setGeometry(QRect(0, 0, 190, 338))
+    self.formLayout = QFormLayout(self.scrollAreaWidgetContents)
+    self.checkBoxes = list()
+    self.pypelines = list()
+    try:
+      self.pypelines=[o.Label for o in FreeCAD.activeDocument().Objects if hasattr(o,'PType') and o.PType=='PypeLine']
+      for pl in self.pypelines:
+          self.checkBoxes.append(QCheckBox(self.scrollAreaWidgetContents))
+          self.checkBoxes[-1].setText(pl)
+          self.formLayout.layout().addWidget(self.checkBoxes[-1])
+    except:
+      None
+    self.scrollArea.setWidget(self.scrollAreaWidgetContents)
+    self.verticalLayout.addWidget(self.scrollArea)
+    self.btn1=QPushButton('Redraw')
+    self.verticalLayout.addWidget(self.btn1)
+    self.btn1.clicked.connect(self.redraw)
+    self.brn2=QPushButton('Select all')
+    self.verticalLayout.addWidget(self.brn2)
+    self.brn2.clicked.connect(self.selectAll)
+    self.btn3=QPushButton('Clear all')
+    self.verticalLayout.addWidget(self.btn3)
+    self.btn3.clicked.connect(self.clearAll)
+    self.show()
+  def redraw(self):
+    FreeCAD.activeDocument().openTransaction('Redraw pype-lines')
+    i=0
+    for cb in self.checkBoxes:
+      if cb.isChecked():
+        pl=FreeCAD.ActiveDocument.getObjectsByLabel(cb.text())[0]
+        if pl.Base:
+          pl.Proxy.purge(pl)
+          pl.Proxy.update(pl)
+          i+=1
+        else:
+          FreeCAD.Console.PrintError('%s has no Base: nothing to redraw\n' %cb.text())
+    FreeCAD.ActiveDocument.recompute()
+    FreeCAD.Console.PrintMessage('Redrawn %i pipelines.\n' %i)
+    FreeCAD.activeDocument().commitTransaction()
+  def selectAll(self):
+    for cb in self.checkBoxes: cb.setChecked(True)
+  def clearAll(self):
+    for cb in self.checkBoxes: cb.setChecked(False)
+        
 class insertPipeForm(protopypeForm):
   '''
   Dialog to insert tubes.
@@ -920,16 +973,17 @@ class insertPypeLineForm(protopypeForm):
     else:
       FreeCAD.Console.PrintError('Please choose or create a PypeLine first\n')
   def redraw(self):
-    FreeCAD.activeDocument().openTransaction('Redraw pype-line')
-    if self.combo.currentText()!="<new>":
-      pl=FreeCAD.ActiveDocument.getObjectsByLabel(self.combo.currentText())[0]
-      if pl.Base:
-        pl.Proxy.purge(pl)
-        pl.Proxy.update(pl)
-        FreeCAD.ActiveDocument.recompute()
-      else:
-        FreeCAD.Console.PrintError('No Base -> nothing to redraw\n')
-    FreeCAD.activeDocument().commitTransaction()
+    #FreeCAD.activeDocument().openTransaction('Redraw pype-line')
+    #if self.combo.currentText()!="<new>":
+      #pl=FreeCAD.ActiveDocument.getObjectsByLabel(self.combo.currentText())[0]
+      #if pl.Base:
+        #pl.Proxy.purge(pl)
+        #pl.Proxy.update(pl)
+        #FreeCAD.ActiveDocument.recompute()
+      #else:
+        #FreeCAD.Console.PrintError('No Base -> nothing to redraw\n')
+    #FreeCAD.activeDocument().commitTransaction()
+    self.rd=redrawDialog()
   def changeColor(self):
     self.hide()
     col=QColorDialog.getColor()

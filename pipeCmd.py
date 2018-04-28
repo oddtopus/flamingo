@@ -570,7 +570,7 @@ def placeoTherElbow(c,v1=None,v2=None,P=None):
     v2.normalize()
     ortho=rounded(frameCmd.ortho(v1,v2))
     bisect=rounded(v2-v1)
-    cBisect=rounded(c.Ports[1]+c.Ports[0]) # math
+    cBisect=rounded(c.Ports[1].normalize()+c.Ports[0].normalize()) # math
     cZ=c.Ports[0].cross(c.Ports[1]) # more math
     ang=degrees(v1.getAngle(v2))
     c.BendAngle=ang
