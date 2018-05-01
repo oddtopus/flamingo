@@ -15,6 +15,7 @@ from PySide.QtCore import *
 from PySide.QtGui import *
 from math import degrees
 from DraftVecUtils import rounded
+from frameForms import prototypeDialog
 
 class protopypeForm(QWidget):
   'prototype dialog for insert pipeFeatures'
@@ -1200,3 +1201,28 @@ class breakForm(QWidget):
     FreeCAD.activeDocument().commitTransaction()
     FreeCAD.activeDocument().recompute()
 
+import pipeObservers as po
+
+class joinForm(prototypeDialog):
+  def __init__(self):
+    super(joinForm,self).__init__('joinPypes.ui')
+    self.form.btn1.clicked.connect(self.reset)
+    self.observer=po.joinObserver()
+    FreeCADGui.Selection.addObserver(self.observer)
+  def reject(self):
+    info=dict()
+    info["State"]="DOWN"
+    info["Key"]="ESCAPE"
+    self.observer.goOut(info)
+    try: self.view.removeEventCallback('SoEvent',self.call)
+    except: pass
+    FreeCADGui.Control.closeDialog()
+  def accept(self):
+    self.reject()
+  def reset(self):
+    po.pipeCmd.o1=None
+    po.pipeCmd.o2=None
+    for a in po.pipeCmd.arrows1+po.pipeCmd.arrows2:
+      a.closeArrow()
+    po.pipeCmd.arrows1=[]
+    po.pipeCmd.arrows2=[]

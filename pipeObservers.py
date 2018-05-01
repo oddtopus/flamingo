@@ -29,11 +29,13 @@ class arrow_insert(arrow):
   def pickAction(self,path=None,event=None,arg=None): # sample
     if path:
       for n in path: 
-        if str(n.getName())==self.name:  #FreeCAD.Console.PrintMessage('Selected port of obj1\n') 
+        if str(n.getName())==self.name:
           if self.name[:4]=='obj1': 
             pipeCmd.port1=int(self.name[-1])
             FreeCAD.Console.PrintMessage('Destination port changed to %i\n' %pipeCmd.port1)
-          elif self.name[:4]=='obj2': #FreeCAD.Console.PrintMessage('Selected port of obj2\n')
+            if FreeCADGui.Control.activeDialog():
+              pass # to understand how to refer to the dialog to update labels
+          elif self.name[:4]=='obj2':
             pipeCmd.port2=int(self.name[-1])
             FreeCAD.Console.PrintMessage('%s %s joined at port %i to %s\n' %(pipeCmd.o2.PType, pipeCmd.o2.Label, pipeCmd.port2,pipeCmd.o1.Label))
             # move o2
@@ -53,14 +55,20 @@ class arrow_insert(arrow):
       self.stop=False
 
 class joinObserver(frameObserverPrototype): 
+  '''
+  Mate together the Ports of different Pypes by clicking on
+  arrows in the scene-graph.
+  '''
   def __init__(self):
     super(joinObserver,self).__init__('Select pypes and ports')
-    pipeCmd.o1=None
+    self.o1=pipeCmd.o1=None
     pipeCmd.port1=None
-    pipeCmd.o2=None
+    self.o2=pipeCmd.o2=None
     pipeCmd.port2=None
     pipeCmd.arrows1=list()
     pipeCmd.arrows2=list()
+    #self.o1=pipeCmd.o1
+    #self.o2=pipeCmd.o2
     FreeCADGui.Selection.clearSelection()
   def goOut(self,info):
     down = (info["State"] == "DOWN")
@@ -76,12 +84,12 @@ class joinObserver(frameObserverPrototype):
     scale=min(sel.Shape.BoundBox.XLength,sel.Shape.BoundBox.YLength,sel.Shape.BoundBox.ZLength)*1.1
     FreeCADGui.Selection.clearSelection()
     if hasattr(sel,'PType') and not pipeCmd.o1:
-      pipeCmd.o1=sel
+      pipeCmd.o1=self.o1=sel
       for i in range(len(sel.Ports)):
         name='obj1_port'+str(i)
         pipeCmd.arrows1.append(arrow_insert(name,sel,i,scale))
     elif hasattr(sel,'PType') and not pipeCmd.o2:
-      pipeCmd.o2=sel
+      pipeCmd.o2=self.o2=sel
       for i in range(len(sel.Ports)):
         name='obj2_port'+str(i)
         a=arrow_insert(name,sel,i,scale)

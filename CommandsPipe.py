@@ -194,9 +194,9 @@ class joinPype:
   
   '''
   def Activated(self):
-    import FreeCAD, FreeCADGui, pipeObservers
-    s=pipeObservers.joinObserver()
-    FreeCADGui.Selection.addObserver(s)
+    import FreeCAD, FreeCADGui, pipeForms #pipeObservers
+    # s=pipeObservers.joinObserver()
+    FreeCADGui.Control.showDialog(pipeForms.joinForm()) #.Selection.addObserver(s)
     
   def GetResources(self):
     return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","join.svg"),'MenuText':'Join pypes','ToolTip':'Select the part-pype and the port'} 

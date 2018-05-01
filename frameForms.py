@@ -57,13 +57,13 @@ class prototypeForm(QWidget): #OBSOLETE: no more used. Replaced by prototypeDial
 class prototypeDialog(object): 
   # ACHTUNG: "self.call" DISABLED IN WINDOWS OS, DUE TO UNHANDLED RUN-TIME EXCEPTION
   'prototype for dialogs.ui with callback function'
-  def __init__(self,dialog='someFile.ui'):
+  def __init__(self,dialog='anyFile.ui'):
     dialogPath=join(dirname(abspath(__file__)),"dialogs",dialog)
     self.form=FreeCADGui.PySideUic.loadUi(dialogPath)
     if platform.startswith('win'):
       FreeCAD.Console.PrintWarning("No keyboard shortcuts.\n")
     else:
-      FreeCAD.Console.PrintMessage("Keyboard shortcuts available.\n")
+      FreeCAD.Console.PrintMessage('Keyboard shortcuts available.\n"S" to select\n"RETURN" to perform action\n')
       try:
         self.view=get3DView()
         self.call=self.view.addEventCallback("SoEvent", self.action)
