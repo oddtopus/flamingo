@@ -116,7 +116,7 @@ class flat:  # tool implemented with pipeCmd.placeTheElbow()
         if curves:
           FreeCAD.ActiveDocument.openTransaction('Place one curve')
           pipeCmd.placeoTherElbow(curves[0],v1,v2,P)
-          FreeCAD.ActiveDocument.recompute()
+          FreeCAD.ActiveDocument.recompute() # recompute for the elbow
           port1,port2=pipeCmd.portsPos(curves[0])
           if (com1-port1).Length<(com1-port2).Length:
             frameCmd.extendTheBeam(p1,port1)
@@ -124,10 +124,10 @@ class flat:  # tool implemented with pipeCmd.placeTheElbow()
           else:
             frameCmd.extendTheBeam(p1,port2)
             frameCmd.extendTheBeam(p2,port1)
-          FreeCAD.ActiveDocument.recompute()
+          FreeCAD.ActiveDocument.recompute() # recompute for the pipes
           FreeCAD.ActiveDocument.commitTransaction()
         else:
-          FreeCAD.Console.PrintError('Select also at least one elbow')
+          FreeCAD.Console.PrintError('Select at least one elbow')
       except:
         FreeCAD.Console.PrintError('Intersection point not found\n')
     else:

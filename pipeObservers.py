@@ -88,7 +88,9 @@ class joinObserver(frameObserverPrototype):
       for i in range(len(sel.Ports)):
         name='obj1_port'+str(i)
         pipeCmd.arrows1.append(arrow_insert(name,sel,i,scale))
-    elif hasattr(sel,'PType') and not pipeCmd.o2:
+    else: #if hasattr(sel,'PType') and not pipeCmd.o2:
+      for a in pipeCmd.arrows2:
+        a.closeArrow()
       pipeCmd.o2=self.o2=sel
       for i in range(len(sel.Ports)):
         name='obj2_port'+str(i)

@@ -156,8 +156,10 @@ class adjustAngleObserver(frameObserverPrototype):
       if (len(self.edges)==len(self.beams)==2):
         if frameCmd.isOrtho(*self.edges):
           self.beams.reverse()
+          FreeCAD.ActiveDocument.openTransaction('Adjust angle')
           for i in range(len(self.edges)):
           	frameCmd.extendTheBeam(self.beams[i],self.edges[i])
+          FreeCAD.ActiveDocument.commitTransaction()
           FreeCAD.Console.PrintWarning("Adjustment executed.\n")
         else:
           FreeCAD.Console.PrintError("Edges must be orthogonal.\n")

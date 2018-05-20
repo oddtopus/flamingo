@@ -17,7 +17,7 @@ from math import degrees
 from DraftVecUtils import rounded
 from frameForms import prototypeDialog
 
-class protopypeForm(QWidget):
+class protopypeForm(QDialog): #QWidget):
   'prototype dialog for insert pipeFeatures'
   def __init__(self,winTitle='Title', PType='Pipe', PRating='SCH-STD', icon='flamingo.svg'):
     '''
@@ -1219,6 +1219,8 @@ class joinForm(prototypeDialog):
     FreeCADGui.Control.closeDialog()
   def accept(self):
     self.reject()
+  def selectAction(self):
+    self.reset()
   def reset(self):
     po.pipeCmd.o1=None
     po.pipeCmd.o2=None

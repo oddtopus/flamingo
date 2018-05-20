@@ -24,14 +24,14 @@
    <item>
     <widget class="QLabel" name="labTagretObj">
      <property name="text">
-      <string>Target object: -</string>
+      <string>&quot;S&quot; to reset</string>
      </property>
     </widget>
    </item>
    <item>
     <widget class="QLabel" name="labTargetPort">
      <property name="text">
-      <string>Target port: -</string>
+      <string>&quot;RETURN&quot; or &quot;ESC&quot; to exit</string>
      </property>
     </widget>
    </item>

@@ -72,7 +72,7 @@ class prototypeDialog(object):
   def action(self,arg):
     'Default function executed by callback'
     if arg['Type']=='SoKeyboardEvent':
-      if arg['Key'] in ['s','S'] and arg['State']=='DOWN' and FreeCADGui.Selection.getSelection():
+      if arg['Key'] in ['s','S'] and arg['State']=='DOWN':# and FreeCADGui.Selection.getSelection():
         self.selectAction()
       elif arg['Key']=='RETURN' and arg['State']=='DOWN':
         self.accept()
