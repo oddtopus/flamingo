@@ -58,7 +58,7 @@ class dpCalcDialog:
     self.form=FreeCADGui.PySideUic.loadUi(dialogPath)
     fluids=['water','air','methane','ethane','propane','butane','CCCCCC','CCCCCCCC','vinegar','acetone','HF','HCl']
     self.form.comboFluid.addItems(fluids)
-    self.form.comboFluid.addItems(['<custom fluid>']) #TODO
+    self.form.comboFluid.addItems(['<custom fluid>']) 
     self .form.comboWhat.addItems([o.Label for o in FreeCAD.ActiveDocument.Objects if hasattr(o,'PType') and o.PType=='PypeBranch' ])
     self.form.editFlow.setValidator(QDoubleValidator())
     self.form.editRough.setValidator(QDoubleValidator())
@@ -74,6 +74,7 @@ class dpCalcDialog:
     self.form.radioLiquid.released.connect(self.setLiquid)
     self.form.radioGas.released.connect(self.setGas)
     self.form.butExport.clicked.connect(self.export)
+    self.form.comboWhat.currentIndexChanged.connect(lambda: self.form.labResult.setText('---'))
     self.isLiquid=True
     self.checkFluid()
   def accept(self):
@@ -168,15 +169,11 @@ class dpCalcDialog:
         self.Rho=self.fluid.rhol
         self.Mu=self.fluid.mul
         self.form.editDensity.setText('%.4f' %self.Rho)
-        self.form.editViscosity.setText('%.4f' %(self.Mu*1000))
+        self.form.editViscosity.setText('%.4f' %(self.Mu*1000000/self.Rho)) #conversion between kinematic and dynamic!!
       except:
         QMessageBox.warning(None,'No data found','It seems the fluid has not\na liquid state.')
         self.form.radioGas.setChecked(True)
-        self.setRho();self.setMu()
         return
-    else:
-      self.setRho()
-      self.setMu()
     self.isLiquid=True
     self.form.labState.setText('*** LIQUID ***')
     self.form.labQ.setText('Flow (m3/h)')
@@ -187,22 +184,21 @@ class dpCalcDialog:
         self.Rho=self.fluid.rhog
         self.Mu=self.fluid.mug
         self.form.editDensity.setText('%.4f' %self.Rho)
-        self.form.editViscosity.setText('%.4f' %(self.Mu*1000))
+        self.form.editViscosity.setText('%.4f' %(self.Mu*1000000/self.Rho)) #conversion between kinematic and dynamic!!
       except:
         QMessageBox.warning(None,'No data found','It seems the fluid has not\na gas state.')
         self.form.radioLiquid.setChecked(True)
-        self.setRho();self.setMu()
         return
-    else:
-      self.setRho();self.setMu()
     self.isLiquid=False
     self.form.labState.setText('*** GAS/VAPOUR ***')
     self.form.labQ.setText('Flow (kg/h)')
     self.form.labResult.setText('---')
   def setRho(self):
     self.Rho=float(self.form.editDensity.text())
+    print("%f kg/m3" %self.Rho)
   def setMu(self):
-    self.Mu=float(self.form.editViscosity.text())/1000
+    self.Mu=float(self.form.editViscosity.text())*self.Rho/1000000 # conversion between kinematic and dynamic!!
+    print("%f Pa*s" %self.Mu)
   def export(self):
     rows=list()
     fields=['Item','ID (mm)','v (m/s)','Dp (bar)']
@@ -211,8 +207,9 @@ class dpCalcDialog:
       print(record)
       rows.append(dict(zip(fields,record)))
     f=QtGui.QFileDialog.getSaveFileName()[0]
-    dpFile=open(abspath(f),'w')
-    w=csv.DictWriter(dpFile,fields,restval='-',delimiter=';')
-    w.writeheader()
-    w.writerows(rows)
-    dpFile.close()
+    if f:
+      dpFile=open(abspath(f),'w')
+      w=csv.DictWriter(dpFile,fields,restval='-',delimiter=';')
+      w.writeheader()
+      w.writerows(rows)
+      dpFile.close()

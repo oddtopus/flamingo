@@ -454,6 +454,21 @@
    </item>
   </layout>
  </widget>
+ <tabstops>
+  <tabstop>editFlow</tabstop>
+  <tabstop>editRough</tabstop>
+  <tabstop>comboFluid</tabstop>
+  <tabstop>comboWhat</tabstop>
+  <tabstop>tabWidget</tabstop>
+  <tabstop>editTemperature</tabstop>
+  <tabstop>editPressure</tabstop>
+  <tabstop>radioLiquid</tabstop>
+  <tabstop>radioGas</tabstop>
+  <tabstop>editDensity</tabstop>
+  <tabstop>editViscosity</tabstop>
+  <tabstop>editResults</tabstop>
+  <tabstop>butExport</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>
