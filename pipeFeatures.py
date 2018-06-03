@@ -4,7 +4,7 @@ __title__="pypeTools objects"
 __author__="oddtopus"
 __url__="github.com/oddtopus/flamingo"
 __license__="LGPL 3"
-objs=['Pipe','Elbow','Reduct','Cap','Flange','Ubolt']
+objs=['Pipe','Elbow','Reduct','Cap','Flange','Ubolt','Valve']
 metaObjs=['PypeLine','PypeBranch']
 
 import FreeCAD, Part, frameCmd, pipeCmd
@@ -524,3 +524,31 @@ class ViewProviderPypeBranch:
       #App.Console.PrintError("Error in onDelete: " + err.message)
     return True
 
+class Valve(pypeType):
+  '''Class for object PType="Valve"
+  Pipe(obj,[PSize="DN50",VType="ball", OD=60.3, H=100])
+    obj: the "App::FeaturePython object"
+    PSize (string): nominal diameter
+    PRating (string): ! the valve's type !
+    OD (float): outside diameter
+    H (float): length of valve'''
+  def __init__(self, obj,DN="DN50",VType="ball",OD=72, ID=50, H=40, Kv=150):
+    # initialize the parent class
+    super(Valve,self).__init__(obj)
+    # define common properties
+    obj.PType="Valve"
+    obj.PRating=VType
+    obj.PSize=DN
+    obj.Kv=Kv
+    # define specific properties
+    obj.addProperty("App::PropertyLength","OD","Valve","Outside diameter").OD=OD
+    obj.addProperty("App::PropertyLength","ID","Valve","Inside diameter").ID=ID
+    obj.addProperty("App::PropertyLength","Height","Valve","Length of tube").Height=H
+  def execute(self, fp):
+    c=Part.makeCone(fp.OD/2,fp.OD/5,fp.Height/2)
+    v=c.fuse(c.mirror(FreeCAD.Vector(0,0,fp.Height/2),FreeCAD.Vector(0,0,1)))
+    if fp.PRating.find('ball')+1 or fp.PRating.find('globe')+1:
+      r=min(fp.Height*0.45,fp.OD/2)
+      v=v.fuse(Part.makeSphere(r,FreeCAD.Vector(0,0,fp.Height/2)))
+    fp.Shape = v
+    fp.Ports=[FreeCAD.Vector(),FreeCAD.Vector(0,0,float(fp.Height))]

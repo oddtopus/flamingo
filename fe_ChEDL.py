@@ -33,6 +33,7 @@ Caleb Bell (2016). thermo: Chemical properties component of Chemical Engineering
 https://github.com/CalebBell/thermo.
 '''  
 import FreeCAD,FreeCADGui, csv
+pq=FreeCAD.Units.parseQuantity
 from PySide import QtCore, QtGui
 from os.path import join, dirname, abspath
 from PySide.QtCore import *
@@ -81,6 +82,8 @@ class dpCalcDialog:
     Dp=Ltot=nc=0
     elements=list()
     Q=float(self.form.editFlow.text())/3600
+    if not self.isLiquid:
+      Q=Q/self.Rho
     if self.form.comboWhat.currentText()=='<on selection>':
       elements = FreeCADGui.Selection.getSelection()
     else:
@@ -89,13 +92,11 @@ class dpCalcDialog:
         elements=o.Tubes+o.Curves
     self.form.editResults.clear()
     for o in elements:
+      loss=0
       if hasattr(o,'PType') and o.PType in ['Pipe','Elbow']:
         ID=float(o.ID)/1000
         e=float(self.form.editRough.text())*1e-6/ID
-        if self.isLiquid:
-          v=Q/((ID)**2*pi/4)
-        else:
-          v=Q/((ID)**2*pi/4)/self.Rho
+        v=Q/((ID)**2*pi/4)
         Re=Reynolds(V=v,D=ID,rho=self.Rho, mu=self.Mu)
         f=friction.friction_factor(Re, eD=e) # Darcy, =4xFanning
         if o.PType=='Pipe':
@@ -105,7 +106,6 @@ class dpCalcDialog:
           loss=dP_from_K(K,rho=self.Rho,V=v)
           FreeCAD.Console.PrintMessage('%s: %s\nID=%.2f\nV=%.2f\ne=%f\nf=%f\nK=%f\nL=%.3f\nDp = %.5f bar\n***'%(o.PType,o.Label,ID,v,e,f,K,L,loss/1e5))
           self.form.editResults.append('%s\t%.1f mm\t%.1f m/s\t%.5f bar'%(o.Label,ID*1000,v,loss/1e5))
-          Dp+=loss
         elif o.PType=='Elbow':
           ang=float(o.BendAngle)
           R=float(o.BendRadius)/1000
@@ -114,21 +114,28 @@ class dpCalcDialog:
           loss=dP_from_K(K,rho=self.Rho,V=v)
           FreeCAD.Console.PrintMessage('%s: %s\nID=%.2f\nV=%.2f\ne=%f\nf=%f\nK=%f\nang=%.3f\nR=%f\nDp = %.5f bar\n***'%(o.PType,o.Label,ID,v,e,f,K,ang,R,loss/1e5))
           self.form.editResults.append('%s\t%.1f mm\t%.1f m/s\t%.5f bar'%(o.Label,ID*1000,v,loss/1e5))
-          Dp+=loss
         elif o.PType=='Reduct':
           pass
       elif hasattr(o,'Kv') and o.Kv>0:
         if self.isLiquid:
-          Dp+=(Q*3600/o.Kv)**2*100000
+          loss=(Q*3600/o.Kv)**2*100000
         elif self.form.comboFluid.currentText()=='water' and not self.isLiquid:
           pass # TODO formula for steam
         else:
           pass # TODO formula for gases
-      if Dp>200: result=' = %.3f bar'%(Dp/100000)
-      else: result=' = %.2e bar'%(Dp/100000)
-      self.form.labResult.setText(result)
-      self.form.labLength.setText('Total length = %.3f m' %Ltot)
-      self.form.labCurves.setText('Nr. of curves = %i' %nc)
+        if hasattr(o,'ID'):
+          ID = float(o.ID)/1000
+          v=Q/(ID**2*pi/4)
+        else: 
+          v = 0
+          ID = 0
+        self.form.editResults.append('%s\t%.1f mm\t%.1f m/s\t%.5f bar'%(o.Label,ID*1000,v,loss/1e5))
+      Dp+=loss
+    if Dp>200: result=' = %.3f bar'%(Dp/100000)
+    else: result=' = %.2e bar'%(Dp/100000)
+    self.form.labResult.setText(result)
+    self.form.labLength.setText('Total length = %.3f m' %Ltot)
+    self.form.labCurves.setText('Nr. of curves = %i' %nc)
   def checkFluid(self):
     T=float(self.form.editTemperature.text())+273.16
     P=float(self.form.editPressure.text())*1e5

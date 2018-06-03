@@ -1033,9 +1033,6 @@ class insertBranchForm(protopypeForm):
     self.edit1.setPlaceholderText('<name>')
     self.edit1.setAlignment(Qt.AlignHCenter)
     self.secondCol.layout().addWidget(self.edit1)
-    #self.btn2=QPushButton('Get Profile')
-    #self.firstCol.layout().addWidget(self.btn2)
-    #self.btn2.clicked.connect(self.apply)
     self.color=0.8,0.8,0.8
     self.btn1.setDefault(True)
     self.btn1.setFocus()
@@ -1204,6 +1201,7 @@ class breakForm(QWidget):
 import pipeObservers as po
 
 class joinForm(prototypeDialog):
+  
   def __init__(self):
     super(joinForm,self).__init__('joinPypes.ui')
     self.form.btn1.clicked.connect(self.reset)
@@ -1228,3 +1226,91 @@ class joinForm(prototypeDialog):
       a.closeArrow()
     po.pipeCmd.arrows1=[]
     po.pipeCmd.arrows2=[]
+
+class insertValveForm(prototypeDialog):
+  '''
+  Dialog to insert Valves.
+  For position and orientation you can select
+    - one or more straight edges (centerlines)
+    - one or more curved edges (axis and origin across the center)
+    - one or more vertexes 
+    - nothing 
+  Default valve = DN50 ball valve.
+  Available one button to reverse the orientation of the last or selected valves.
+  '''
+  def __init__(self):
+    self.PType='Valve'
+    self.PRating=''
+    super(insertValveForm,self).__init__("valves.ui")
+    self.form.btn2.clicked.connect(self.apply)
+    self.form.btn3.clicked.connect(self.reverse)
+    self.lastValve=None
+    self.fileList=listdir(join(dirname(abspath(__file__)),"tables"))
+    self.fillSizes()
+    self.PRatingsList=[s.lstrip(self.PType+"_").rstrip(".csv") for s in self.fileList if s.startswith(self.PType) and s.endswith('.csv')]
+    self.form.ratingCombo.addItems(self.PRatingsList)
+    self.form.ratingCombo.currentIndexChanged.connect(self.changeRating)
+  def fillSizes(self):
+    self.form.sizeList.clear()
+    for fileName in self.fileList:
+      if fileName==self.PType+'_'+self.PRating+'.csv':
+        f=open(join(dirname(abspath(__file__)),"tables",fileName),'r')
+        reader=csv.DictReader(f,delimiter=';')
+        self.pipeDictList=[DNx for DNx in reader]
+        f.close()
+        for row in self.pipeDictList:
+          s=row['PSize']
+          self.form.sizeList.addItem(s)
+  def changeRating(self):
+    self.PRating=self.form.ratingCombo.currentText()
+    self.fillSizes()
+  def reverse(self): 
+      selValves=[p for p in FreeCADGui.Selection.getSelection() if hasattr(p,'PType') and p.PType=='Valve']
+      if len(selValves):
+        for p in selValves:
+          pipeCmd.rotateTheTubeAx(p,FreeCAD.Vector(1,0,0),180)
+      else:
+        pipeCmd.rotateTheTubeAx(self.lastValve,FreeCAD.Vector(1,0,0),180)
+  def accept(self):      # TODO
+    self.lastValve=None
+    d=self.pipeDictList[self.form.sizeList.currentRow()]
+    FreeCAD.activeDocument().openTransaction('Insert valve')
+    propList=[d['PSize'],d['VType'],float(pq(d['OD'])),float(pq(d['ID'])),float(pq(d['H'])),float(pq(d['Kv']))]
+    if len(frameCmd.edges())==0: #..no edges selected
+      vs=[v for sx in FreeCADGui.Selection.getSelectionEx() for so in sx.SubObjects for v in so.Vertexes]
+      if len(vs)==0: # ...no vertexes selected
+        self.lastValve=pipeCmd.makeValve(propList)
+      else:
+        for v in vs: # ... one or more vertexes
+          self.lastValve=pipeCmd.makeValve(propList,v.Point)
+    else:
+      selex=FreeCADGui.Selection.getSelectionEx()
+      for objex in selex:
+        o=objex.Object
+        for edge in frameCmd.edges([objex]): # ...one or more edges...
+          if edge.curvatureAt(0)==0: # ...straight edges
+            self.lastValve=pipeCmd.makeValve(propList,edge.valueAt(0),edge.tangentAt(0))
+          else: # ...curved edges
+            pos=edge.centerOfCurvatureAt(0)
+            Z=edge.tangentAt(0).cross(edge.normalAt(0))
+            if pipeCmd.isElbow(o):
+              p0,p1=[o.Placement.Rotation.multVec(p) for p in o.Ports]
+              if not frameCmd.isParallel(Z,p0):
+                Z=p1
+            self.lastValve=pipeCmd.makeValve(propList,pos,Z)
+          self.lastValve.ViewObject.ShapeColor=0.05,0.3,0.75
+    FreeCAD.activeDocument().commitTransaction()
+    FreeCAD.activeDocument().recompute()
+  def apply(self):
+    self.lastValve=None
+    for obj in FreeCADGui.Selection.getSelection():
+      d=self.pipeDictList[self.form.sizeList.currentRow()]
+      if hasattr(obj,'PType') and obj.PType==self.PType:
+        obj.PSize=d['PSize']
+        obj.PRating=self.PRating
+        obj.OD=pq(d['OD'])
+        obj.ID=pq(d['ID'])
+        obj.Height=pq(d['H'])
+        obj.Kv=float(d['Kv'])
+        FreeCAD.activeDocument().recompute()
+

@@ -689,3 +689,32 @@ def join(obj1,port1,obj2,port2):
       obj2.Placement.move(p1-p2)
   else:
     FreeCAD.Console.PrintError('Object(s) are not pypes\n')
+
+def makeValve(propList=[], pos=None, Z=None):
+  '''add a Valve object
+  makeValve(propList,pos,Z);
+  propList is one optional list with at least 4 elements:
+    DN (string): nominal diameter
+    VType (string): type of valve
+    OD (float): outside diameter
+    ID (float): inside diameter
+    H (float): length of pipe
+    Kv (float): valve's flow factor (optional)
+  Default is "DN50 ball valve ('ball')"
+  pos (vector): position of insertion; default = 0,0,0
+  Z (vector): orientation: default = 0,0,1
+  '''
+  if pos==None:
+    pos=FreeCAD.Vector(0,0,0)
+  if Z==None:
+    Z=FreeCAD.Vector(0,0,1)
+  a=FreeCAD.ActiveDocument.addObject("Part::FeaturePython","Valvola")
+  if len(propList):
+    pipeFeatures.Valve(a,*propList)
+  else:
+    pipeFeatures.Valve(a)
+  a.ViewObject.Proxy=0
+  a.Placement.Base=pos
+  rot=FreeCAD.Rotation(FreeCAD.Vector(0,0,1),Z)
+  a.Placement.Rotation=rot.multiply(a.Placement.Rotation)
+  return a

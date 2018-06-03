@@ -201,6 +201,12 @@ class joinPype:
   def GetResources(self):
     return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","join.svg"),'MenuText':'Join pypes','ToolTip':'Select the part-pype and the port'} 
 
+class insertValve:
+  def Activated (self):
+    import pipeForms
+    FreeCADGui.Control.showDialog(pipeForms.insertValveForm()) #pipeFormObj=pipeForms.insertValveForm()
+  def GetResources(self):
+    return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","valve.svg"),'MenuText':'Insert a valve','ToolTip':'Insert a valve'}
 
 #---------------------------------------------------------------------------
 # Adds the commands to the FreeCAD command manager
@@ -209,6 +215,7 @@ addCommand('insertPipe',insertPipe())
 addCommand('insertElbow',insertElbow())
 addCommand('insertReduct',insertReduct())
 addCommand('insertCap',insertCap())
+addCommand('insertValve',insertValve())
 addCommand('insertFlange',insertFlange())
 addCommand('insertUbolt',insertUbolt())
 addCommand('insertPypeLine',insertPypeLine())
