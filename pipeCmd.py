@@ -460,30 +460,34 @@ def alignTheTube():
   of 2 separate objects.
   '''
   try:
+    pO=FreeCADGui.Selection.getSelection()[-1]
+    if isElbow(pO): placeThePype(pO,0)
+    else: placeThePype(pO)
+    FreeCAD.Console.PrintMessage('placeThePype done!\n')
+  except:
     t1,t2=FreeCADGui.Selection.getSelection()[:2]
     d1,d2=frameCmd.edges()[:2]
     if d1.curvatureAt(0)!=0 and d2.curvatureAt(0)!=0:
       n1=d1.tangentAt(0).cross(d1.normalAt(0))
       n2=d2.tangentAt(0).cross(d2.normalAt(0))
-    else: return
-  except:
-    FreeCAD.Console.PrintError("Wrong selection.\n")
-    return None
-  rot=FreeCAD.Rotation(n2,n1)
-  t2.Placement.Rotation=rot.multiply(t2.Placement.Rotation)
-  #traslazione centri di curvatura
-  d1,d2=frameCmd.edges() #redo selection to get new positions
-  dist=d1.centerOfCurvatureAt(0)-d2.centerOfCurvatureAt(0)
-  t2.Placement.move(dist)
-  #verifica posizione relativa
-  try:
-    com1,com2=[t.Shape.Solids[0].CenterOfMass for t in [t1,t2]]
-    if isElbow(t2):
+    else: 
+      FreeCAD.Console.PrintError("Wrong selection.\n")
+      return None
+    rot=FreeCAD.Rotation(n2,n1)
+    t2.Placement.Rotation=rot.multiply(t2.Placement.Rotation)
+    #traslazione centri di curvatura
+    d1,d2=frameCmd.edges() #redo selection to get new positions
+    dist=d1.centerOfCurvatureAt(0)-d2.centerOfCurvatureAt(0)
+    t2.Placement.move(dist)
+    #verifica posizione relativa
+    try:
+      com1,com2=[t.Shape.Solids[0].CenterOfMass for t in [t1,t2]]
+      if isElbow(t2):
+        pass
+      elif (com1-d1.centerOfCurvatureAt(0)).dot(com2-d1.centerOfCurvatureAt(0))>0:
+        reverseTheTube(FreeCADGui.Selection.getSelectionEx()[:2][1])
+    except: 
       pass
-    elif (com1-d1.centerOfCurvatureAt(0)).dot(com2-d1.centerOfCurvatureAt(0))>0:
-      reverseTheTube(FreeCADGui.Selection.getSelectionEx()[:2][1])
-  except: 
-    pass
     
 def rotateTheTubeAx(obj=None,vShapeRef=None, angle=45):
   '''
@@ -581,6 +585,37 @@ def placeoTherElbow(c,v1=None,v2=None,P=None):
     if not P:
       P=c.Placement.Base
     c.Placement.Base=P
+
+def placeThePype(pypeObject, port=None): #TODO
+  '''
+  placeThePype(pypeObject, port=None)
+    pypeObject: a FeaturePython with PType property
+    port: an optional port of pypeObject
+  Aligns pypeObject's Placement to the Port of another pype which is selected in the viewport.
+  The pype shall be selected to the circular edge nearest to the port concerned.
+  '''
+  selex=FreeCADGui.Selection.getSelectionEx()
+  if selex:
+    o=selex[0].Object
+    if frameCmd.edges([selex[0]]): # ...one or more edges...
+      edge=frameCmd.edges([selex[0]])[0]
+      if edge.curvatureAt(0)!=0: # ...curved edge
+        pos=edge.centerOfCurvatureAt(0)
+        if hasattr(o,'PType') and len(o.Ports)==2: # ...selection is another pype-object with 2 ports
+          p0,p1=portsPos(o) 
+          if (p0-pos).Length<(p1-pos).Length:
+            Z=portsDir(o)[0]
+          else:
+            Z=portsDir(o)[1]
+          if port!=None: # align another port of pypeObject
+            pOport=pypeObject.Ports[port]
+            if pOport==FreeCAD.Vector():
+              pOport=portsDir(pypeObject)[port]
+            pypeObject.Placement=FreeCAD.Placement(pos+Z*pOport.Length,FreeCAD.Rotation(pOport*-1,Z))
+          else: # align the Placement Z
+            pypeObject.Placement=FreeCAD.Placement(pos,FreeCAD.Rotation(FreeCAD.Vector(0,0,1),Z))
+        else:
+          FreeCAD.Console.PrintError('The object selected is not a "pype"\n')
 
 def extendTheTubes2intersection(pipe1=None,pipe2=None,both=True):
   '''

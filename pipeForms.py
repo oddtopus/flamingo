@@ -1271,8 +1271,9 @@ class insertValveForm(prototypeDialog):
           pipeCmd.rotateTheTubeAx(p,FreeCAD.Vector(1,0,0),180)
       else:
         pipeCmd.rotateTheTubeAx(self.lastValve,FreeCAD.Vector(1,0,0),180)
-  def accept(self):      # TODO
+  def accept(self):      
     self.lastValve=None
+    color=0.05,0.3,0.75
     d=self.pipeDictList[self.form.sizeList.currentRow()]
     FreeCAD.activeDocument().openTransaction('Insert valve')
     propList=[d['PSize'],d['VType'],float(pq(d['OD'])),float(pq(d['ID'])),float(pq(d['H'])),float(pq(d['Kv']))]
@@ -1280,25 +1281,30 @@ class insertValveForm(prototypeDialog):
       vs=[v for sx in FreeCADGui.Selection.getSelectionEx() for so in sx.SubObjects for v in so.Vertexes]
       if len(vs)==0: # ...no vertexes selected
         self.lastValve=pipeCmd.makeValve(propList)
+        self.lastValve.ViewObject.ShapeColor=color
       else:
         for v in vs: # ... one or more vertexes
           self.lastValve=pipeCmd.makeValve(propList,v.Point)
+          self.lastValve.ViewObject.ShapeColor=color
     else:
       selex=FreeCADGui.Selection.getSelectionEx()
       for objex in selex:
         o=objex.Object
         for edge in frameCmd.edges([objex]): # ...one or more edges...
           if edge.curvatureAt(0)==0: # ...straight edges
-            self.lastValve=pipeCmd.makeValve(propList,edge.valueAt(0),edge.tangentAt(0))
+            self.lastValve=pipeCmd.makeValve(propList,edge.valueAt(edge.LastParameter/2-propList[4]/2),edge.tangentAt(0))
           else: # ...curved edges
-            pos=edge.centerOfCurvatureAt(0)
-            Z=edge.tangentAt(0).cross(edge.normalAt(0))
-            if pipeCmd.isElbow(o):
-              p0,p1=[o.Placement.Rotation.multVec(p) for p in o.Ports]
-              if not frameCmd.isParallel(Z,p0):
-                Z=p1
+            pos=edge.centerOfCurvatureAt(0) # SNIPPET TO ALIGN WITH THE PORTS OF Pype SELECTED: BEGIN...
+            if hasattr(o,'PType') and len(o.Ports)==2:
+              p0,p1=pipeCmd.portsPos(o) 
+              if (p0-pos).Length<(p1-pos).Length:
+                Z=pipeCmd.portsDir(o)[0]
+              else:
+                Z=pipeCmd.portsDir(o)[1]
+            else:
+              Z=edge.tangentAt(0).cross(edge.normalAt(0)) # ...END
             self.lastValve=pipeCmd.makeValve(propList,pos,Z)
-          self.lastValve.ViewObject.ShapeColor=0.05,0.3,0.75
+          self.lastValve.ViewObject.ShapeColor=color
     FreeCAD.activeDocument().commitTransaction()
     FreeCAD.activeDocument().recompute()
   def apply(self):

@@ -383,6 +383,7 @@ class Ubolt():
     p=Part.Face(Part.Wire(Part.makeCircle(fp.d/2,c.valueAt(c.FirstParameter),c.tangentAt(c.FirstParameter))))
     path=Part.Wire([c,l1,l2])
     fp.Shape=path.makePipe(p)
+    fp.Ports=[FreeCAD.Vector(0,0,1)]
 
 class Shell():
   '''
