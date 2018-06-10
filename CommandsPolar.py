@@ -83,7 +83,7 @@ class moveWorkPlane:
     polarUtilsCmd.setWP()
 
   def GetResources(self):
-    return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","grid.svg"),'MenuText':'align Workplane','ToolTip':'Moves and rotates the drafting workplane with points, edges and faces'}
+    return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","grid.svg"),'Accel':"A,W",'MenuText':'align Workplane','ToolTip':'Moves and rotates the drafting workplane with points, edges and faces'}
     
 class rotateWorkPlane:
 
@@ -92,7 +92,7 @@ class rotateWorkPlane:
     form = qForms.rotWPForm()
 
   def GetResources(self):
-    return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","rotWP.svg"),'MenuText':'rotate Workplane','ToolTip':'Spin the Draft working plane about one of its axes'}
+    return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","rotWP.svg"),'Accel':"R,W",'MenuText':'rotate Workplane','ToolTip':'Spin the Draft working plane about one of its axes'}
     
 class offsetWorkPlane:
 
@@ -109,7 +109,7 @@ class offsetWorkPlane:
       #FreeCADGui.ActiveDocument.ActiveView.getSceneGraph().removeChild(arrow.node)
       arrow.closeArrow()
   def GetResources(self):
-    return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","offsetWP.svg"),'MenuText':'offset Workplane','ToolTip':'Shifts the WP alongg its normal.'}
+    return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","offsetWP.svg"),'Accel':"O,W",'MenuText':'offset Workplane','ToolTip':'Shifts the WP alongg its normal.'}
     
 class hackedL:
 

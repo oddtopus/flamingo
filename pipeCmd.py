@@ -460,18 +460,22 @@ def alignTheTube():
   of 2 separate objects.
   '''
   try:
-    pO=FreeCADGui.Selection.getSelection()[-1]
-    if isElbow(pO): placeThePype(pO,0)
-    else: placeThePype(pO)
-    FreeCAD.Console.PrintMessage('placeThePype done!\n')
+    t1=FreeCADGui.Selection.getSelection()[0]
+    t2=FreeCADGui.Selection.getSelection()[-1]
   except:
-    t1,t2=FreeCADGui.Selection.getSelection()[:2]
+    FreeCAD.Console.PrintError("Select at least one object.\n")
+    return None
+  if hasattr(t1,'PType') and hasattr(t2,'PType'):
+    if isElbow(t2): placeThePype(t2,0)
+    else: placeThePype(t2)
+    FreeCAD.Console.PrintMessage('placeThePype done!\n') #debug
+  else:
     d1,d2=frameCmd.edges()[:2]
     if d1.curvatureAt(0)!=0 and d2.curvatureAt(0)!=0:
       n1=d1.tangentAt(0).cross(d1.normalAt(0))
       n2=d2.tangentAt(0).cross(d2.normalAt(0))
     else: 
-      FreeCAD.Console.PrintError("Wrong selection.\n")
+      FreeCAD.Console.PrintError("Select 2 curved edges.\n")
       return None
     rot=FreeCAD.Rotation(n2,n1)
     t2.Placement.Rotation=rot.multiply(t2.Placement.Rotation)

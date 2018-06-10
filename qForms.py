@@ -10,7 +10,7 @@ import FreeCAD,FreeCADGui
  
 # UI Class definitions
  
-class QueryForm(QtGui.QWidget):
+class QueryForm(QtGui.QDialog): #QWidget):
   "form for qCmd.py"
   def __init__(self,Selection):
     super(QueryForm,self).__init__()
@@ -112,7 +112,7 @@ from PySide.QtGui import *
 from os import listdir
 from os.path import join, dirname, abspath
 
-class rotWPForm(QWidget):
+class rotWPForm(QDialog): #QWidget):
   '''
   Dialog to rotate the working plane about its axis.
   '''
@@ -163,3 +163,8 @@ class rotWPForm(QWidget):
     self.arrow.moveto(newpl)
   def closeEvent(self,event):
     self.sg.removeChild(self.arrow.node)
+  def reject(self):
+    self.sg.removeChild(self.arrow.node)
+    self.close()
+  def accept(self):
+    self.rotate()

@@ -99,7 +99,7 @@ class mateEdges:
     FreeCAD.activeDocument().commitTransaction()
     FreeCAD.activeDocument().recompute()
   def GetResources(self):
-    return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","mate.svg"),'MenuText':'Mate pipes edges','ToolTip':'Mate two terminations through their edges'}
+    return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","mate.svg"),'Accel':"M,E",'MenuText':'Mate pipes edges','ToolTip':'Mate two terminations through their edges'}
 
 class flat:  # tool implemented with pipeCmd.placeTheElbow()
   def Activated (self):

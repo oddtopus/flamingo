@@ -373,6 +373,7 @@ class Ubolt():
     obj.addProperty("App::PropertyLength","H","Ubolt","Overall height").H=H
     obj.addProperty("App::PropertyLength","d","Ubolt","Rod diameter").d=d
     obj.addProperty("App::PropertyString","thread","Ubolt","Size of thread").thread="M"+str(d)
+    obj.addProperty("App::PropertyVectorList","Ports","PBase","Ports position relative to the origin of Shape")
   def onChanged(self, fp, prop):
     return None
   def execute(self, fp):
