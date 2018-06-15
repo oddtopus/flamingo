@@ -454,7 +454,7 @@ def updatePLColor(sel=None, color=None):
   else:
     FreeCAD.Console.PrintError('Select first one pype line\n')
 
-def alignTheTube():
+def alignTheTube(): 
   '''
   Mates the selected 2 circular edges
   of 2 separate objects.
@@ -465,11 +465,17 @@ def alignTheTube():
   except:
     FreeCAD.Console.PrintError("Select at least one object.\n")
     return None
-  if hasattr(t1,'PType') and hasattr(t2,'PType'):
-    if isElbow(t2): placeThePype(t2,0)
-    else: placeThePype(t2)
-    FreeCAD.Console.PrintMessage('placeThePype done!\n') #debug
-  else:
+  if hasattr(t2,'PType'): # align with placeThePype
+    try:
+      objex=FreeCADGui.Selection.getSelectionEx()[-1]
+      if type(objex.SubObjects[0])==Part.Vertex:
+        pick=objex.SubObjects[0].Point
+      else:
+        pick=objex.SubObjects[0].CenterOfMass
+      placeThePype(t2, nearestPort(t2, pick)[0])
+    except:
+      placeThePype(t2)
+  else: # mate the curved edges
     d1,d2=frameCmd.edges()[:2]
     if d1.curvatureAt(0)!=0 and d2.curvatureAt(0)!=0:
       n1=d1.tangentAt(0).cross(d1.normalAt(0))
@@ -590,36 +596,50 @@ def placeoTherElbow(c,v1=None,v2=None,P=None):
       P=c.Placement.Base
     c.Placement.Base=P
 
-def placeThePype(pypeObject, port=None): #TODO
+def placeThePype(pypeObject, port=0, target=None, targetPort=0):
   '''
-  placeThePype(pypeObject, port=None)
+  placeThePype(pypeObject, port=None, target=None, targetPort=0)
     pypeObject: a FeaturePython with PType property
     port: an optional port of pypeObject
   Aligns pypeObject's Placement to the Port of another pype which is selected in the viewport.
   The pype shall be selected to the circular edge nearest to the port concerned.
   '''
-  selex=FreeCADGui.Selection.getSelectionEx()
-  if selex:
-    o=selex[0].Object
-    if frameCmd.edges([selex[0]]): # ...one or more edges...
+  pos=Z=FreeCAD.Vector()
+  if target and hasattr(target,'PType') and hasattr(target,'Ports'): # target is given
+    pos=portsPos(target)[targetPort]
+    Z=portsDir(target)[targetPort]
+  else: # find target
+    selex=FreeCADGui.Selection.getSelectionEx()
+    target=selex[0].Object
+    so=selex[0].SubObjects[0]
+    if type(so)==Part.Vertex: pick=so.Point
+    else: pick=so.CenterOfMass
+    if hasattr(target,'PType') and hasattr(target,'Ports'): # ...selection is another pype-object
+      pos, Z = nearestPort(target, pick)[1:]
+    elif frameCmd.edges([selex[0]]): # one or more edges selected...
       edge=frameCmd.edges([selex[0]])[0]
-      if edge.curvatureAt(0)!=0: # ...curved edge
+      if edge.curvatureAt(0)!=0: # ...and the first is curve
         pos=edge.centerOfCurvatureAt(0)
-        if hasattr(o,'PType') and len(o.Ports)==2: # ...selection is another pype-object with 2 ports
-          p0,p1=portsPos(o) 
-          if (p0-pos).Length<(p1-pos).Length:
-            Z=portsDir(o)[0]
-          else:
-            Z=portsDir(o)[1]
-          if port!=None: # align another port of pypeObject
-            pOport=pypeObject.Ports[port]
-            if pOport==FreeCAD.Vector():
-              pOport=portsDir(pypeObject)[port]
-            pypeObject.Placement=FreeCAD.Placement(pos+Z*pOport.Length,FreeCAD.Rotation(pOport*-1,Z))
-          else: # align the Placement Z
-            pypeObject.Placement=FreeCAD.Placement(pos,FreeCAD.Rotation(FreeCAD.Vector(0,0,1),Z))
-        else:
-          FreeCAD.Console.PrintError('The object selected is not a "pype"\n')
+        Z=edge.tangentAt(0).cross(edge.normalAt(0))
+  # now place pypeObject on target
+  pOport=pypeObject.Ports[port]
+  if pOport==FreeCAD.Vector():
+    pOport=pypeObject.Ports[port]
+    if pOport==FreeCAD.Vector(): pOport=FreeCAD.Vector(0,0,-1)
+  pypeObject.Placement=FreeCAD.Placement(pos+Z*pOport.Length,FreeCAD.Rotation(pOport*-1,Z))
+
+def nearestPort (pypeObject,point):
+  try:
+    pos=portsPos(pypeObject)[0]; Z=portsDir(pypeObject)[0]
+    i=0
+    for p in portsPos(pypeObject)[1:] :
+      i+=1
+      if (p-point).Length<(pos-point).Length:
+        pos=p
+        Z=portsDir(pypeObject)[i]
+    return i, pos, Z
+  except:
+    return None
 
 def extendTheTubes2intersection(pipe1=None,pipe2=None,both=True):
   '''
