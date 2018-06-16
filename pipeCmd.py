@@ -472,6 +472,7 @@ def alignTheTube():
         pick=objex.SubObjects[0].Point
       else:
         pick=objex.SubObjects[0].CenterOfMass
+        print(nearestPort(t2, pick)[0]) #debug
       placeThePype(t2, nearestPort(t2, pick)[0])
     except:
       placeThePype(t2)
@@ -631,13 +632,14 @@ def placeThePype(pypeObject, port=0, target=None, targetPort=0):
 def nearestPort (pypeObject,point):
   try:
     pos=portsPos(pypeObject)[0]; Z=portsDir(pypeObject)[0]
-    i=0
+    i=nearest=0
     for p in portsPos(pypeObject)[1:] :
       i+=1
       if (p-point).Length<(pos-point).Length:
         pos=p
         Z=portsDir(pypeObject)[i]
-    return i, pos, Z
+        nearest=i
+    return nearest, pos, Z
   except:
     return None
 
