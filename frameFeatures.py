@@ -15,7 +15,7 @@ from os.path import join, dirname, abspath
 
 ################ DIALOGS #############################
 
-class frameLineForm(QWidget):
+class frameLineForm(QDialog):
   '''
   Dialog for frameFeatures management.
   From this you can:

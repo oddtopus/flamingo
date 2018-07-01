@@ -204,7 +204,9 @@ class joinPype:
 class insertValve:
   def Activated (self):
     import pipeForms
-    FreeCADGui.Control.showDialog(pipeForms.insertValveForm()) #pipeFormObj=pipeForms.insertValveForm()
+    #pipeFormObj=pipeForms.insertValveForm()
+    #FreeCADGui.Control.showDialog(pipeForms.insertValveForm()) 
+    pipeFormObj=pipeForms.insertValveForm()
   def GetResources(self):
     return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","valve.svg"),'MenuText':'Insert a valve','ToolTip':'Insert a valve'}
 

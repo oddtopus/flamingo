@@ -1,3 +1,4 @@
+
 #(c) 2016 R. T. LGPL: part of Flamingo tools w.b. for FreeCAD
 
 __title__="polarUtils functions"
@@ -252,6 +253,7 @@ class handleDialog(prototypeDialog):
     if self.arrow: self.arrow.closeArrow()
     try: self.view.removeEventCallback('SoEvent',self.call)
     except: pass
+    if FreeCAD.ActiveDocument: FreeCAD.ActiveDocument.recompute()
     FreeCADGui.Control.closeDialog()
 
 class label3D(object):

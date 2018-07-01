@@ -430,7 +430,7 @@ def makeBranch(base=None, DN="DN50",PRating="SCH-STD",OD=60.3,thk=3,BR=None, lab
       base=path
   if base:
     a=FreeCAD.ActiveDocument.addObject("Part::FeaturePython",lab)
-    pipeFeatures.PypeBranch(a,base,DN,PRating,OD,thk,BR)
+    pipeFeatures.PypeBranch2(a,base,DN,PRating,OD,thk,BR)
     pipeFeatures.ViewProviderPypeBranch(a.ViewObject)
     return a
   else:
@@ -610,9 +610,13 @@ def placeThePype(pypeObject, port=0, target=None, targetPort=0):
     pos=portsPos(target)[targetPort]
     Z=portsDir(target)[targetPort]
   else: # find target
-    selex=FreeCADGui.Selection.getSelectionEx()
-    target=selex[0].Object
-    so=selex[0].SubObjects[0]
+    try:
+      selex=FreeCADGui.Selection.getSelectionEx()
+      target=selex[0].Object
+      so=selex[0].SubObjects[0]
+    except:
+      FreeCAD.Console.PrintError('No geometry selected\n')
+      return
     if type(so)==Part.Vertex: pick=so.Point
     else: pick=so.CenterOfMass
     if hasattr(target,'PType') and hasattr(target,'Ports'): # ...selection is another pype-object

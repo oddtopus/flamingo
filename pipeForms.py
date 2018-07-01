@@ -237,6 +237,16 @@ class insertPipeForm(protopypeForm):
           propList=[o.PSize,o.OD,o.thk,self.H]
         else:
           propList=[d['PSize'],float(pq(d['OD'])),float(pq(d['thk'])),self.H]
+        if frameCmd.faces(): # Face selected...
+          for face in frameCmd.faces():
+            x=(face.ParameterRange[0]+face.ParameterRange[1])/2
+            y=(face.ParameterRange[2]+face.ParameterRange[3])/2
+            self.lastPipe=pipeCmd.makePipe(propList,face.valueAt(x,y),face.normalAt(x,y))
+            if self.combo.currentText()!='<none>':
+              pipeCmd.moveToPyLi(self.lastPipe,self.combo.currentText())
+          FreeCAD.activeDocument().commitTransaction()
+          FreeCAD.activeDocument().recompute()
+          return 
         for edge in frameCmd.edges([objex]): # ...one or more edges...
           if edge.curvatureAt(0)==0: # ...straight edges
             pL=propList
@@ -1068,7 +1078,7 @@ class insertBranchForm(protopypeForm):
     FreeCAD.ActiveDocument.recompute()
     FreeCAD.ActiveDocument.recompute()
     
-class breakForm(QWidget):
+class breakForm(QDialog):
   '''
   Dialog to break one pipe and create a gap.
   '''
@@ -1207,14 +1217,15 @@ class joinForm(prototypeDialog):
     self.form.btn1.clicked.connect(self.reset)
     self.observer=po.joinObserver()
     FreeCADGui.Selection.addObserver(self.observer)
-  def reject(self):
+  def reject(self): #redefined to remove the observer
     info=dict()
     info["State"]="DOWN"
     info["Key"]="ESCAPE"
     self.observer.goOut(info)
-    try: self.view.removeEventCallback('SoEvent',self.call)
-    except: pass
-    FreeCADGui.Control.closeDialog()
+    #try: self.view.removeEventCallback('SoEvent',self.call)
+    #except: pass
+    #FreeCADGui.Control.closeDialog()
+    super(joinForm,self).reject()
   def accept(self):
     self.reject()
   def selectAction(self):
@@ -1227,7 +1238,7 @@ class joinForm(prototypeDialog):
     po.pipeCmd.arrows1=[]
     po.pipeCmd.arrows2=[]
 
-class insertValveForm(prototypeDialog):
+class insertValveForm(protopypeForm):
   '''
   Dialog to insert Valves.
   For position and orientation you can select
@@ -1241,29 +1252,31 @@ class insertValveForm(prototypeDialog):
   def __init__(self):
     self.PType='Valve'
     self.PRating=''
-    super(insertValveForm,self).__init__("valves.ui")
-    self.form.btn2.clicked.connect(self.apply)
-    self.form.btn3.clicked.connect(self.reverse)
+    #super(insertValveForm,self).__init__("valves.ui")
+    super(insertValveForm,self).__init__("Insert valves","Valve","ball","valve.svg")
+    self.move(QPoint(75,225))
+    self.sizeList.setCurrentRow(0)
+    self.ratingList.setCurrentRow(0)
+    self.btn1.clicked.connect(self.insert)
+    self.btn2=QPushButton('Reverse')
+    self.secondCol.layout().addWidget(self.btn2)
+    self.btn2.clicked.connect(self.reverse)
+    self.btn3=QPushButton('Apply')
+    self.secondCol.layout().addWidget(self.btn3)
+    self.btn3.clicked.connect(self.apply)
+    self.btn1.setDefault(True)
+    self.btn1.setFocus()
+    self.sli=QSlider(Qt.Vertical)
+    self.sli.setMaximum(200)
+    self.sli.setMinimum(1)
+    self.sli.setValue(100)
+    self.mainHL.addWidget(self.sli)
+    self.cb1=QCheckBox(' Insert in pipe')
+    self.secondCol.layout().addWidget(self.cb1)
+    #self.sli.valueChanged.connect(self.changeL)
+    self.show()
+    #########
     self.lastValve=None
-    self.fileList=listdir(join(dirname(abspath(__file__)),"tables"))
-    self.fillSizes()
-    self.PRatingsList=[s.lstrip(self.PType+"_").rstrip(".csv") for s in self.fileList if s.startswith(self.PType) and s.endswith('.csv')]
-    self.form.ratingCombo.addItems(self.PRatingsList)
-    self.form.ratingCombo.currentIndexChanged.connect(self.changeRating)
-  def fillSizes(self):
-    self.form.sizeList.clear()
-    for fileName in self.fileList:
-      if fileName==self.PType+'_'+self.PRating+'.csv':
-        f=open(join(dirname(abspath(__file__)),"tables",fileName),'r')
-        reader=csv.DictReader(f,delimiter=';')
-        self.pipeDictList=[DNx for DNx in reader]
-        f.close()
-        for row in self.pipeDictList:
-          s=row['PSize']
-          self.form.sizeList.addItem(s)
-  def changeRating(self):
-    self.PRating=self.form.ratingCombo.currentText()
-    self.fillSizes()
   def reverse(self): 
       selValves=[p for p in FreeCADGui.Selection.getSelection() if hasattr(p,'PType') and p.PType=='Valve']
       if len(selValves):
@@ -1271,10 +1284,10 @@ class insertValveForm(prototypeDialog):
           pipeCmd.rotateTheTubeAx(p,FreeCAD.Vector(1,0,0),180)
       else:
         pipeCmd.rotateTheTubeAx(self.lastValve,FreeCAD.Vector(1,0,0),180)
-  def accept(self):      
+  def insert(self):      
     self.lastValve=None
     color=0.05,0.3,0.75
-    d=self.pipeDictList[self.form.sizeList.currentRow()]
+    d=self.pipeDictList[self.sizeList.currentRow()]
     FreeCAD.activeDocument().openTransaction('Insert valve')
     propList=[d['PSize'],d['VType'],float(pq(d['OD'])),float(pq(d['ID'])),float(pq(d['H'])),float(pq(d['Kv']))]
     if len(frameCmd.edges())==0: #..no edges selected
@@ -1310,7 +1323,7 @@ class insertValveForm(prototypeDialog):
   def apply(self):
     self.lastValve=None
     for obj in FreeCADGui.Selection.getSelection():
-      d=self.pipeDictList[self.form.sizeList.currentRow()]
+      d=self.pipeDictList[self.sizeList.currentRow()]
       if hasattr(obj,'PType') and obj.PType==self.PType:
         obj.PSize=d['PSize']
         obj.PRating=self.PRating

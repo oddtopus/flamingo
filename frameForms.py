@@ -99,6 +99,7 @@ class prototypeDialog(object):
     'CAN be redefined to remove other attributes, such as arrow()s or label()s'
     try: self.view.removeEventCallback('SoEvent',self.call)
     except: pass
+    if FreeCAD.ActiveDocument: FreeCAD.ActiveDocument.recompute()
     FreeCADGui.Control.closeDialog()
 
 class fillForm(prototypeDialog):
@@ -217,11 +218,13 @@ class stretchForm(prototypeDialog):
       FreeCAD.activeDocument().recompute()
       FreeCAD.activeDocument().commitTransaction()
   def reject(self): # redefined to remove label from the scene
-    try: self.view.removeEventCallback('SoEvent',self.call)
-    except: pass
     if self.labTail:
       self.labTail.removeLabel()
-    FreeCADGui.Control.closeDialog()
+    #try: self.view.removeEventCallback('SoEvent',self.call)
+    #except: pass
+    #if FreeCAD.ActiveDocument: FreeCAD.ActiveDocument.recompute()
+    #FreeCADGui.Control.closeDialog()
+    super(stretchForm,self).reject()
 
 class translateForm(prototypeDialog):   
   'dialog for moving blocks'
@@ -303,7 +306,7 @@ class translateForm(prototypeDialog):
   def accept(self):           # translate
     self.deleteArrow()
     scale=float(self.form.edit4.text())/float(self.form.edit5.text())
-    disp=FreeCAD.Vector(float(self.form.edit1.text()),float(self.form.edit2.text()),float(self.form.edit3.text())).scale(scale,scale,scale)
+    disp=FreeCAD.Vector(float(self.form.edit1.text())*self.form.cbX.isChecked(),float(self.form.edit2.text())*self.form.cbY.isChecked(),float(self.form.edit3.text())*self.form.cbZ.isChecked()).scale(scale,scale,scale)
     FreeCAD.activeDocument().openTransaction('Translate')    
     if self.form.radio2.isChecked():
       for o in set(FreeCADGui.Selection.getSelection()):
@@ -316,10 +319,12 @@ class translateForm(prototypeDialog):
     if self.arrow: self.arrow.closeArrow() #FreeCADGui.ActiveDocument.ActiveView.getSceneGraph().removeChild(self.arrow.node)
     self.arrow=None
   def reject(self): # redefined to remove arrow from scene
-    try: self.view.removeEventCallback('SoEvent',self.call)
-    except: pass
     self.deleteArrow()
-    FreeCADGui.Control.closeDialog()
+    #try: self.view.removeEventCallback('SoEvent',self.call)
+    #except: pass
+    #if FreeCAD.ActiveDocument: FreeCAD.ActiveDocument.recompute()
+    #FreeCADGui.Control.closeDialog()
+    super(translateForm,self).reject()
 
 class alignForm(prototypeDialog):   
   'dialog to flush faces'
@@ -430,7 +435,9 @@ class rotateAroundForm(prototypeDialog):
     if self.arrow: self.arrow.closeArrow()
     self.arrow=None
   def reject(self): # redefined to remove arrow from scene
-    try: self.view.removeEventCallback('SoEvent',self.call)
-    except: pass
     self.deleteArrow()
-    FreeCADGui.Control.closeDialog()
+    #try: self.view.removeEventCallback('SoEvent',self.call)
+    #except: pass
+    #if FreeCAD.ActiveDocument: FreeCAD.ActiveDocument.recompute()
+    #FreeCADGui.Control.closeDialog()
+    super(rotateAroundForm,self).reject()
