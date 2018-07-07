@@ -984,16 +984,6 @@ class insertPypeLineForm(protopypeForm):
     else:
       FreeCAD.Console.PrintError('Please choose or create a PypeLine first\n')
   def redraw(self):
-    #FreeCAD.activeDocument().openTransaction('Redraw pype-line')
-    #if self.combo.currentText()!="<new>":
-      #pl=FreeCAD.ActiveDocument.getObjectsByLabel(self.combo.currentText())[0]
-      #if pl.Base:
-        #pl.Proxy.purge(pl)
-        #pl.Proxy.update(pl)
-        #FreeCAD.ActiveDocument.recompute()
-      #else:
-        #FreeCAD.Console.PrintError('No Base -> nothing to redraw\n')
-    #FreeCAD.activeDocument().commitTransaction()
     self.rd=redrawDialog()
   def changeColor(self):
     self.hide()

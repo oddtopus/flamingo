@@ -84,7 +84,7 @@ class Pipe(pypeType):
       fp.Shape = Part.makeCylinder(fp.OD/2,fp.Height)
     fp.Ports=[FreeCAD.Vector(),FreeCAD.Vector(0,0,float(fp.Height))]
     super(Pipe,self).execute(fp) # perform common operations
-    
+
 class Elbow(pypeType):
   '''Class for object PType="Elbow"
   Elbow(obj,[PSize="DN50",OD=60.3,thk=3,BA=90,BR=45.225])
@@ -457,82 +457,6 @@ class Shell():
     fp.Shape=tank
     fp.positionBySupport() # to recomute placement according the Support
     
-class PypeBranch(pypeType): # single-branch PypeLine
-  '''Class for object PType="PypeBranch"
-  Like PypeLine2 but attempting to make automatic update
-  '''
-  def __init__(self, obj,base,DN="DN50",PRating="SCH-STD",OD=60.3,thk=3,BR=None):
-    # initialize the parent class
-    super(PypeBranch,self).__init__(obj)
-    # define common properties
-    obj.PType="PypeBranch"
-    obj.PSize=DN
-    obj.PRating=PRating
-    # define specific properties
-    obj.addProperty("App::PropertyLink","Base","PypeBranch","The path.")
-    if hasattr(base,"Shape") and base.Shape.Edges: 
-      obj.Base=base
-    else:
-      FreeCAD.Console.PrintError('Base not valid\n')
-    obj.addProperty("App::PropertyLinkList","Tubes","PypeBranch","The tubes of the branch.")
-    obj.addProperty("App::PropertyLinkList","Curves","PypeBranch","The curves of the branch.")
-    # draw elements
-    self.redraw(obj,OD,thk,BR)
-  def onChanged(self, fp, prop):
-    pass
-  def execute(self, fp):
-    tubes=fp.Tubes
-    curves=fp.Curves
-    edges=fp.Base.Shape.Edges
-    from math import degrees
-    from DraftVecUtils import rounded
-    from frameCmd import bisect, beamAx, extendTheBeam, ortho
-    i=0
-    L=0
-    portA,portB=[FreeCAD.Vector()]*2
-    while i<len(curves) and i<len(edges):
-      v1,v2=[e.tangentAt(0) for e in edges[i:i+2]]
-      P=edges[i+1].valueAt(0) #frameCmd.intersectionCLines(*edges[i:i+2])
-      pipeCmd.placeTheElbow(curves[i],v1,v2,P)
-      if not i:
-        tubes[i].Placement.Base=edges[i].valueAt(0)
-      else:
-        tubes[i].Placement.Base=pipeCmd.portsPos(curves[i-1])[1]
-      tubes[i].Placement.Rotation=FreeCAD.Rotation(FreeCAD.Vector(0,0,1),edges[i].tangentAt(0))
-      L=min([(tubes[i].Placement.Base-port).Length for port in pipeCmd.portsPos(curves[i])])
-      tubes[i].Height=L #.Length
-      i+=1
-    tubes[-1].Placement.Base=pipeCmd.portsPos(curves[-1])[1]
-    tubes[-1].Placement.Rotation=FreeCAD.Rotation(FreeCAD.Vector(0,0,1),edges[-1].tangentAt(0))
-    L=tubes[-1].Placement.Base-edges[i].valueAt(edges[i].LastParameter)
-    tubes[-1].Height=L.Length
-  def redraw(self,fp,OD=60.3,thk=3,BR=None):
-    if not BR: BR=0.75*OD
-    edges=copy(fp.Base.Shape.Edges)
-    from pipeCmd import makePipe, makeElbowBetweenThings
-    #---Create the tubes---
-    tubes=list()
-    for e in edges:
-      t=makePipe([fp.PSize,OD,thk,e.Length],pos=e.valueAt(0),Z=e.tangentAt(0))
-      t.PRating=fp.PRating
-      t.PSize=fp.PSize
-      tubes.append(t)
-    fp.Tubes=tubes
-    #---Create the curves---
-    curves=list()
-    for t in range(len(edges)-1):
-      c=makeElbowBetweenThings(edges[t],edges[t+1],[fp.PSize,OD,thk,90,BR])
-      c.PRating=fp.PRating
-      c.PSize=fp.PSize
-      curves.append(c)
-    fp.Curves=curves
-  def purge(self,fp):
-    delTubes=copy(fp.Tubes)
-    delCurves=copy(fp.Curves)
-    fp.Tubes=[]
-    fp.Curves=[]
-    for o in delTubes+delCurves: FreeCAD.ActiveDocument.removeObject(o.Name)
-    
 class ViewProviderPypeBranch:
   def __init__(self,vobj):
     vobj.Proxy = self
@@ -554,11 +478,6 @@ class ViewProviderPypeBranch:
     children=[FreeCAD.ActiveDocument.getObject(name) for name in self.Object.Tubes+self.Object.Curves]
     return children #self.Object.Tubes + self.Object.Curves
   def onDelete(self, feature, subelements): # subelements is a tuple of strings
-    #try:
-      #for f in self.Object.Tubes+self.Object.Curves:
-          #f.ViewObject.show()
-    #except Exception as err:
-      #App.Console.PrintError("Error in onDelete: " + err.message)
     return True
 
 class Valve(pypeType):
@@ -593,13 +512,16 @@ class Valve(pypeType):
     
 class PypeBranch2(pypeType): # use AttachExtensionPython
   '''Class for object PType="PypeBranch2"
-  Like PypeBranch but attempting to use AttachExtensionPython
+  Single-line pipe branch linked to its center-line using AttachExtensionPython
+  ex: a=PypeBranch2(obj,base,DN="DN50",PRating="SCH-STD",OD=60.3,thk=3,BR=None)
+    type(obj)=FeaturePython
+    type(base)=DWire or SketchObject
   '''
   def __init__(self, obj,base,DN="DN50",PRating="SCH-STD",OD=60.3,thk=3,BR=None):
     # initialize the parent class
     super(PypeBranch2,self).__init__(obj)
     # define common properties
-    obj.PType="PypeBranch2"
+    obj.PType="PypeBranch"
     obj.PSize=DN
     obj.PRating=PRating
     # define specific properties
@@ -620,77 +542,71 @@ class PypeBranch2(pypeType): # use AttachExtensionPython
       self.purge(fp)
       self.redraw(fp)
   def execute(self, fp):
-    from math import tan, degrees
-    if hasattr(fp,'Curves') and fp.Curves:
-      vecs=[e.tangentAt(0) for e in fp.Base.Shape.Edges]
-      for i in range(len(fp.Curves)):
-        # adjust the curve
+    if len(fp.Tubes)!=len(fp.Base.Shape.Edges):
+      self.purge(fp)
+      self.redraw(fp)
+      return
+    from math import tan
+    for i in range(len(fp.Tubes)):
+      L=fp.Base.Shape.Edges[i].Length
+      R=fp.BendRadius
+      # adjust the curve
+      if i<len(fp.Curves):
         c=FreeCAD.ActiveDocument.getObject(fp.Curves[i])
-        pipeCmd.placeTheElbow(c,vecs[i],vecs[i+1]) 
-        # adjust the pipes
-        ## ..next
-        tNext=FreeCAD.ActiveDocument.getObject(fp.Tubes[i+1])
-        alfa=vecs[i].getAngle(vecs[i+1])/2
-        offset=float(fp.BendRadius)*tan(alfa)
-        tNext.AttachmentOffset.Base=FreeCAD.Vector(0,0,offset)
-        ## ..previous
-        tPrev=FreeCAD.ActiveDocument.getObject(fp.Tubes[i])
-        beta=vecs[i].getAngle(vecs[i+1])
-        # FreeCAD.Console.PrintMessage('Round '+str(i)+': '+str(degrees(beta))+' deg, L='+str(fp.Base.Shape.Edges[i].Length)+'\n') #debug
-        L=fp.Base.Shape.Edges[i].Length
-        L-=float(c.BendRadius)*tan(beta/2)
-        if i>0: 
-          cp=FreeCAD.ActiveDocument.getObject(fp.Curves[i-1])
-          betap=vecs[i-1].getAngle(vecs[i])
-          L-=float(cp.BendRadius)*tan(betap/2)
-        tPrev.Height=L
-      tLast=FreeCAD.ActiveDocument.getObject(fp.Tubes[-1])
-      cp=FreeCAD.ActiveDocument.getObject(fp.Curves[-1])
-      betap=vecs[-2].getAngle(vecs[-1])
-      L=fp.Base.Shape.Edges[-1].Length
-      L-=float(cp.BendRadius)*tan(betap/2)
-      tLast.Height=L
+        v1,v2=[e.tangentAt(0) for e in fp.Base.Shape.Edges[i:i+2]]
+        pipeCmd.placeTheElbow(c,v1,v2) 
+        alfa=float(v1.getAngle(v2))/2
+        L-=float(R*tan(alfa)) 
+      # adjust the pipes
+      if i: 
+        v1,v2=[e.tangentAt(0) for e in fp.Base.Shape.Edges[i-1:i+1]]
+        alfa=float(v1.getAngle(v2))/2
+        tang=float(R*tan(alfa)) 
+        L-=tang
+        FreeCAD.ActiveDocument.getObject(fp.Tubes[i]).AttachmentOffset.Base=FreeCAD.Vector(0,0,tang)
+      FreeCAD.ActiveDocument.getObject(fp.Tubes[i]).Height=L
   def redraw(self,fp): 
     from math import tan, degrees
     tubes=list()
     curves=list()
-    for i in range(len(fp.Base.Shape.Edges)):
-      e=fp.Base.Shape.Edges[i]
-      L=e.Length
-      R=float(fp.BendRadius)
-      offset=0
-      #---Create the tube---
-      if i>0: 
-        alfa=e.tangentAt(0).getAngle(fp.Base.Shape.Edges[i-1].tangentAt(0))/2
-        L-=R*tan(alfa)
-        offset=R*tan(alfa)
-      if i<(len(fp.Base.Shape.Edges)-1): 
-        alfa=e.tangentAt(0).getAngle(fp.Base.Shape.Edges[i+1].tangentAt(0))/2
-        L-=R*tan(alfa)
-      eSupport='Edge'+str(i+1)
-      t=pipeCmd.makePipe([fp.PSize,float(fp.OD),float(fp.thk),L])
-      t.PRating=fp.PRating
-      t.PSize=fp.PSize
-      t.Support = [(fp.Base,eSupport)]
-      t.MapMode = 'NormalToEdge'
-      t.MapReversed = True
-      t.AttachmentOffset=FreeCAD.Placement(FreeCAD.Vector(0,0,offset),FreeCAD.Rotation())
-      tubes.append(t.Name)
-      #---Create the curve---
-      if i>0:
-        e0=fp.Base.Shape.Edges[i-1]
-        alfa=degrees(e0.tangentAt(0).getAngle(e.tangentAt(0)))
-        c=pipeCmd.makeElbow([fp.PSize,float(fp.OD),float(fp.thk),alfa,R])
-        c.PRating=fp.PRating
-        c.PSize=fp.PSize
-        O='Vertex'+str(i+1)
-        c.MapReversed = False
-        c.Support = [(fp.Base,O)]
-        c.MapMode = 'Translate'
-        pipeCmd.placeTheElbow(c,e0.tangentAt(0),e.tangentAt(0)) #funziona qui ma non in execute()!
-        curves.append(c.Name)
-      fp.Tubes=tubes
-      fp.Curves=curves
+    if fp.Base:
+      for i in range(len(fp.Base.Shape.Edges)):
+        e=fp.Base.Shape.Edges[i]
+        L=e.Length
+        R=float(fp.BendRadius)
+        offset=0
+        #---Create the tube---
+        if i>0: 
+          alfa=e.tangentAt(0).getAngle(fp.Base.Shape.Edges[i-1].tangentAt(0))/2
+          L-=R*tan(alfa)
+          offset=R*tan(alfa)
+        if i<(len(fp.Base.Shape.Edges)-1): 
+          alfa=e.tangentAt(0).getAngle(fp.Base.Shape.Edges[i+1].tangentAt(0))/2
+          L-=R*tan(alfa)
+        eSupport='Edge'+str(i+1)
+        t=pipeCmd.makePipe([fp.PSize,float(fp.OD),float(fp.thk),L])
+        t.PRating=fp.PRating
+        t.PSize=fp.PSize
+        t.Support = [(fp.Base,eSupport)]
+        t.MapMode = 'NormalToEdge'
+        t.MapReversed = True
+        t.AttachmentOffset=FreeCAD.Placement(FreeCAD.Vector(0,0,offset),FreeCAD.Rotation())
+        tubes.append(t.Name)
+        #---Create the curve---
+        if i>0:
+          e0=fp.Base.Shape.Edges[i-1]
+          alfa=degrees(e0.tangentAt(0).getAngle(e.tangentAt(0)))
+          c=pipeCmd.makeElbow([fp.PSize,float(fp.OD),float(fp.thk),alfa,R])
+          c.PRating=fp.PRating
+          c.PSize=fp.PSize
+          O='Vertex'+str(i+1)
+          c.MapReversed = False
+          c.Support = [(fp.Base,O)]
+          c.MapMode = 'Translate'
+          pipeCmd.placeTheElbow(c,e0.tangentAt(0),e.tangentAt(0))
+          curves.append(c.Name)
+        fp.Tubes=tubes
+        fp.Curves=curves
   def purge(self,fp):
     if hasattr(fp,'Tubes'):
       for name in fp.Tubes: FreeCAD.ActiveDocument.removeObject(name)

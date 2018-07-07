@@ -89,7 +89,7 @@ class dpCalcDialog:
     else:
       o=FreeCAD.ActiveDocument.getObjectsByLabel(self.form.comboWhat.currentText())[0]
       if hasattr(o,'PType') and o.PType=='PypeBranch':
-        elements=o.Tubes+o.Curves
+        elements=[FreeCAD.ActiveDocument.getObject(name) for name in o.Tubes+o.Curves]
     self.form.editResults.clear()
     for o in elements:
       loss=0

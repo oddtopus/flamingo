@@ -66,8 +66,12 @@ def moveToPyLi(obj,plName):
   pl=FreeCAD.ActiveDocument.getObjectsByLabel(plName)[0]
   group=FreeCAD.ActiveDocument.getObjectsByLabel(str(pl.Group))[0]
   group.addObject(obj)
-  if hasattr(obj,'PType') and obj.PType in objToPaint:
-    obj.ViewObject.ShapeColor=pl.ViewObject.ShapeColor
+  if hasattr(obj,'PType'):
+    if obj.PType in objToPaint:
+      obj.ViewObject.ShapeColor=pl.ViewObject.ShapeColor
+    elif obj.PType == 'PypeBranch':
+      for e in [FreeCAD.ActiveDocument.getObject(name) for name in obj.Tubes+obj.Curves]: 
+        e.ViewObject.ShapeColor=pl.ViewObject.ShapeColor
 
 def portsPos(o):
   '''
@@ -450,7 +454,8 @@ def updatePLColor(sel=None, color=None):
           if o.PType in objToPaint: 
             o.ViewObject.ShapeColor=color
           elif o.PType == 'PypeBranch':
-            for e in o.Tubes+o.Curves: e.ViewObject.ShapeColor=color
+            for e in [FreeCAD.ActiveDocument.getObject(name) for name in o.Tubes+o.Curves]: 
+              e.ViewObject.ShapeColor=color
   else:
     FreeCAD.Console.PrintError('Select first one pype line\n')
 
