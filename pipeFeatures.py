@@ -541,6 +541,20 @@ class PypeBranch2(pypeType): # use AttachExtensionPython
     if prop=='Base' and hasattr(fp,'OD') and hasattr(fp,'thk') and hasattr(fp,'BendRadius'):
       self.purge(fp)
       self.redraw(fp)
+    if prop=='BendRadius' and hasattr(fp,'Curves'):
+      BR=fp.BendRadius
+      for curve in [FreeCAD.ActiveDocument.getObject(name) for name in fp.Curves]:
+        curve.BendRadius=BR
+    if prop=='OD' and hasattr(fp,'Tubes') and hasattr(fp,'Curves'):
+      OD=fp.OD
+      for obj in [FreeCAD.ActiveDocument.getObject(name) for name in fp.Tubes+fp.Curves]:
+        if obj.PType=='Elbow': obj.BendRadius=OD*.75
+        obj.OD=OD
+      fp.BendRadius=OD*.75
+    if prop=='thk' and hasattr(fp,'Tubes') and hasattr(fp,'Curves'):
+      thk=fp.thk
+      for obj in [FreeCAD.ActiveDocument.getObject(name) for name in fp.Tubes+fp.Curves]:
+        obj.thk=thk
   def execute(self, fp):
     if len(fp.Tubes)!=len(fp.Base.Shape.Edges):
       self.purge(fp)
