@@ -26,6 +26,13 @@ class pypeType(object):
   def execute(self, fp):
     fp.positionBySupport() # to recomute placement according the Support
   def nearestPort (self,point=None):
+    '''
+    nearestPort (point=None)
+      Returns the Port nearest to  point 
+      or to the selected geometry.
+      (<portNr>, <portPos>, <portDir>)
+    '''
+    obj=FreeCAD.ActiveDocument.getObject(self.Name)
     if not point and FreeCADGui.ActiveDocument:
       try:
         selex=FreeCADGui.Selection.getSelectionEx()
@@ -34,7 +41,6 @@ class pypeType(object):
       except:
         FreeCAD.Console.PrintError('No geometry selected\n')
         return None
-      obj=FreeCAD.ActiveDocument.getObject(self.Name)
       if type(so)==Part.Vertex: point=so.Point
       else: point=so.CenterOfMass
     if point:

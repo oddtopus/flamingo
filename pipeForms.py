@@ -1257,9 +1257,9 @@ class insertValveForm(protopypeForm):
     self.btn1.setDefault(True)
     self.btn1.setFocus()
     self.sli=QSlider(Qt.Vertical)
-    self.sli.setMaximum(200)
+    self.sli.setMaximum(100)
     self.sli.setMinimum(1)
-    self.sli.setValue(100)
+    self.sli.setValue(50)
     self.mainHL.addWidget(self.sli)
     self.cb1=QCheckBox(' Insert in pipe')
     self.secondCol.layout().addWidget(self.cb1)
@@ -1280,7 +1280,17 @@ class insertValveForm(protopypeForm):
     d=self.pipeDictList[self.sizeList.currentRow()]
     FreeCAD.activeDocument().openTransaction('Insert valve')
     propList=[d['PSize'],d['VType'],float(pq(d['OD'])),float(pq(d['ID'])),float(pq(d['H'])),float(pq(d['Kv']))]
-    if len(frameCmd.edges())==0: #..no edges selected
+    if self.cb1.isChecked(): # ..place the valve in the middle of pipe(s)
+      pipes=[p for p in FreeCADGui.Selection.getSelection() if hasattr(p,'PType') and p.PType=='Pipe']
+      if pipes:
+        for p1 in pipes:
+          self.lastValve=pipeCmd.makeValve(propList)
+          p2=pipeCmd.breakTheTubes(float(p1.Height)*self.sli.value()/100, pipes=[p1], gap=float(self.lastValve.Height))[0]
+          if p2 and self.combo.currentText()!='<none>': pipeCmd.moveToPyLi(p2,self.combo.currentText())
+          self.lastValve.Placement=p1.Placement
+          self.lastValve.Placement.move(pipeCmd.portsDir(p1)[1]*float(p1.Height))
+        FreeCAD.ActiveDocument.recompute()
+    elif len(frameCmd.edges())==0: #..no edges selected
       vs=[v for sx in FreeCADGui.Selection.getSelectionEx() for so in sx.SubObjects for v in so.Vertexes]
       if len(vs)==0: # ...no vertexes selected
         self.lastValve=pipeCmd.makeValve(propList)

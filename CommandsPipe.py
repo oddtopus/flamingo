@@ -210,6 +210,16 @@ class insertValve:
   def GetResources(self):
     return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","valve.svg"),'MenuText':'Insert a valve','ToolTip':'Insert a valve'}
 
+class attach2tube:
+  def Activated (self):
+    import pipeCmd
+    FreeCAD.activeDocument().openTransaction('Attach to tube')
+    pipeCmd.attachToTube()
+    FreeCAD.activeDocument().recompute()
+    FreeCAD.activeDocument().commitTransaction()
+  def GetResources(self):
+    return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","attach.svg"),'MenuText':'Attach  to tube','ToolTip':'Attach one pype to the nearest port of selected pipe'}
+
 #---------------------------------------------------------------------------
 # Adds the commands to the FreeCAD command manager
 #---------------------------------------------------------------------------
@@ -225,6 +235,7 @@ addCommand('insertBranch',insertBranch())
 addCommand('breakPipe',breakPipe())
 addCommand('mateEdges',mateEdges())
 addCommand('joinPype',joinPype())
+addCommand('attach2tube',attach2tube())
 addCommand('flat',flat())
 addCommand('extend2intersection',extend2intersection())
 addCommand('extend1intersection',extend1intersection())
