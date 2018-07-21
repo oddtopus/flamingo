@@ -560,7 +560,7 @@ class PypeBranch2(pypeType): # use AttachExtensionPython
     if prop=='thk' and hasattr(fp,'Tubes') and hasattr(fp,'Curves'):
       thk=fp.thk
       for obj in [FreeCAD.ActiveDocument.getObject(name) for name in fp.Tubes+fp.Curves]:
-        obj.thk=thk
+        if hasattr(obj,'thk'): obj.thk=thk
   def execute(self, fp):
     if len(fp.Tubes)!=len(fp.Base.Shape.Edges):
       self.purge(fp)

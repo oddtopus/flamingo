@@ -791,20 +791,28 @@ def makeValve(propList=[], pos=None, Z=None):
 
 def attachToTube(port=None):
   pypes=[p for p in FreeCADGui.Selection.getSelection() if hasattr(p,'PType')]
+  tube=None
   try:
-    tube=[t for t in pypes if t.PType=='Pipe'][0]
-    pypes.pop(pypes.index(tube))
-    for p in pypes:
-      p.MapMode = 'Concentric'
-      port=tube.Proxy.nearestPort(p.Shape.Solids[0].CenterOfMass)[0]
-      if port==0:
-        if p.PType!='Flange': p.MapReversed = True
-        else: p.MapReversed = False
-        p.Support = [(tube,'Edge3')]
-      elif port==1:
-        if p.PType!='Flange': p.MapReversed = False
-        else: p.MapReversed = True
-        p.Support = [(tube,'Edge1')]
-      if p.PType=='Elbow': p.AttachmentOffset = FreeCAD.Placement(FreeCAD.Vector(0, 0, p.Ports[0].Length),  FreeCAD.Rotation(0, 90, 0))
+    tubes=[t for t in pypes if t.PType=='Pipe']
+    if tubes:
+      tube=tubes[0]
+      pypes.pop(pypes.index(tube))
+      for p in pypes:
+        p.MapMode = 'Concentric'
+        if not port: port=tube.Proxy.nearestPort(p.Shape.Solids[0].CenterOfMass)[0]
+        if port==0:
+          if p.PType!='Flange': p.MapReversed = True
+          else: p.MapReversed = False
+          p.Support = [(tube,'Edge3')]
+        elif port==1:
+          if p.PType!='Flange': p.MapReversed = False
+          else: p.MapReversed = True
+          p.Support = [(tube,'Edge1')]
+        if p.PType=='Elbow': p.AttachmentOffset = FreeCAD.Placement(FreeCAD.Vector(0, 0, p.Ports[0].Length),  FreeCAD.Rotation(p.Ports[1],FreeCAD.Vector(0, 0, 1).negative()))
+        FreeCAD.Console.PrintMessage('%s attached to %s\n' %(p.Label,tube.Label))
+    else:
+      for p in pypes:
+        p.MapMode='Deactivated'
+        FreeCAD.Console.PrintMessage('Object Detached\n')
   except:
     FreeCAD.Console.PrintError('Nothing attached\n')

@@ -1033,6 +1033,11 @@ class insertBranchForm(protopypeForm):
     self.edit1.setPlaceholderText('<name>')
     self.edit1.setAlignment(Qt.AlignHCenter)
     self.secondCol.layout().addWidget(self.edit1)
+    self.edit2=QLineEdit()
+    self.edit2.setPlaceholderText('<bend radius>')
+    self.edit2.setAlignment(Qt.AlignHCenter)
+    self.edit2.setValidator(QDoubleValidator())
+    self.secondCol.layout().addWidget(self.edit2)
     self.color=0.8,0.8,0.8
     self.btn1.setDefault(True)
     self.btn1.setFocus()
@@ -1061,7 +1066,9 @@ class insertBranchForm(protopypeForm):
     FreeCAD.activeDocument().openTransaction('Insert pype-branch')
     plLabel=self.edit1.text()
     if not plLabel: plLabel="Traccia"
-    a=pipeCmd.makeBranch(DN=d["PSize"],PRating=self.PRating,OD=float(d["OD"]),thk=float(d["thk"]), lab=plLabel, color=self.color)
+    if not self.edit2.text(): bendRad=0.75*float(d["OD"])
+    else: bendRad=float(self.edit2.text())
+    a=pipeCmd.makeBranch(DN=d["PSize"],PRating=self.PRating,OD=float(d["OD"]),thk=float(d["thk"]), BR=bendRad, lab=plLabel, color=self.color)
     if self.combo.currentText()!='<none>':
       pipeCmd.moveToPyLi(a,self.combo.currentText())
     FreeCAD.activeDocument().commitTransaction()
@@ -1289,6 +1296,7 @@ class insertValveForm(protopypeForm):
           if p2 and self.combo.currentText()!='<none>': pipeCmd.moveToPyLi(p2,self.combo.currentText())
           self.lastValve.Placement=p1.Placement
           self.lastValve.Placement.move(pipeCmd.portsDir(p1)[1]*float(p1.Height))
+          self.lastValve.ViewObject.ShapeColor=color
         FreeCAD.ActiveDocument.recompute()
     elif len(frameCmd.edges())==0: #..no edges selected
       vs=[v for sx in FreeCADGui.Selection.getSelectionEx() for so in sx.SubObjects for v in so.Vertexes]
