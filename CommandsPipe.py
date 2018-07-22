@@ -220,6 +220,15 @@ class attach2tube:
   def GetResources(self):
     return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","attach.svg"),'MenuText':'Attach  to tube','ToolTip':'Attach one pype to the nearest port of selected pipe'}
 
+class point2point:
+
+  def Activated(self):
+    import pipeForms
+    form = pipeForms.point2pointPipe()
+
+  def GetResources(self):
+    return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","point2point.svg"),'MenuText':'draw a tube point-to-point','ToolTip':'Click on subsequent points.'}
+    
 #---------------------------------------------------------------------------
 # Adds the commands to the FreeCAD command manager
 #---------------------------------------------------------------------------
@@ -241,3 +250,4 @@ addCommand('extend2intersection',extend2intersection())
 addCommand('extend1intersection',extend1intersection())
 addCommand('laydown',laydown())
 addCommand('raiseup',raiseup())
+addCommand('point2point',point2point())

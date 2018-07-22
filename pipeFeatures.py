@@ -465,7 +465,9 @@ class Shell():
     
 class ViewProviderPypeBranch:
   def __init__(self,vobj):
-    vobj.Proxy = self
+    vobj.addExtension("Gui::ViewProviderGroupExtensionPython",self)
+    vobj.ExtensionProxy=self # GROUP test in progress!
+    vobj.Proxy = self # GROUP test in progress!
   def getIcon(self):
     from os.path import join, dirname, abspath
     return join(dirname(abspath(__file__)),"icons","branch.svg")
@@ -542,7 +544,7 @@ class PypeBranch2(pypeType): # use AttachExtensionPython
       obj.Base=base
     else:
       FreeCAD.Console.PrintError('Base not valid\n')
-    # draw elements
+    obj.addExtension("App::GroupExtensionPython",obj)  # GROUP test in progress!
   def onChanged(self, fp, prop):
     if prop=='Base' and hasattr(fp,'OD') and hasattr(fp,'thk') and hasattr(fp,'BendRadius'):
       self.purge(fp)

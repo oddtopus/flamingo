@@ -1341,3 +1341,84 @@ class insertValveForm(protopypeForm):
         obj.Kv=float(d['Kv'])
         FreeCAD.activeDocument().recompute()
 
+import DraftTools,Draft,qForms
+from PySide.QtGui import *
+class point2pointPipe(DraftTools.Line):
+  '''
+  Draw pipes by sequence point.
+  '''    
+  def __init__(self, wireFlag=True):
+    DraftTools.Line.__init__(self,wireFlag)
+    self.form=insertPipeForm()
+    self.form.btn1.hide()
+    self.form.btn3.hide()
+    self.form.edit1.hide()
+    self.form.sli.hide()
+    self.form.cb1=QCheckBox(' Move WP on click ')
+    self.form.cb1.setChecked(True)
+    self.form.firstCol.layout().addWidget(self.form.cb1)
+    self.start=None
+    self.lastPipe=None
+    self.Activated()
+  def action(self,arg): #re-defintition of the method of parent
+    "scene event handler"
+    if arg["Type"] == "SoKeyboardEvent" and arg["State"]=='DOWN':
+      # key detection
+      if arg["Key"] == "ESCAPE":
+          self.form.close()
+          self.finish()
+    elif arg["Type"] == "SoLocation2Event":
+      # mouse movement detection
+      self.point,ctrlPoint,info = DraftTools.getPoint(self,arg)
+    elif arg["Type"] == "SoMouseButtonEvent":
+      FreeCAD.activeDocument().openTransaction('point-to-point')
+      # mouse button detection
+      if (arg["State"] == "DOWN") and (arg["Button"] == "BUTTON1"):
+        if (arg["Position"] == self.pos):
+          self.finish(False,cont=True)
+        else:
+          if (not self.node) and (not self.support):
+            DraftTools.getSupport(arg)
+            self.point,ctrlPoint,info = DraftTools.getPoint(self,arg)
+          if self.point:
+            self.ui.redraw()
+            self.pos = arg["Position"]
+            try:
+              print(arg)
+              print(self.point)
+              print(ctrlPoint)
+              print(info)
+            except:
+              pass
+            if not self.start:
+              self.start=self.point
+            else:
+              if self.lastPipe:
+                prev=self.lastPipe
+              else:
+                prev=None
+              d=self.form.pipeDictList[self.form.sizeList.currentRow()]
+              v=self.point-self.start
+              propList=[d['PSize'],float(pq(d['OD'])),float(pq(d['thk'])),float(v.Length)]
+              self.lastPipe=pipeCmd.makePipe(propList,self.start,v)
+              if self.form.combo.currentText()!='<none>':
+                pipeCmd.moveToPyLi(self.lastPipe,self.form.combo.currentText())
+              self.start=self.point
+              FreeCAD.ActiveDocument.recompute()
+              if prev:
+                c=pipeCmd.makeElbowBetweenThings(prev,self.lastPipe,[d['PSize'],float(pq(d['OD'])),float(pq(d['thk'])),90,float(pq(d['OD'])*.75)])
+                if c and self.form.combo.currentText()!='<none>':
+                  pipeCmd.moveToPyLi(c,self.form.combo.currentText())
+                FreeCAD.ActiveDocument.recompute()
+            if self.form.cb1.isChecked():
+              rot=FreeCAD.DraftWorkingPlane.getPlacement().Rotation
+              normal=rot.multVec(FreeCAD.Vector(0,0,1))
+              FreeCAD.DraftWorkingPlane.alignToPointAndAxis(self.point,normal)
+              FreeCADGui.Snapper.setGrid()
+            if (not self.isWire and len(self.node) == 2):
+              self.finish(False,cont=True)
+            if (len(self.node) > 2):
+              if ((self.point-self.node[0]).Length < Draft.tolerance()):
+                self.undolast()
+                self.finish(True,cont=True)
+      FreeCAD.activeDocument().commitTransaction()

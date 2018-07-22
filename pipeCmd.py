@@ -187,12 +187,16 @@ def makeElbowBetweenThings(thing1=None, thing2=None, propList=None):
     thing1,thing2=frameCmd.edges()[:2]
   P=frameCmd.intersectionCLines(thing1,thing2)
   directions=list()
-  for thing in [thing1,thing2]:
-    if frameCmd.beams([thing]):
-      directions.append(rounded((frameCmd.beamAx(thing).multiply(thing.Height/2)+thing.Placement.Base)-P))
-    elif hasattr(thing,'ShapeType') and thing.ShapeType=='Edge':
-      directions.append(rounded(thing.CenterOfMass-P))
+  try:
+    for thing in [thing1,thing2]:
+      if frameCmd.beams([thing]):
+        directions.append(rounded((frameCmd.beamAx(thing).multiply(thing.Height/2)+thing.Placement.Base)-P))
+      elif hasattr(thing,'ShapeType') and thing.ShapeType=='Edge':
+        directions.append(rounded(thing.CenterOfMass-P))
+  except:
+    return None
   ang=180-degrees(directions[0].getAngle(directions[1]))
+  if ang==0 or ang==180: return None
   if not propList:
     propList=["DN50",60.3,3.91,ang,45.24]
   else:
