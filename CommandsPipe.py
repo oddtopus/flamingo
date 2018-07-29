@@ -229,6 +229,17 @@ class point2point:
   def GetResources(self):
     return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","point2point.svg"),'MenuText':'draw a tube point-to-point','ToolTip':'Click on subsequent points.'}
     
+class insertAny:
+  '''
+  Dialog to insert any object saved as .STEP, .IGES or .BREP in folder ../Mod/flamingo/shapes or subfolders.
+  '''
+  def Activated(self):
+    import anyShape
+    FreeCADGui.Control.showDialog(anyShape.shapeDialog()) 
+    
+  def GetResources(self):
+    return{'MenuText':'Insert any shape','ToolTip':'Insert a STEP, IGES or BREP'}
+
 #---------------------------------------------------------------------------
 # Adds the commands to the FreeCAD command manager
 #---------------------------------------------------------------------------
@@ -251,3 +262,4 @@ addCommand('extend1intersection',extend1intersection())
 addCommand('laydown',laydown())
 addCommand('raiseup',raiseup())
 addCommand('point2point',point2point())
+addCommand('insertAny',insertAny())

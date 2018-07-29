@@ -9,6 +9,7 @@ metaObjs=['PypeLine','PypeBranch']
 
 import FreeCAD, FreeCADGui, Part, frameCmd, pipeCmd
 from copy import copy
+from os.path import join, dirname, abspath
 
 ################ CLASSES ###########################
 
@@ -636,3 +637,4 @@ class PypeBranch2(pypeType): # use AttachExtensionPython
     if hasattr(fp,'Curves'):
       for name in fp.Curves: FreeCAD.ActiveDocument.removeObject(name)
       fp.Curves=[]
+

@@ -1,0 +1,3 @@
+name;fileName;DN;PN;Kv;ports
+"ball valve 1/2""";ballDN15.stp;DN15;PN10;10;0:0:0/0:0:69
+"ball valve 3/4""";ballDN20.step;DN20;PN10;15;0:0:0/0:0:77
