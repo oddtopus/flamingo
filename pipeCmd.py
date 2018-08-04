@@ -474,41 +474,41 @@ def alignTheTube():
   except:
     FreeCAD.Console.PrintError("Select at least one object.\n")
     return None
-  if hasattr(t2,'PType'): # align with placeThePype
-    try:
-      objex=FreeCADGui.Selection.getSelectionEx()[-1]
-      if type(objex.SubObjects[0])==Part.Vertex:
-        pick=objex.SubObjects[0].Point
-      else:
-        pick=objex.SubObjects[0].CenterOfMass
-        print(nearestPort(t2, pick)[0]) #debug
-      placeThePype(t2, nearestPort(t2, pick)[0])
-    except:
-      placeThePype(t2)
-  else: # mate the curved edges
-    d1,d2=frameCmd.edges()[:2]
-    if d1.curvatureAt(0)!=0 and d2.curvatureAt(0)!=0:
-      n1=d1.tangentAt(0).cross(d1.normalAt(0))
-      n2=d2.tangentAt(0).cross(d2.normalAt(0))
-    else: 
-      FreeCAD.Console.PrintError("Select 2 curved edges.\n")
-      return None
-    rot=FreeCAD.Rotation(n2,n1)
-    t2.Placement.Rotation=rot.multiply(t2.Placement.Rotation)
-    #traslazione centri di curvatura
-    d1,d2=frameCmd.edges() #redo selection to get new positions
-    dist=d1.centerOfCurvatureAt(0)-d2.centerOfCurvatureAt(0)
-    t2.Placement.move(dist)
-    #verifica posizione relativa
-    try:
-      com1,com2=[t.Shape.Solids[0].CenterOfMass for t in [t1,t2]]
-      if isElbow(t2):
-        pass
-      elif (com1-d1.centerOfCurvatureAt(0)).dot(com2-d1.centerOfCurvatureAt(0))>0:
-        reverseTheTube(FreeCADGui.Selection.getSelectionEx()[:2][1])
-    except: 
+  #if hasattr(t2,'PType'): # align with placeThePype
+    #try:
+      #objex=FreeCADGui.Selection.getSelectionEx()[-1]
+      #if type(objex.SubObjects[0])==Part.Vertex:
+        #pick=objex.SubObjects[0].Point
+      #else:
+        #pick=objex.SubObjects[0].CenterOfMass
+        #print(nearestPort(t2, pick)[0]) #debug
+      #placeThePype(t2, nearestPort(t2, pick)[0])
+    #except:
+      #placeThePype(t2)
+  #else: # mate the curved edges
+  d1,d2=frameCmd.edges()[:2]
+  if d1.curvatureAt(0)!=0 and d2.curvatureAt(0)!=0:
+    n1=d1.tangentAt(0).cross(d1.normalAt(0))
+    n2=d2.tangentAt(0).cross(d2.normalAt(0))
+  else: 
+    FreeCAD.Console.PrintError("Select 2 curved edges.\n")
+    return None
+  rot=FreeCAD.Rotation(n2,n1)
+  t2.Placement.Rotation=rot.multiply(t2.Placement.Rotation)
+  #traslazione centri di curvatura
+  d1,d2=frameCmd.edges() #redo selection to get new positions
+  dist=d1.centerOfCurvatureAt(0)-d2.centerOfCurvatureAt(0)
+  t2.Placement.move(dist)
+  #verifica posizione relativa
+  try:
+    com1,com2=[t.Shape.Solids[0].CenterOfMass for t in [t1,t2]]
+    if isElbow(t2):
       pass
-    
+    elif (com1-d1.centerOfCurvatureAt(0)).dot(com2-d1.centerOfCurvatureAt(0))>0:
+      reverseTheTube(FreeCADGui.Selection.getSelectionEx()[:2][1])
+  except: 
+    pass
+  
 def rotateTheTubeAx(obj=None,vShapeRef=None, angle=45):
   '''
   rotateTheTubeAx(obj=None,vShapeRef=None,angle=45)

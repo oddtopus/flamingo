@@ -1208,7 +1208,6 @@ class breakForm(QDialog):
 import pipeObservers as po
 
 class joinForm(prototypeDialog):
-  
   def __init__(self):
     super(joinForm,self).__init__('joinPypes.ui')
     self.form.btn1.clicked.connect(self.reset)
@@ -1349,24 +1348,29 @@ class point2pointPipe(DraftTools.Line):
   '''    
   def __init__(self, wireFlag=True):
     DraftTools.Line.__init__(self,wireFlag)
-    self.form=insertPipeForm()
-    self.form.btn1.hide()
-    self.form.btn3.hide()
-    self.form.edit1.hide()
-    self.form.sli.hide()
-    self.form.cb1=QCheckBox(' Move WP on click ')
-    self.form.cb1.setChecked(True)
-    self.form.firstCol.layout().addWidget(self.form.cb1)
+    self.pform=insertPipeForm()
+    self.pform.btn1.setText('Reset')
+    self.pform.btn1.clicked.disconnect(self.pform.insert)
+    self.pform.btn1.clicked.connect(self.rset)
+    self.pform.btn3.hide()
+    self.pform.edit1.hide()
+    self.pform.sli.hide()
+    self.pform.cb1=QCheckBox(' Move WP on click ')
+    self.pform.cb1.setChecked(True)
+    self.pform.firstCol.layout().addWidget(self.pform.cb1)
     self.start=None
     self.lastPipe=None
     self.Activated()
+  def rset(self):
+    self.start=None
+    self.lastPipe=None
   def action(self,arg): #re-defintition of the method of parent
     "scene event handler"
     if arg["Type"] == "SoKeyboardEvent" and arg["State"]=='DOWN':
       # key detection
       if arg["Key"] == "ESCAPE":
-          self.form.close()
-          self.finish()
+        self.pform.close()
+        self.finish()
     elif arg["Type"] == "SoLocation2Event":
       # mouse movement detection
       self.point,ctrlPoint,info = DraftTools.getPoint(self,arg)
@@ -1397,20 +1401,20 @@ class point2pointPipe(DraftTools.Line):
                 prev=self.lastPipe
               else:
                 prev=None
-              d=self.form.pipeDictList[self.form.sizeList.currentRow()]
+              d=self.pform.pipeDictList[self.pform.sizeList.currentRow()]
               v=self.point-self.start
               propList=[d['PSize'],float(pq(d['OD'])),float(pq(d['thk'])),float(v.Length)]
               self.lastPipe=pipeCmd.makePipe(propList,self.start,v)
-              if self.form.combo.currentText()!='<none>':
-                pipeCmd.moveToPyLi(self.lastPipe,self.form.combo.currentText())
+              if self.pform.combo.currentText()!='<none>':
+                pipeCmd.moveToPyLi(self.lastPipe,self.pform.combo.currentText())
               self.start=self.point
               FreeCAD.ActiveDocument.recompute()
               if prev:
                 c=pipeCmd.makeElbowBetweenThings(prev,self.lastPipe,[d['PSize'],float(pq(d['OD'])),float(pq(d['thk'])),90,float(pq(d['OD'])*.75)])
-                if c and self.form.combo.currentText()!='<none>':
-                  pipeCmd.moveToPyLi(c,self.form.combo.currentText())
+                if c and self.pform.combo.currentText()!='<none>':
+                  pipeCmd.moveToPyLi(c,self.pform.combo.currentText())
                 FreeCAD.ActiveDocument.recompute()
-            if self.form.cb1.isChecked():
+            if self.pform.cb1.isChecked():
               rot=FreeCAD.DraftWorkingPlane.getPlacement().Rotation
               normal=rot.multVec(FreeCAD.Vector(0,0,1))
               FreeCAD.DraftWorkingPlane.alignToPointAndAxis(self.point,normal)
@@ -1422,3 +1426,6 @@ class point2pointPipe(DraftTools.Line):
                 self.undolast()
                 self.finish(True,cont=True)
       FreeCAD.activeDocument().commitTransaction()
+  #def finish(self, closed=False, cont=False):
+    #self.pform.close()
+    #super(point2pointPipe,self).finish(closed,cont)
