@@ -79,11 +79,13 @@ class QueryForm(QtGui.QDialog): #QWidget):
         sub=shapes[0]
         if sub.ShapeType=='Edge':
           if sub.curvatureAt(0)==0:
-            self.labSubObj.setText(sub.ShapeType+': L = %.1f mm' %sub.Length)
+            self.labSubObj.setText(sub.ShapeType+':\tL = %.1f mm' %sub.Length)
           else:
-            self.labSubObj.setText(sub.ShapeType+': D = %.1f mm' %(2/sub.curvatureAt(0)))
+            x,y,z=sub.centerOfCurvatureAt(0)
+            d=2/sub.curvatureAt(0)
+            self.labSubObj.setText(sub.ShapeType+':\tD = %.1f mm\n\tC = %.1f,%.1f,%.1f' %(d,x,y,z))
         elif sub.ShapeType=='Face':
-          self.labSubObj.setText(sub.ShapeType+': A = %.1f mm2' %sub.Area)
+          self.labSubObj.setText(sub.ShapeType+':\tA = %.1f mm2' %sub.Area)
         elif sub.ShapeType=='Vertex':
           self.labSubObj.setText(sub.ShapeType+': pos = (%(x).1f,%(y).1f,%(z).1f)' %{'x':sub.X,'y':sub.Y,'z':sub.Z})
       elif len(shapes)>1:
@@ -92,7 +94,7 @@ class QueryForm(QtGui.QDialog): #QWidget):
         self.labSubObj.setText(' ')
       if len(frameCmd.beams())==1:
         b=frameCmd.beams()[0]
-        self.labBeam.setText(b.Label+": L=%.2f"%(b.Height))
+        self.labBeam.setText(b.Label+":\tL=%.2f"%(b.Height))
         self.labProfile.setText("Profile: "+b.Profile)
       elif len(frameCmd.beams())>1:
         b1,b2=frameCmd.beams()[:2]

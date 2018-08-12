@@ -60,7 +60,7 @@ class dpCalcDialog:
     fluids=['water','air','methane','ethane','propane','butane','CCCCCC','CCCCCCCC','vinegar','acetone','HF','HCl']
     self.form.comboFluid.addItems(fluids)
     self.form.comboFluid.addItems(['<custom fluid>']) 
-    self .form.comboWhat.addItems([o.Label for o in FreeCAD.ActiveDocument.Objects if hasattr(o,'PType') and o.PType=='PypeBranch' ])
+    self .form.comboWhat.addItems([o.Label for o in FreeCAD.ActiveDocument.Objects if hasattr(o,'PType') and (o.PType=='PypeBranch' or o.PType=='PypeLine')])
     self.form.editFlow.setValidator(QDoubleValidator())
     self.form.editRough.setValidator(QDoubleValidator())
     self.form.editPressure.setValidator(QDoubleValidator())
@@ -90,6 +90,9 @@ class dpCalcDialog:
       o=FreeCAD.ActiveDocument.getObjectsByLabel(self.form.comboWhat.currentText())[0]
       if hasattr(o,'PType') and o.PType=='PypeBranch':
         elements=[FreeCAD.ActiveDocument.getObject(name) for name in o.Tubes+o.Curves]
+      elif hasattr(o,'PType') and o.PType=='PypeLine':
+        group=FreeCAD.ActiveDocument.getObjectsByLabel(o.Label+'_pieces')[0]
+        elements=group.OutList
     self.form.editResults.clear()
     for o in elements:
       loss=0

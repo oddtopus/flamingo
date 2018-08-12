@@ -1340,7 +1340,7 @@ class insertValveForm(protopypeForm):
         obj.Kv=float(d['Kv'])
         FreeCAD.activeDocument().recompute()
 
-import DraftTools,Draft,qForms
+import DraftTools,Draft,qForms, polarUtilsCmd
 from PySide.QtGui import *
 class point2pointPipe(DraftTools.Line):
   '''
@@ -1348,6 +1348,7 @@ class point2pointPipe(DraftTools.Line):
   '''    
   def __init__(self, wireFlag=True):
     DraftTools.Line.__init__(self,wireFlag)
+    self.Activated()
     self.pform=insertPipeForm()
     self.pform.btn1.setText('Reset')
     self.pform.btn1.clicked.disconnect(self.pform.insert)
@@ -1358,9 +1359,31 @@ class point2pointPipe(DraftTools.Line):
     self.pform.cb1=QCheckBox(' Move WP on click ')
     self.pform.cb1.setChecked(True)
     self.pform.firstCol.layout().addWidget(self.pform.cb1)
+    dialogPath=join(dirname(abspath(__file__)),"dialogs","hackedline.ui")
+    self.hackedUI=FreeCADGui.PySideUic.loadUi(dialogPath)
+    self.hackedUI.btnRot.clicked.connect(self.rotateWP)
+    self.hackedUI.btnOff.clicked.connect(self.offsetWP)
+    self.hackedUI.btnXY.clicked.connect(lambda: self.alignWP(FreeCAD.Vector(0,0,1)))
+    self.hackedUI.btnXZ.clicked.connect(lambda: self.alignWP(FreeCAD.Vector(0,1,0)))
+    self.hackedUI.btnYZ.clicked.connect(lambda: self.alignWP(FreeCAD.Vector(1,0,0)))
+    self.ui.layout.addWidget(self.hackedUI)
     self.start=None
     self.lastPipe=None
-    self.Activated()
+    self.nodes=list()
+  def alignWP(self, norm):
+      FreeCAD.DraftWorkingPlane.alignToPointAndAxis(self.nodes[-1],norm)
+      FreeCADGui.Snapper.setGrid()
+  def offsetWP(self):
+    if hasattr(FreeCAD,'DraftWorkingPlane') and hasattr(FreeCADGui,'Snapper'):
+      s=FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/Draft").GetInt("gridSize")
+      sc=[float(x*s) for x in [1,1,.2]]
+      varrow =polarUtilsCmd.arrow(FreeCAD.DraftWorkingPlane.getPlacement(),scale=sc,offset=s)
+      offset=QInputDialog.getInteger(None,'Offset Work Plane','Offset: ')
+      if offset[1]:
+        polarUtilsCmd.offsetWP(offset[0])
+      FreeCADGui.ActiveDocument.ActiveView.getSceneGraph().removeChild(varrow.node)
+  def rotateWP(self):
+    self.form=qForms.rotWPForm()
   def rset(self):
     self.start=None
     self.lastPipe=None
@@ -1387,13 +1410,14 @@ class point2pointPipe(DraftTools.Line):
           if self.point:
             self.ui.redraw()
             self.pos = arg["Position"]
-            try:
-              print(arg)
-              print(self.point)
-              print(ctrlPoint)
-              print(info)
-            except:
-              pass
+            self.nodes.append(self.point)
+            #try:
+              #print(arg)
+              #print(self.point)
+              #print(ctrlPoint)
+              #print(info)
+            #except:
+              #pass
             if not self.start:
               self.start=self.point
             else:
@@ -1410,7 +1434,12 @@ class point2pointPipe(DraftTools.Line):
               self.start=self.point
               FreeCAD.ActiveDocument.recompute()
               if prev:
-                c=pipeCmd.makeElbowBetweenThings(prev,self.lastPipe,[d['PSize'],float(pq(d['OD'])),float(pq(d['thk'])),90,float(pq(d['OD'])*.75)])
+                c= pipeCmd.makeElbowBetweenThings(prev,self.lastPipe, [d['PSize'],float(pq(d['OD'])),float(pq(d['thk'])),90,float(pq(d['OD'])*.75)])
+                #c= pipeCmd.makeElbow([d['PSize'],float(pq(d['OD'])),float(pq(d['thk'])),90,float(pq(d['OD'])*.75)])
+                #pipeCmd.placeTheElbow(c,pipeCmd.portsDir(prev)[1], pipeCmd.portsDir(self.lastPipe)[1], pipeCmd.portsPos(self.lastPipe)[0])
+                #portA, portB = pipeCmd.portsPos(c)
+                #frameCmd.extendTheBeam(prev,portA)
+                #frameCmd.extendTheBeam(self.lastPipe,portB)
                 if c and self.pform.combo.currentText()!='<none>':
                   pipeCmd.moveToPyLi(c,self.pform.combo.currentText())
                 FreeCAD.ActiveDocument.recompute()
