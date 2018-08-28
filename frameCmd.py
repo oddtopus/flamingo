@@ -407,3 +407,12 @@ def makeFrameLine(base=None,beam=None,name="Telaio"):
   if beam:
     a.Beam=beam
   return a
+
+def makeFrameBranch(base=None,beam=None,name="Travatura"):
+  '''add a FrameBranch object
+  '''
+  a=FreeCAD.ActiveDocument.addObject("Part::FeaturePython",name)
+  frameFeatures.FrameBranch(a)
+  #a.ViewObject.Proxy=0
+  frameFeatures.ViewProviderFrameBranch(a.ViewObject)
+  return a

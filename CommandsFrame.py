@@ -333,6 +333,22 @@ class FrameLineManager:
   def GetResources(self):
     return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","frameline.svg"),'MenuText':'FrameLine Manager','ToolTip':'Open FrameLine Manager'}
 
+class FrameBranchManager:
+  '''
+  Dialog to create and change properties of objects FrameBranch
+  '''
+  def Activated(self):
+    if FreeCAD.ActiveDocument:
+      FreeCAD.activeDocument().openTransaction('Insert FrameBranch')
+      import frameCmd
+      t=frameCmd.makeFrameBranch()
+      t.Proxy.getBeams()
+      FreeCAD.activeDocument().recompute()
+      FreeCAD.activeDocument().commitTransaction()
+
+  def GetResources(self):
+    return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","framebranch.svg"),'MenuText':'FrameBranch (in progress)','ToolTip':'*** IN PROGRESS ***'}
+
 class insertSection:
   '''
   Dialog to create the set of profiles to be used in the model for
@@ -378,3 +394,4 @@ addCommand('rotJoin',rotJoin())
 addCommand('insertPath',insertPath())
 addCommand('FrameLineManager',FrameLineManager())
 addCommand('insertSection',insertSection())
+addCommand('FrameBranchManager',FrameBranchManager())

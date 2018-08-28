@@ -5,8 +5,7 @@ __author__="oddtopus"
 __url__="github.com/oddtopus/flamingo"
 __license__="LGPL 3"
 
-import FreeCAD, FreeCADGui, Part, csv
-import ArchProfile
+import FreeCAD, FreeCADGui, Part, csv, frameCmd, ArchProfile
 from Arch import makeStructure
 from PySide.QtCore import *
 from PySide.QtGui import *
@@ -345,4 +344,80 @@ class FrameLine(object):
   def execute(self, fp):
     return None
 
-    
+class FrameBranch(object):
+  def __init__(self,obj):
+    obj.Proxy=self
+    obj.addProperty("App::PropertyStringList","Beams","FrameBranch","The beams names")
+    obj.addProperty("App::PropertyLink","Base","FrameBranch","The path.")
+    for base in FreeCADGui.Selection.getSelection():
+      isWire=hasattr(base,'Shape') and type(base.Shape)==Part.Wire
+      isSketch=hasattr(base,'TypeId') and base.TypeId=='Sketcher::SketchObject'
+      if isWire or isSketch:
+        obj.Base=base
+        break
+    self.objName=obj.Name
+  def execute(self,obj):
+    if hasattr(obj,'Beams'):
+      for i in range(len(obj.Beams)):
+        name=obj.Beams[i]
+        beam=FreeCAD.ActiveDocument.getObject(name)
+        beam.Height=obj.Base.Shape.Edges[i].Length
+        offset=FreeCAD.Vector() #tbd
+        spin=FreeCAD.Rotation() #tbd
+        beam.AttachmentOffset = FreeCAD.Placement(offset, spin)
+  def getBeams(self):
+    beams=frameCmd.beams()
+    obj=FreeCAD.ActiveDocument.getObject(self.objName)
+    beamsList=list()
+    sketch=obj.Base
+    for i in range(len(beams)):
+      beam=beams[i]
+      if not hasattr(beam,'Support'):
+        beam.addExtension("Part::AttachExtensionPython",beam)
+      if i<len(sketch.Shape.Edges):
+        beam.Support=[(sketch,'Edge'+str(i+1))]
+        beam.MapMode='NormalToEdge'
+        beam.MapReversed=True
+        beamsList.append(str(beam.Name))
+    obj.Beams=beamsList
+    FreeCAD.activeDocument().recompute()
+  def normBeams(self):
+    obj=FreeCAD.ActiveDocument.getObject(self.objName)
+    i=0
+    if hasattr(obj.Base,'TypeId') and obj.Base.TypeId=='Sketcher::SketchObject':
+      for bName in obj.Beams:
+        print(bName)
+        b=FreeCAD.ActiveDocument.getObject(bName)
+        Zs=obj.Base.Placement.multVec(FreeCAD.Vector(0,0,1))
+        Xb=frameCmd.beamAx(b,FreeCAD.Vector(1,0,0))
+        rot=FreeCAD.Rotation(Xb,Zs)
+        b.AttachmentOffset.Rotation=rot
+        FreeCAD.ActiveDocument.recompute()
+        v=obj.Base.Shape.Edges[i].tangentAt(0)
+        #if v.dot(frameCmd.beamAx(b))<0:
+          #b.MapReversed=b.MapReversed^True
+          #FreeCAD.ActiveDocument.recompute()
+
+class ViewProviderFrameBranch:
+  def __init__(self,vobj):
+    vobj.Proxy = self
+  def getIcon(self):
+    from os.path import join, dirname, abspath
+    return join(dirname(abspath(__file__)),"icons","framebranch.svg")
+  def attach(self, vobj):
+    self.ViewObject = vobj
+    self.Object = vobj.Object
+  def setEdit(self,vobj,mode):
+    return False
+  def unsetEdit(self,vobj,mode):
+    return
+  def __getstate__(self):
+    return None
+  def __setstate__(self,state):
+    return None
+  def claimChildren(self):
+    children=[FreeCAD.ActiveDocument.getObject(name) for name in self.Object.Beams]
+    return children 
+  def onDelete(self, feature, subelements): # subelements is a tuple of strings
+    return True
+
