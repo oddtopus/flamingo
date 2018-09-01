@@ -396,23 +396,23 @@ def rotjoinTheBeam(beam=None,e1=None,e2=None):
   beam.Placement.Rotation=rot.multiply(beam.Placement.Rotation)
   beam.Placement.move(rounded(dist+rot.multVec(delta)))
 
-def makeFrameLine(base=None,beam=None,name="Telaio"):
-  '''add a FrameLine object
-  '''
-  a=FreeCAD.ActiveDocument.addObject("Part::FeaturePython",name)
-  frameFeatures.FrameLine(a)
-  a.ViewObject.Proxy=0
-  if base:
-    a.Base=base
-  if beam:
-    a.Beam=beam
-  return a
-
-def makeFrameBranch(base=None,beam=None,name="Travatura"):
-  '''add a FrameBranch object
-  '''
-  a=FreeCAD.ActiveDocument.addObject("Part::FeaturePython",name)
-  frameFeatures.FrameBranch(a)
+#def makeFrameLine(base=None,beam=None,name="Telaio"): #OBSOLETE
+  #'''add a FrameLine object
+  #'''
+  #a=FreeCAD.ActiveDocument.addObject("Part::FeaturePython",name)
+  #frameFeatures.FrameLine(a)
   #a.ViewObject.Proxy=0
-  frameFeatures.ViewProviderFrameBranch(a.ViewObject)
-  return a
+  #if base:
+    #a.Base=base
+  #if beam:
+    #a.Beam=beam
+  #return a
+
+#def makeFrameBranch(base=None,profile=None,name="Travatura"): #OBSOLETE
+  #'''add a FrameBranch object
+  #'''
+  #a=FreeCAD.ActiveDocument.addObject("Part::FeaturePython",name)
+  #frameFeatures.FrameBranch(a)
+  ##a.ViewObject.Proxy=0
+  #frameFeatures.ViewProviderFrameBranch(a.ViewObject)
+  #return a

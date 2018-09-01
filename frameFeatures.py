@@ -133,14 +133,14 @@ class frameLineForm(QDialog):
       self.current=None
       FreeCAD.Console.PrintMessage('current FrameLine = None\n')
   def insert(self):
-    from frameCmd import makeFrameLine, edges, placeTheBeam
+    from frameCmd import edges, placeTheBeam
     from pipeCmd import moveToPyLi
     if self.combo.currentText()=='<new>':
-      n=self.edit1.text()
-      if n:
-        a=makeFrameLine(name=n)
-      else:
-        a=makeFrameLine()
+      name=self.edit1.text()
+      if not name: name='Telaio'
+      a=FreeCAD.ActiveDocument.addObject("Part::FeaturePython",name)
+      FrameLine(a)
+      a.ViewObject.Proxy=0
       self.combo.addItem(a.Label)
       self.combo.setCurrentIndex(self.combo.count()-1)
       if self.sectList.selectedItems():
@@ -277,6 +277,79 @@ class insertSectForm(QWidget):
       group.addObject(s)
     FreeCAD.activeDocument().recompute()
 
+from frameForms import prototypeDialog
+
+class frameBranchForm(prototypeDialog):
+  'dialog for framebranches'
+  def __init__(self):
+    super(frameBranchForm,self).__init__('fbranch.ui')
+    self.sectDictList=[] # list (sizes) of properties (dictionaries) of the current type of section
+    tables=listdir(join(dirname(abspath(__file__)),"tables"))
+    fileList=[name for name in tables if name.startswith("Section")]
+    RatingsList=[s.lstrip("Section_").rstrip(".csv") for s in fileList]
+    self.form.comboRatings.addItems(RatingsList)
+    self.form.comboRatings.currentIndexChanged.connect(self.fillSizes)
+    self.form.btnRemove.clicked.connect(self.removeBeams)
+    self.form.btnAdd.clicked.connect(self.addBeams)
+    self.form.btnProfile.clicked.connect(self.changeProfile)
+    self.fillSizes()
+    self.Branches=[o.Name for o in FreeCAD.ActiveDocument.Objects if hasattr(o,'FType') and o.FType=='FrameBranch']
+    if self.Branches:
+      self.form.comboActiveFB.addItems(self.Branches)
+      self.activeFB=FreeCAD.ActiveDocument.getObject(self.form.comboActiveFB.currentText())
+    else:
+      self.activeFB=None
+  def fillSizes(self):
+    self.SType=self.form.comboRatings.currentText()
+    self.form.listSizes.clear()
+    fileName = "Section_"+self.SType+".csv"
+    f=open(join(dirname(abspath(__file__)),"tables",fileName),'r')
+    reader=csv.DictReader(f,delimiter=';')
+    self.sectDictList=[x for x in reader]
+    f.close()
+    for row in self.sectDictList:
+      s=row['SSize']
+      self.form.listSizes.addItem(s)
+  def accept(self):
+    if FreeCAD.ActiveDocument:
+      # GET BASE
+      bases=[b for b in FreeCADGui.Selection.getSelection() if hasattr(b,'Shape')]
+      if bases and self.form.listSizes.selectedItems():
+        FreeCAD.activeDocument().openTransaction('Insert FrameBranch')
+        prop=self.sectDictList[self.form.listSizes.currentRow()]
+        if prop['stype']=='C':
+          from Draft import makeCircle
+          profile=makeCircle(float(prop['H']))
+        else:
+          profile=ArchProfile.makeProfile([0,'SECTION',prop['SSize']+'-000',prop['stype'],float(prop['W']),float(prop['H']),float(prop['ta']),float(prop['tf'])])
+        #MAKE FRAMEBRANCH
+        if self.form.editName.text():
+          name=self.form.editName.text()
+        else:
+          name='Travatura'
+        a=FreeCAD.ActiveDocument.addObject("Part::FeaturePython",name)
+        FrameBranch(a,bases[0],profile)
+        ViewProviderFrameBranch(a.ViewObject)
+        FreeCAD.activeDocument().commitTransaction()
+        FreeCAD.activeDocument().recompute()
+        FreeCAD.activeDocument().recompute()
+        self.Branches.append(a.Name)
+        self.form.comboActiveFB.addItem(self.Branches[-1])
+  def addBeams(self):
+    pass
+  def removeBeams(self):
+    beams=frameCmd.beams()
+    if self.form.comboActiveFB.currentText():
+      activeFB=FreeCAD.ActiveDocument.getObject(self.form.comboActiveFB.currentText())
+    else:
+      return
+    for beam in beams:
+      if beam.Name in activeFB.Beams:
+        i=activeFB.Beams.index(beam.Name)
+        print(i)
+        activeFB.Proxy.remove(i)
+  def changeProfile(self):
+    pass
     
 ################ CLASSES ###########################
 
@@ -321,7 +394,7 @@ class FrameLine(object):
         for p in profiles:
           FreeCAD.ActiveDocument.removeObject(p.Name)
   def update(self,fp,copyProfile=True):
-    import frameCmd, pipeCmd
+    import pipeCmd
     if hasattr(fp.Base,'Shape'):
       edges=fp.Base.Shape.Edges
       if not edges:
@@ -330,7 +403,6 @@ class FrameLine(object):
     group=FreeCAD.activeDocument().getObjectsByLabel(fp.Group)[0]
     if fp.Profile:
       FreeCAD.activeDocument().openTransaction('Update frameLine')
-      from Arch import makeStructure
       for e in edges:
         if copyProfile:
           p=FreeCAD.activeDocument().copyObject(fp.Profile,True)
@@ -345,64 +417,58 @@ class FrameLine(object):
     return None
 
 class FrameBranch(object):
-  def __init__(self,obj):
+  def __init__(self,obj, base=None, profile=None):
     obj.Proxy=self
-    obj.addProperty("App::PropertyStringList","Beams","FrameBranch","The beams names")
-    obj.addProperty("App::PropertyLink","Base","FrameBranch","The path.")
-    for base in FreeCADGui.Selection.getSelection():
-      isWire=hasattr(base,'Shape') and type(base.Shape)==Part.Wire
-      isSketch=hasattr(base,'TypeId') and base.TypeId=='Sketcher::SketchObject'
-      if isWire or isSketch:
-        obj.Base=base
-        break
+    # PROXY CLASS PROPERTIES
     self.objName=obj.Name
+    # FEATUREPYTHON OBJECT PROPERTIES
+    obj.addProperty("App::PropertyString","FType","FrameBranch","Type of frameFeature").FType='FrameBranch'
+    obj.addProperty("App::PropertyStringList","Beams","FrameBranch","The beams names")
+    obj.addProperty("App::PropertyLink","Base","FrameBranch","The path.").Base=base
+    obj.addProperty("App::PropertyLink","Profile","FrameBranch","The profile").Profile=profile
+    obj.addProperty("App::PropertyFloatList","tailsOffset","FrameBranch","The extension of the tail ends")
+    obj.addProperty("App::PropertyFloatList","headsOffset","FrameBranch","The extension of the head ends")
+    obj.addProperty("App::PropertyFloatList","spins","FrameBranch","The rotation of sections")
+    # DRAW THE FRAMEBRANCH
+    self.redraw(obj)
+  def remove(self,i):
+    obj=FreeCAD.ActiveDocument.getObject(self.objName)
+    FreeCAD.ActiveDocument.removeObject(obj.Beams[i])
+    b=[str(n) for n in obj.Beams]
+    b[i]=''
+    obj.Beams=b
   def execute(self,obj):
-    if hasattr(obj,'Beams'):
+    if hasattr(obj,'Base') and obj.Base and hasattr(obj,'Beams'):
       for i in range(len(obj.Beams)):
-        name=obj.Beams[i]
-        beam=FreeCAD.ActiveDocument.getObject(name)
-        beam.Height=obj.Base.Shape.Edges[i].Length
-        offset=FreeCAD.Vector() #tbd
-        spin=FreeCAD.Rotation() #tbd
-        beam.AttachmentOffset = FreeCAD.Placement(offset, spin)
-  def getBeams(self):
-    beams=frameCmd.beams()
-    obj=FreeCAD.ActiveDocument.getObject(self.objName)
-    beamsList=list()
-    sketch=obj.Base
-    for i in range(len(beams)):
-      beam=beams[i]
-      if not hasattr(beam,'Support'):
-        beam.addExtension("Part::AttachExtensionPython",beam)
-      if i<len(sketch.Shape.Edges):
-        beam.Support=[(sketch,'Edge'+str(i+1))]
-        beam.MapMode='NormalToEdge'
-        beam.MapReversed=True
-        beamsList.append(str(beam.Name))
-    obj.Beams=beamsList
-    FreeCAD.activeDocument().recompute()
-  def normBeams(self):
-    obj=FreeCAD.ActiveDocument.getObject(self.objName)
+        if obj.Beams[i]:
+          beam=FreeCAD.ActiveDocument.getObject(obj.Beams[i])
+          beam.Height=obj.Base.Shape.Edges[i].Length #tbd according offsetTails[i] and offsetHeads[i]
+          offset=FreeCAD.Vector() #tbd according offsetTails[i]
+          spin=FreeCAD.Rotation() #tbd according spins[i]
+          beam.AttachmentOffset = FreeCAD.Placement(offset, spin)
+  def redraw(self, obj):
+    # clear all
+    for o in obj.Beams: FreeCAD.ActiveDocument.removeObject(o)
+    # create new beams
     i=0
-    if hasattr(obj.Base,'TypeId') and obj.Base.TypeId=='Sketcher::SketchObject':
-      for bName in obj.Beams:
-        print(bName)
-        b=FreeCAD.ActiveDocument.getObject(bName)
-        Zs=obj.Base.Placement.multVec(FreeCAD.Vector(0,0,1))
-        Xb=frameCmd.beamAx(b,FreeCAD.Vector(1,0,0))
-        rot=FreeCAD.Rotation(Xb,Zs)
-        b.AttachmentOffset.Rotation=rot
-        FreeCAD.ActiveDocument.recompute()
-        v=obj.Base.Shape.Edges[i].tangentAt(0)
-        #if v.dot(frameCmd.beamAx(b))<0:
-          #b.MapReversed=b.MapReversed^True
-          #FreeCAD.ActiveDocument.recompute()
+    beamsList=[]
+    for e in obj.Base.Shape.Edges:
+      beam=makeStructure(obj.Profile)
+      beam.addExtension("Part::AttachExtensionPython",beam)
+      beam.Support=[(obj.Base,'Edge'+str(i+1))]
+      beam.MapMode='NormalToEdge'
+      beam.MapReversed=True
+      beamsList.append(str(beam.Name))
+      i+=1
+    obj.Beams=beamsList
+    obj.tailsOffset=[0]*i
+    obj.headsOffset=[0]*i
+    obj.spins=[0]*i
 
 class ViewProviderFrameBranch:
   def __init__(self,vobj):
     vobj.Proxy = self
   def getIcon(self):
-    from os.path import join, dirname, abspath
     return join(dirname(abspath(__file__)),"icons","framebranch.svg")
   def attach(self, vobj):
     self.ViewObject = vobj
@@ -420,4 +486,3 @@ class ViewProviderFrameBranch:
     return children 
   def onDelete(self, feature, subelements): # subelements is a tuple of strings
     return True
-

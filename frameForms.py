@@ -59,7 +59,9 @@ class prototypeDialog(object):
   'prototype for dialogs.ui with callback function'
   def __init__(self,dialog='anyFile.ui'):
     dialogPath=join(dirname(abspath(__file__)),"dialogs",dialog)
+    FreeCAD.Console.PrintMessage(dialogPath+"\n")
     self.form=FreeCADGui.PySideUic.loadUi(dialogPath)
+    FreeCAD.Console.PrintMessage(dialogPath+" loaded\n")
     if platform.startswith('win'):
       FreeCAD.Console.PrintWarning("No keyboard shortcuts.\n")
     else:

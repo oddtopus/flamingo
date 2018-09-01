@@ -339,12 +339,8 @@ class FrameBranchManager:
   '''
   def Activated(self):
     if FreeCAD.ActiveDocument:
-      FreeCAD.activeDocument().openTransaction('Insert FrameBranch')
-      import frameCmd
-      t=frameCmd.makeFrameBranch()
-      t.Proxy.getBeams()
-      FreeCAD.activeDocument().recompute()
-      FreeCAD.activeDocument().commitTransaction()
+      import frameFeatures
+      FreeCADGui.Control.showDialog(frameFeatures.frameBranchForm())
 
   def GetResources(self):
     return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","framebranch.svg"),'MenuText':'FrameBranch (in progress)','ToolTip':'*** IN PROGRESS ***'}
