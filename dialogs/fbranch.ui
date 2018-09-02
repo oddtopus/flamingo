@@ -33,7 +33,7 @@
    <item row="9" column="0" colspan="2">
     <widget class="QLabel" name="lab1">
      <property name="text">
-      <string>&lt;selected frameBranch&gt;</string>
+      <string>&lt;selection&gt;</string>
      </property>
      <property name="alignment">
       <set>Qt::AlignCenter</set>
@@ -43,7 +43,7 @@
    <item row="3" column="0">
     <widget class="QPushButton" name="btnAdd">
      <property name="text">
-      <string>Add</string>
+      <string>AddBeams</string>
      </property>
     </widget>
    </item>

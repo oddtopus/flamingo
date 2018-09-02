@@ -82,9 +82,9 @@ class prototypeDialog(object):
         self.reject()
     if arg['Type']=='SoMouseButtonEvent':
       CtrlAltShift=[arg['CtrlDown'],arg['AltDown'],arg['ShiftDown']]
-      if arg['Button']=='BUTTON1' and arg['State']=='UP': self.mouseActionB1(CtrlAltShift)
-      elif arg['Button']=='BUTTON2' and arg['State']=='UP': self.mouseActionB2(CtrlAltShift)
-      elif arg['Button']=='BUTTON3' and arg['State']=='UP': self.mouseActionB3(CtrlAltShift)
+      if arg['Button']=='BUTTON1' and arg['State']=='DOWN': self.mouseActionB1(CtrlAltShift)
+      elif arg['Button']=='BUTTON2' and arg['State']=='DOWN': self.mouseActionB2(CtrlAltShift)
+      elif arg['Button']=='BUTTON3' and arg['State']=='DOWN': self.mouseActionB3(CtrlAltShift)
   def selectAction(self):
     'MUST be redefined in the child class'
     pass

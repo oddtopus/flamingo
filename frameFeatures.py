@@ -25,6 +25,15 @@ def newProfile(prop):
     profile=ArchProfile.makeProfile([0,'SECTION',prop['SSize']+'-000',prop['stype'],float(prop['W']),float(prop['H']),float(prop['ta']),float(prop['tf'])])
   return profile
   
+def indexEdge(edge,listedges):
+  '''
+  Auxiliary function to find the index of an edge
+  '''
+  for e in listedges:
+    if e.isSame(edge):
+      return listedges.index(e)
+  return None
+  
 ################ DIALOGS #############################
 
 class frameLineForm(QDialog):
@@ -307,6 +316,8 @@ class frameBranchForm(prototypeDialog):
     self.form.btnRemove.clicked.connect(self.removeBeams)
     self.form.btnAdd.clicked.connect(self.addBeams)
     self.form.btnProfile.clicked.connect(self.changeProfile)
+    self.form.sliTail.valueChanged.connect(self.stretchTail)
+    self.form.sliHead.valueChanged.connect(self.stretchHead)
     self.fillSizes()
     self.Branches=[o.Name for o in FreeCAD.ActiveDocument.Objects if hasattr(o,'FType') and o.FType=='FrameBranch']
   def fillSizes(self):
@@ -341,7 +352,24 @@ class frameBranchForm(prototypeDialog):
         FreeCAD.activeDocument().recompute()
         self.Branches.append(a.Name)
   def addBeams(self):
-    pass
+    # find selected FB
+    try:
+      FB=self.findFB(baseName=FreeCADGui.Selection.getSelection()[0].Name)
+    except:
+      return
+    if FB:
+      beamsList=FB.Beams
+      for edge in frameCmd.edges():
+        i=indexEdge(edge,FB.Base.Shape.Edges)
+        beam=makeStructure(FB.Profile)
+        beam.addExtension("Part::AttachExtensionPython",beam)
+        beam.Support=[(FB.Base,'Edge'+str(i+1))]
+        beam.MapMode='NormalToEdge'
+        beam.MapReversed=True
+        beamsList[i]=str(beam.Name)
+      FB.Beams=beamsList
+      FreeCAD.ActiveDocument.recompute()
+      FreeCAD.ActiveDocument.recompute()
   def removeBeams(self):
     for beam in frameCmd.beams():
       FB=self.findFB(beamName=beam.Name)
@@ -398,12 +426,28 @@ class frameBranchForm(prototypeDialog):
         FB.tailsOffset=temp
     FreeCAD.ActiveDocument.recompute()
     FreeCAD.ActiveDocument.recompute()
+  def stretchTail(self):
+    beams=frameCmd.beams()
+    if beams:
+      L=float(beams[0].Height)/2
+      ext=L*(self.form.sliTail.value()/100.0)
+      self.form.editTail.setText("%.3f" %ext)
+      self.changeTailOffset()
+  def stretchHead(self):
+    beams=frameCmd.beams()
+    if beams:
+      L=float(beams[0].Height)/2
+      ext=L*(self.form.sliHead.value()/100.0)
+      self.form.editHead.setText("%.3f" %ext)
+      self.changeHeadOffset()
   def mouseActionB1(self, CtrlAltShift):
-    sel=FreeCADGui.Selection.getSelection()
-    if sel:
-      text=sel[0].Name
-    else:
-      text='<none>'
+    try: 
+      bn=frameCmd.beams()[0].Name
+      FB=self.findFB(beamName=bn)
+    except: 
+      return
+    if FB: text=FB.Name+": "+bn
+    else: text=bn
     self.form.lab1.setText(text)
     
 ################ CLASSES ###########################
@@ -485,12 +529,6 @@ class FrameBranch(object):
     obj.addProperty("App::PropertyFloatList","spins","FrameBranch","The rotation of sections")
     # DRAW THE FRAMEBRANCH
     self.redraw(obj)
-  def remove(self,i):
-    obj=FreeCAD.ActiveDocument.getObject(self.objName)
-    FreeCAD.ActiveDocument.removeObject(obj.Beams[i])
-    b=[str(n) for n in obj.Beams]
-    b[i]=''
-    obj.Beams=b
   def execute(self,obj):
     if hasattr(obj,'Base') and obj.Base and hasattr(obj,'Beams'):
       for i in range(len(obj.Beams)):
@@ -518,6 +556,29 @@ class FrameBranch(object):
     obj.tailsOffset=[0]*i
     obj.headsOffset=[0]*i
     obj.spins=[0]*i
+  def remove(self,i):
+    obj=FreeCAD.ActiveDocument.getObject(self.objName)
+    FreeCAD.ActiveDocument.removeObject(obj.Beams[i])
+    b=[str(n) for n in obj.Beams]
+    b[i]=''
+    obj.Beams=b
+  #def add(self,edge):
+    #obj=FreeCAD.ActiveDocument.getObject(self.objName)
+    #i=indexEdge(edge,obj.Base.Shape.Edges)
+    #if i is int():
+      #if not obj.Beams[i]:
+        #beamsList=obj.Beams
+        #beam=makeStructure(obj.Profile)
+        #beam.addExtension("Part::AttachExtensionPython",beam)
+        #beam.Support=[(obj.Base,'Edge'+str(i+1))]
+        #beam.MapMode='NormalToEdge'
+        #beam.MapReversed=True
+        #beamsList[i]=beam.Name
+        #obj.Beams=beamsList
+      #else:
+        #FreeCAD.Console.PrintMessage('That edge is already filled.\n')
+    #else:
+      #FreeCAD.Console.PrintMessage('That edge is not in Base of frameBranch\n')
 
 class ViewProviderFrameBranch:
   def __init__(self,vobj):
