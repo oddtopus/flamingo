@@ -7,11 +7,24 @@ __license__="LGPL 3"
 
 import FreeCAD, FreeCADGui, Part, csv, frameCmd, ArchProfile
 from Arch import makeStructure
+from Draft import makeCircle
 from PySide.QtCore import *
 from PySide.QtGui import *
 from os import listdir
 from os.path import join, dirname, abspath
 
+################ FUNCTIONS ###########################
+
+def newProfile(prop):
+  '''
+  Auxiliary function to create profiles
+  '''
+  if prop['stype']=='C':
+    profile=makeCircle(float(prop['H']))
+  else:
+    profile=ArchProfile.makeProfile([0,'SECTION',prop['SSize']+'-000',prop['stype'],float(prop['W']),float(prop['H']),float(prop['ta']),float(prop['tf'])])
+  return profile
+  
 ################ DIALOGS #############################
 
 class frameLineForm(QDialog):
@@ -133,7 +146,6 @@ class frameLineForm(QDialog):
       self.current=None
       FreeCAD.Console.PrintMessage('current FrameLine = None\n')
   def insert(self):
-    from frameCmd import edges, placeTheBeam
     from pipeCmd import moveToPyLi
     if self.combo.currentText()=='<new>':
       name=self.edit1.text()
@@ -147,12 +159,12 @@ class frameLineForm(QDialog):
         self.getProfile()
     elif self.sectList.selectedItems():
       prof= FreeCAD.ActiveDocument.getObjectsByLabel(self.sectList.selectedItems()[0].text())[0]
-      for e in edges():
+      for e in frameCmd.edges():
         if self.cb1.isChecked():
           s=makeStructure(FreeCAD.ActiveDocument.copyObject(prof))
         else:
           s=makeStructure(prof)
-        placeTheBeam(s,e)
+        frameCmd.placeTheBeam(s,e)
         moveToPyLi(s,self.current.Name)
       FreeCAD.ActiveDocument.recompute()
   def redraw(self):
@@ -183,9 +195,8 @@ class frameLineForm(QDialog):
         FreeCAD.Console.PrintWarning(self.current.Label+' base set to None.\n')
   def getProfile(self):
     if self.current:
-      from frameCmd import beams
-      if beams():
-        self.current.Profile=beams()[0].Base
+      if frameCmd.beams():
+        self.current.Profile=frameCmd.beams()[0].Base
       elif self.sectList.selectedItems():
         prof= FreeCAD.ActiveDocument.getObjectsByLabel(self.sectList.selectedItems()[0].text())[0]
         if prof.Shape.ShapeType=='Wire' and self.cb2.isChecked():
@@ -270,7 +281,6 @@ class insertSectForm(QWidget):
     if self.sizeList.selectedItems():
       prop=self.sectDictList[self.sizeList.currentRow()]
       if prop['stype']=='C':
-        from Draft import makeCircle
         s=makeCircle(float(prop['H']))
       else:
         s=ArchProfile.makeProfile([0,'SECTION',prop['SSize']+'-000',prop['stype'],float(prop['W']),float(prop['H']),float(prop['ta']),float(prop['tf'])])
@@ -284,6 +294,11 @@ class frameBranchForm(prototypeDialog):
   def __init__(self):
     super(frameBranchForm,self).__init__('fbranch.ui')
     self.sectDictList=[] # list (sizes) of properties (dictionaries) of the current type of section
+    self.form.editAngle.setValidator(QDoubleValidator())
+    self.form.editHead.setValidator(QDoubleValidator())
+    self.form.editHead.editingFinished.connect(self.changeHeadOffset)
+    self.form.editTail.setValidator(QDoubleValidator())
+    self.form.editTail.editingFinished.connect(self.changeTailOffset)
     tables=listdir(join(dirname(abspath(__file__)),"tables"))
     fileList=[name for name in tables if name.startswith("Section")]
     RatingsList=[s.lstrip("Section_").rstrip(".csv") for s in fileList]
@@ -294,11 +309,6 @@ class frameBranchForm(prototypeDialog):
     self.form.btnProfile.clicked.connect(self.changeProfile)
     self.fillSizes()
     self.Branches=[o.Name for o in FreeCAD.ActiveDocument.Objects if hasattr(o,'FType') and o.FType=='FrameBranch']
-    if self.Branches:
-      self.form.comboActiveFB.addItems(self.Branches)
-      self.activeFB=FreeCAD.ActiveDocument.getObject(self.form.comboActiveFB.currentText())
-    else:
-      self.activeFB=None
   def fillSizes(self):
     self.SType=self.form.comboRatings.currentText()
     self.form.listSizes.clear()
@@ -317,12 +327,8 @@ class frameBranchForm(prototypeDialog):
       if bases and self.form.listSizes.selectedItems():
         FreeCAD.activeDocument().openTransaction('Insert FrameBranch')
         prop=self.sectDictList[self.form.listSizes.currentRow()]
-        if prop['stype']=='C':
-          from Draft import makeCircle
-          profile=makeCircle(float(prop['H']))
-        else:
-          profile=ArchProfile.makeProfile([0,'SECTION',prop['SSize']+'-000',prop['stype'],float(prop['W']),float(prop['H']),float(prop['ta']),float(prop['tf'])])
-        #MAKE FRAMEBRANCH
+        profile=newProfile(prop)
+        # MAKE FRAMEBRANCH
         if self.form.editName.text():
           name=self.form.editName.text()
         else:
@@ -334,22 +340,71 @@ class frameBranchForm(prototypeDialog):
         FreeCAD.activeDocument().recompute()
         FreeCAD.activeDocument().recompute()
         self.Branches.append(a.Name)
-        self.form.comboActiveFB.addItem(self.Branches[-1])
   def addBeams(self):
     pass
   def removeBeams(self):
-    beams=frameCmd.beams()
-    if self.form.comboActiveFB.currentText():
-      activeFB=FreeCAD.ActiveDocument.getObject(self.form.comboActiveFB.currentText())
-    else:
-      return
-    for beam in beams:
-      if beam.Name in activeFB.Beams:
-        i=activeFB.Beams.index(beam.Name)
-        print(i)
-        activeFB.Proxy.remove(i)
+    for beam in frameCmd.beams():
+      FB=self.findFB(beamName=beam.Name)
+      if FB:
+        i=FB.Beams.index(beam.Name)
+        FB.Proxy.remove(i)
   def changeProfile(self):
-    pass
+    # find selected FB
+    try:
+      FB=self.findFB(baseName=FreeCADGui.Selection.getSelection()[0].Name)
+      if not FB:
+        FB=self.findFB(beamName=frameCmd.beams()[0].Name)
+    except:
+      FreeCAD.Console.PrintError('Nothing selected\n')
+      return
+    if FB and self.form.listSizes.selectedItems():
+      prop=self.sectDictList[self.form.listSizes.currentRow()]
+      profile=newProfile(prop)
+      name=FB.Profile.Name
+      FB.Profile=profile
+      FB.Proxy.redraw(FB)
+      FreeCAD.ActiveDocument.removeObject(name)
+      FreeCAD.ActiveDocument.recompute()
+      FreeCAD.ActiveDocument.recompute()
+    else:
+      FreeCAD.Console.PrintError('No frameBranch or profile selected\n')
+  def findFB(self,beamName=None, baseName=None):
+    if beamName:
+      for name in self.Branches:
+        if beamName in FreeCAD.ActiveDocument.getObject(name).Beams: #if beam.Name in activeFB.Beams:
+          return FreeCAD.ActiveDocument.getObject(name)
+    elif baseName:
+      for name in self.Branches:
+        if baseName==FreeCAD.ActiveDocument.getObject(name).Base.Name: #if beam.Name in activeFB.Beams:
+          return FreeCAD.ActiveDocument.getObject(name)
+    return None
+  def changeHeadOffset(self):
+    for beam in frameCmd.beams():
+      FB=self.findFB(beamName=beam.Name)
+      if FB:
+        i=FB.Beams.index(beam.Name)
+        temp=FB.headsOffset
+        temp[i]=float(self.form.editHead.text())
+        FB.headsOffset=temp
+    FreeCAD.ActiveDocument.recompute()
+    FreeCAD.ActiveDocument.recompute()
+  def changeTailOffset(self):
+    for beam in frameCmd.beams():
+      FB=self.findFB(beamName=beam.Name)
+      if FB:
+        i=FB.Beams.index(beam.Name)
+        temp=FB.tailsOffset
+        temp[i]=float(self.form.editTail.text())
+        FB.tailsOffset=temp
+    FreeCAD.ActiveDocument.recompute()
+    FreeCAD.ActiveDocument.recompute()
+  def mouseActionB1(self, CtrlAltShift):
+    sel=FreeCADGui.Selection.getSelection()
+    if sel:
+      text=sel[0].Name
+    else:
+      text='<none>'
+    self.form.lab1.setText(text)
     
 ################ CLASSES ###########################
 
@@ -385,8 +440,7 @@ class FrameLine(object):
       FreeCAD.Console.PrintWarning(fp.Label+' Profile has changed to '+fp.Profile.Label+'\n')
   def purge(self,fp):
     group=FreeCAD.activeDocument().getObjectsByLabel(fp.Group)[0]
-    from frameCmd import beams
-    beams2purge=beams(group.OutList)
+    beams2purge=frameCmd.beams(group.OutList)
     if beams2purge:
       for b in beams2purge:
         profiles=b.OutList
@@ -442,8 +496,8 @@ class FrameBranch(object):
       for i in range(len(obj.Beams)):
         if obj.Beams[i]:
           beam=FreeCAD.ActiveDocument.getObject(obj.Beams[i])
-          beam.Height=obj.Base.Shape.Edges[i].Length #tbd according offsetTails[i] and offsetHeads[i]
-          offset=FreeCAD.Vector() #tbd according offsetTails[i]
+          beam.Height=float(obj.Base.Shape.Edges[i].Length)+obj.tailsOffset[i]+obj.headsOffset[i] #tbd according offsetTails[i] and offsetHeads[i]
+          offset=FreeCAD.Vector(0,0,obj.tailsOffset[i]).negative() #tbd according offsetTails[i]
           spin=FreeCAD.Rotation() #tbd according spins[i]
           beam.AttachmentOffset = FreeCAD.Placement(offset, spin)
   def redraw(self, obj):
