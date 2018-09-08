@@ -33,7 +33,7 @@
    <item row="9" column="0" colspan="2">
     <widget class="QLabel" name="lab1">
      <property name="text">
-      <string>&lt;selection&gt;</string>
+      <string>----</string>
      </property>
      <property name="alignment">
       <set>Qt::AlignCenter</set>
