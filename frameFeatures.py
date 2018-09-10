@@ -47,6 +47,12 @@ def findFB(beamName=None, baseName=None):
         return FreeCAD.ActiveDocument.getObject(name)
   return None
   
+def refresh():
+  for b in [o for o in FreeCAD.ActiveDocument.Objects if hasattr(o,'FType') and o.FType=='FrameBranch']:
+    b.touch()
+  FreeCAD.ActiveDocument.recompute()
+  FreeCAD.ActiveDocument.recompute()
+
 ################ DIALOGS #############################
 
 class frameLineForm(QDialog):
@@ -330,22 +336,13 @@ class frameBranchForm(prototypeDialog):
     self.form.btnRemove.clicked.connect(self.removeBeams)
     self.form.btnAdd.clicked.connect(self.addBeams)
     self.form.btnProfile.clicked.connect(self.changeProfile)
+    self.form.btnRefresh.clicked.connect(refresh)
+    self.form.btnTrim.clicked.connect(self.trim)
     self.form.sliTail.valueChanged.connect(self.stretchTail)
     self.form.sliHead.valueChanged.connect(self.stretchHead)
     self.form.dialAngle.valueChanged.connect(self.spinAngle)
     self.fillSizes()
-    self.selectedBranch=None #to be updated by select-observer that also updates the lab1 (in spite of mouseActionB1)
-  def fillSizes(self):
-    self.SType=self.form.comboRatings.currentText()
-    self.form.listSizes.clear()
-    fileName = "Section_"+self.SType+".csv"
-    f=open(join(dirname(abspath(__file__)),"tables",fileName),'r')
-    reader=csv.DictReader(f,delimiter=';')
-    self.sectDictList=[x for x in reader]
-    f.close()
-    for row in self.sectDictList:
-      s=row['SSize']
-      self.form.listSizes.addItem(s)
+    self.targets=list()
   def accept(self):
     if FreeCAD.ActiveDocument:
       # GET BASE
@@ -365,6 +362,56 @@ class frameBranchForm(prototypeDialog):
         FreeCAD.activeDocument().commitTransaction()
         FreeCAD.activeDocument().recompute()
         FreeCAD.activeDocument().recompute()
+  def selectAction(self):
+    self.targets=[]
+    selex=FreeCADGui.Selection.getSelectionEx()
+    shapes=[(sx.SubObjects[0],sx.Object.Label) for sx in selex if sx.SubObjects]
+    print shapes
+    for shape in shapes:
+      self.targets.append(shape[0])
+    if len(shapes)>1:
+      self.form.lab2.setText('<multiple selection>')
+    else:
+      self.form.lab2.setText(shapes[0][1]+': '+shapes[0][0].ShapeType)
+  def mouseActionB1(self, CtrlAltShift):
+    v = FreeCADGui.ActiveDocument.ActiveView
+    i = v.getObjectInfo(v.getCursorPos())
+    if i: 
+      labText=i['Object']
+      obj=FreeCAD.ActiveDocument.getObject(i['Object'])
+      if hasattr(obj,'tailOffset') and hasattr(obj,'headOffset') and hasattr(obj,'spin'):
+        self.form.editTail.setText(str(obj.tailOffset))
+        self.form.editHead.setText(str(obj.headOffset))
+        self.form.editAngle.setText(str(obj.spin))
+        #self.form.sliTail.setValue(int(obj.tailOffset/float(obj.Height)*100))
+        #self.form.sliHead.setValue(int(obj.headOffset/float(obj.Height)*100))
+        #self.form.dialAngle.setValue(int(obj.spin))
+        fb=findFB(i['Object'])
+        if fb: labText+=': part of '+fb.Label
+      else:
+        self.form.editTail.clear()
+        self.form.editHead.clear()
+        self.form.editAngle.clear()
+        self.form.sliHead.setValue(0)
+        self.form.sliTail.setValue(0)
+        self.form.dialAngle.setValue(0)
+      self.form.lab1.setText(labText)
+    else:
+      self.form.sliHead.setValue(0)
+      self.form.sliTail.setValue(0)
+      self.form.dialAngle.setValue(0)
+      self.form.lab1.setText('<no item selected>')
+  def fillSizes(self):
+    self.SType=self.form.comboRatings.currentText()
+    self.form.listSizes.clear()
+    fileName = "Section_"+self.SType+".csv"
+    f=open(join(dirname(abspath(__file__)),"tables",fileName),'r')
+    reader=csv.DictReader(f,delimiter=';')
+    self.sectDictList=[x for x in reader]
+    f.close()
+    for row in self.sectDictList:
+      s=row['SSize']
+      self.form.listSizes.addItem(s)
   def addBeams(self):
     # find selected FB
     try:
@@ -376,6 +423,9 @@ class frameBranchForm(prototypeDialog):
       for edge in frameCmd.edges():
         i=indexEdge(edge,FB.Base.Shape.Edges)
         beam=makeStructure(FB.Profile)
+        beam.addProperty("App::PropertyFloat","tailOffset","FrameBranch","The extension of the tail")
+        beam.addProperty("App::PropertyFloat","headOffset","FrameBranch","The extension of the head")
+        beam.addProperty("App::PropertyFloat","spin","FrameBranch","The rotation of the section")
         beam.addExtension("Part::AttachExtensionPython",beam)
         beam.Support=[(FB.Base,'Edge'+str(i+1))]
         beam.MapMode='NormalToEdge'
@@ -429,8 +479,8 @@ class frameBranchForm(prototypeDialog):
   def changeAngle(self):
     for beam in frameCmd.beams():
       if hasattr(beam,'spin'): 
-        beam.spin=float(self.form.editAngle.text())
         FB=findFB(beam.Name)
+        beam.spin=float(self.form.editAngle.text())
         FB.touch()
     FreeCAD.ActiveDocument.recompute()
     FreeCAD.ActiveDocument.recompute()
@@ -451,46 +501,35 @@ class frameBranchForm(prototypeDialog):
   def spinAngle(self):
     self.form.editAngle.setText(str(self.form.dialAngle.value()))
     self.changeAngle()
-  def mouseActionB1(self, CtrlAltShift):
-    v = FreeCADGui.ActiveDocument.ActiveView
-    cp = v.getCursorPos()
-    i = v.getObjectInfo(cp)
-    if i: 
-      labText=i['Object']
-      obj=FreeCAD.ActiveDocument.getObject(i['Object'])
-      if hasattr(obj,'tailOffset') and hasattr(obj,'headOffset') and hasattr(obj,'spin'):
-        self.form.editTail.setText(str(obj.tailOffset))
-        self.form.editHead.setText(str(obj.headOffset))
-        self.form.editAngle.setText(str(obj.spin))
-        #self.form.sliTail.setValue(int(obj.tailOffset/float(obj.Height)*100))
-        #self.form.sliHead.setValue(int(obj.headOffset/float(obj.Height)*100))
-        #self.form.dialAngle.setValue(int(obj.spin))
-        fb=findFB(i['Object'])
-        if fb: labText+=': part of FB '+fb.Label
-        else:  labText+=': not in any FB'
-      else:
-        self.form.editTail.clear()
-        self.form.editHead.clear()
-        self.form.editAngle.clear()
-        self.form.sliHead.setValue(0)
-        self.form.sliTail.setValue(0)
-        self.form.dialAngle.setValue(0)
-      self.form.lab1.setText(labText)
-    else:
-      self.form.sliHead.setValue(0)
-      self.form.sliTail.setValue(0)
-      self.form.dialAngle.setValue(0)
-      self.form.lab1.setText('----')
-    #FB=None
-    #try: 
-      #bn=frameCmd.beams()[0].Name
-      #FB=findFB(beamName=bn)
-      #i=FB.Beams.index(bn)
-    #except: 
-      #pass
-    #if FB: text=FB.Name+": "+bn+", index="+str(i)
-    #else: text="Not in frameBranch"
-    #self.form.lab1.setText(text)
+  def trim(self):
+    FreeCAD.ActiveDocument.openTransaction('Trim FB')
+    for target in self.targets:
+      for b in frameCmd.beams():
+        if hasattr(b,'tailOffset') and hasattr(b,'headOffset'):
+          edge=b.Support[0][0].Shape.getElement(b.Support[0][1][0])
+          ax=edge.tangentAt(0).normalize() #frameCmd.beamAx(b).normalize()
+          tail=edge.valueAt(0) #b.Placement.Base
+          head=edge.valueAt(edge.LastParameter) #tail+ax*float(b.Height)
+          if target.ShapeType=="Vertex":
+            P=target.Point
+          elif target.ShapeType=="Face" and not frameCmd.isOrtho(target,ax):
+            P=frameCmd.intersectionPlane(tail,ax,target)
+          elif hasattr(target,"CenterOfMass"):
+            P=target.CenterOfMass
+          else: 
+            P=None
+          if P:
+            #print P
+            #print ax.Length
+            deltaTail=(P-tail).dot(ax)
+            deltaHead=(P-head).dot(ax)
+            #print "D-tail = %.1f; D-head = %.1f" %(deltaTail,deltaHead)
+            if abs(deltaTail)<abs(deltaHead):
+              b.tailOffset=-deltaTail
+            else:
+              b.headOffset=deltaHead
+    refresh()
+    FreeCAD.ActiveDocument.commitTransaction()
     
 ################ CLASSES ###########################
 
@@ -522,7 +561,6 @@ class FrameLine(object):
       FreeCAD.Console.PrintWarning(fp.Label+' Base has changed to '+fp.Base.Label+'\n')
     if prop=='Profile' and fp.Profile:
       fp.Profile.ViewObject.Visibility=False
-      #fp.Profile.Placement.Base=FreeCAD.Vector(0,0,0) 
       FreeCAD.Console.PrintWarning(fp.Label+' Profile has changed to '+fp.Profile.Label+'\n')
   def purge(self,fp):
     group=FreeCAD.activeDocument().getObjectsByLabel(fp.Group)[0]
@@ -565,32 +603,22 @@ class FrameBranch(object):
     obj.addProperty("App::PropertyStringList","Beams","FrameBranch","The beams names")
     obj.addProperty("App::PropertyLink","Base","FrameBranch","The path.").Base=base
     obj.addProperty("App::PropertyLink","Profile","FrameBranch","The profile").Profile=profile
-    #obj.addProperty("App::PropertyFloatList","tailsOffset","FrameBranch","The extension of the tail ends")
-    #obj.addProperty("App::PropertyFloatList","headsOffset","FrameBranch","The extension of the head ends")
-    #obj.addProperty("App::PropertyFloatList","spins","FrameBranch","The rotation of sections")
-    # DRAW THE FRAMEBRANCH
     self.redraw(obj)
   def execute(self,obj):
+    X=FreeCAD.Vector(1,0,0)
+    Z=FreeCAD.Vector(0,0,1)
     if hasattr(obj,'Base') and obj.Base and hasattr(obj,'Beams'):
-      if hasattr(obj.Base,'TypeId') and obj.Base.TypeId=='Sketcher::SketchObject': # if Base is Sketch...
-        n=obj.Base.Placement.Rotation.multVec(FreeCAD.Vector(0,0,1))
-      else:
-        n=None
+      n=obj.Base.Placement.Rotation.multVec(Z)
       for i in range(len(obj.Beams)):
         if obj.Beams[i]:
+          edge=obj.Base.Shape.Edges[i]
           beam=FreeCAD.ActiveDocument.getObject(obj.Beams[i])
           beam.Height=float(obj.Base.Shape.Edges[i].Length)+beam.tailOffset+beam.headOffset
           offset=FreeCAD.Vector(0,0,beam.tailOffset).negative()
-          spin=FreeCAD.Rotation() #tbd also according obj.spins[i]
+          spin=FreeCAD.Rotation()
           beam.AttachmentOffset = FreeCAD.Placement(offset, spin)
-          if n:
-            angle=degrees(float(frameCmd.beamAx(beam,FreeCAD.Vector(1,0,0)).getAngle(n)))
-            zBeam=frameCmd.beamAx(beam)
-            rot=FreeCAD.Rotation(zBeam,angle)
-            beam.Placement.Rotation=rot.multiply(beam.Placement.Rotation)
-          if beam.spin: 
-            rot=FreeCAD.Rotation(frameCmd.beamAx(beam),beam.spin)
-            beam.Placement.Rotation=rot.multiply(beam.Placement.Rotation)
+          angle=degrees(frameCmd.beamAx(beam,X).getAngle(n))
+          beam.AttachmentOffset.Rotation=FreeCAD.Rotation(Z,angle+beam.spin)
   def redraw(self, obj):
     # clear all
     for o in obj.Beams: FreeCAD.ActiveDocument.removeObject(o)
@@ -609,32 +637,12 @@ class FrameBranch(object):
       beamsList.append(str(beam.Name))
       i+=1
     obj.Beams=beamsList
-    #obj.tailsOffset=[0]*i
-    #obj.headsOffset=[0]*i
-    #obj.spins=[0]*i
   def remove(self,i):
     obj=FreeCAD.ActiveDocument.getObject(self.objName)
     FreeCAD.ActiveDocument.removeObject(obj.Beams[i])
     b=[str(n) for n in obj.Beams]
     b[i]=''
     obj.Beams=b
-  #def add(self,edge):
-    #obj=FreeCAD.ActiveDocument.getObject(self.objName)
-    #i=indexEdge(edge,obj.Base.Shape.Edges)
-    #if i is int():
-      #if not obj.Beams[i]:
-        #beamsList=obj.Beams
-        #beam=makeStructure(obj.Profile)
-        #beam.addExtension("Part::AttachExtensionPython",beam)
-        #beam.Support=[(obj.Base,'Edge'+str(i+1))]
-        #beam.MapMode='NormalToEdge'
-        #beam.MapReversed=True
-        #beamsList[i]=beam.Name
-        #obj.Beams=beamsList
-      #else:
-        #FreeCAD.Console.PrintMessage('That edge is already filled.\n')
-    #else:
-      #FreeCAD.Console.PrintMessage('That edge is not in Base of frameBranch\n')
 
 class ViewProviderFrameBranch:
   def __init__(self,vobj):

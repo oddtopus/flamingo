@@ -161,14 +161,14 @@ def intersectionPlane(base=None,v=None,face=None):
     # equation of plane: ax+by+cz+d=0
     a,b,c=list(face.normalAt(0,0))
     d=-face.CenterOfMass.dot(face.normalAt(0,0))
-    FreeCAD.Console.PrintMessage('a=%.2f b=%.2f c=%.2f d=%.2f\n' %(a,b,c,d))
-    # definition of line
-    FreeCAD.Console.PrintMessage('base=(%.2f,%.2f,%.2f)\n' %(base.x,base.y,base.z))
-    FreeCAD.Console.PrintMessage('v=(%.2f,%.2f,%.2f)\n' %(v.x,v.y,v.z))
-    #intersection
+    #FreeCAD.Console.PrintMessage('a=%.2f b=%.2f c=%.2f d=%.2f\n' %(a,b,c,d))
+    ## definition of line
+    #FreeCAD.Console.PrintMessage('base=(%.2f,%.2f,%.2f)\n' %(base.x,base.y,base.z))
+    #FreeCAD.Console.PrintMessage('v=(%.2f,%.2f,%.2f)\n' %(v.x,v.y,v.z))
+    ##intersection
     k=-1*(a*base.x+b*base.y+c*base.z+d)/(a*v.x+b*v.y+c*v.z)
-    FreeCAD.Console.PrintMessage('k=%f\n' %float(k))
-    P=base+v.multiply(k) 
+    #FreeCAD.Console.PrintMessage('k=%f\n' %float(k))
+    P=base+v*k
     return rounded(P)
 
 def isOrtho(e1=None,e2=None):
@@ -395,24 +395,3 @@ def rotjoinTheBeam(beam=None,e1=None,e2=None):
   delta=beam.Placement.Base-e2.CenterOfMass
   beam.Placement.Rotation=rot.multiply(beam.Placement.Rotation)
   beam.Placement.move(rounded(dist+rot.multVec(delta)))
-
-#def makeFrameLine(base=None,beam=None,name="Telaio"): #OBSOLETE
-  #'''add a FrameLine object
-  #'''
-  #a=FreeCAD.ActiveDocument.addObject("Part::FeaturePython",name)
-  #frameFeatures.FrameLine(a)
-  #a.ViewObject.Proxy=0
-  #if base:
-    #a.Base=base
-  #if beam:
-    #a.Beam=beam
-  #return a
-
-#def makeFrameBranch(base=None,profile=None,name="Travatura"): #OBSOLETE
-  #'''add a FrameBranch object
-  #'''
-  #a=FreeCAD.ActiveDocument.addObject("Part::FeaturePython",name)
-  #frameFeatures.FrameBranch(a)
-  ##a.ViewObject.Proxy=0
-  #frameFeatures.ViewProviderFrameBranch(a.ViewObject)
-  #return a
