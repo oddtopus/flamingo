@@ -199,8 +199,8 @@ class stretchForm(prototypeDialog):
     if frameCmd.beams():
       beam=frameCmd.beams()[0]
       from polarUtilsCmd import label3D
-      self.labTail=label3D(pl=beam.Placement, text='____TAIL') #, sizeFont=sc)
-  def accept(self):        # stretch
+      self.labTail=label3D(pl=beam.Placement, text='____TAIL')
+  def accept(self):
     if self.labTail:
       self.labTail.removeLabel()
       self.labTail=None
@@ -222,10 +222,6 @@ class stretchForm(prototypeDialog):
   def reject(self): # redefined to remove label from the scene
     if self.labTail:
       self.labTail.removeLabel()
-    #try: self.view.removeEventCallback('SoEvent',self.call)
-    #except: pass
-    #if FreeCAD.ActiveDocument: FreeCAD.ActiveDocument.recompute()
-    #FreeCADGui.Control.closeDialog()
     super(stretchForm,self).reject()
 
 class translateForm(prototypeDialog):   

@@ -13,6 +13,7 @@ from PySide.QtGui import *
 from os import listdir
 from os.path import join, dirname, abspath
 from math import degrees
+from polarUtilsCmd import label3D
 
 ################ FUNCTIONS ###########################
 
@@ -336,13 +337,15 @@ class frameBranchForm(prototypeDialog):
     self.form.btnRemove.clicked.connect(self.removeBeams)
     self.form.btnAdd.clicked.connect(self.addBeams)
     self.form.btnProfile.clicked.connect(self.changeProfile)
-    self.form.btnRefresh.clicked.connect(refresh)
+    self.form.btnRefresh.clicked.connect(self.refresh)
+    self.form.btnTargets.clicked.connect(self.selectAction)
     self.form.btnTrim.clicked.connect(self.trim)
     self.form.sliTail.valueChanged.connect(self.stretchTail)
     self.form.sliHead.valueChanged.connect(self.stretchHead)
     self.form.dialAngle.valueChanged.connect(self.spinAngle)
     self.fillSizes()
     self.targets=list()
+    self.labTail=None
   def accept(self):
     if FreeCAD.ActiveDocument:
       # GET BASE
@@ -362,11 +365,14 @@ class frameBranchForm(prototypeDialog):
         FreeCAD.activeDocument().commitTransaction()
         FreeCAD.activeDocument().recompute()
         FreeCAD.activeDocument().recompute()
+  def reject(self): # redefined to remove label from the scene
+    if self.labTail:
+      self.labTail.removeLabel()
+    super(frameBranchForm,self).reject()
   def selectAction(self):
     self.targets=[]
     selex=FreeCADGui.Selection.getSelectionEx()
     shapes=[(sx.SubObjects[0],sx.Object.Label) for sx in selex if sx.SubObjects]
-    print shapes
     for shape in shapes:
       self.targets.append(shape[0])
     if len(shapes)>1:
@@ -387,8 +393,14 @@ class frameBranchForm(prototypeDialog):
         #self.form.sliHead.setValue(int(obj.headOffset/float(obj.Height)*100))
         #self.form.dialAngle.setValue(int(obj.spin))
         fb=findFB(i['Object'])
-        if fb: labText+=': part of '+fb.Label
+        if fb: 
+          labText+=': part of '+fb.Label
+        if self.labTail:
+          self.labTail.removeLabel()
+        self.labTail=label3D(pl=obj.Placement, text='____TAIL')
       else:
+        if self.labTail:
+          self.labTail.removeLabel()
         self.form.editTail.clear()
         self.form.editHead.clear()
         self.form.editAngle.clear()
@@ -397,6 +409,8 @@ class frameBranchForm(prototypeDialog):
         self.form.dialAngle.setValue(0)
       self.form.lab1.setText(labText)
     else:
+      if self.labTail:
+        self.labTail.removeLabel()
       self.form.sliHead.setValue(0)
       self.form.sliTail.setValue(0)
       self.form.dialAngle.setValue(0)
@@ -530,6 +544,12 @@ class frameBranchForm(prototypeDialog):
               b.headOffset=deltaHead
     refresh()
     FreeCAD.ActiveDocument.commitTransaction()
+  def refresh(self):
+    obj=findFB(frameCmd.beams()[0].Name)
+    if not obj: obj=findFB(baseName=FreeCADGui.Selection.getSelection()[0])
+    if obj: obj.Proxy.redraw(obj)
+    FreeCAD.ActiveDocument.recompute()
+    FreeCAD.ActiveDocument.recompute()
     
 ################ CLASSES ###########################
 
