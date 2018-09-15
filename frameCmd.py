@@ -8,7 +8,6 @@ __license__="LGPL 3"
 import FreeCAD,FreeCADGui
 import DraftGeomUtils as dgu
 from DraftVecUtils import rounded
-import frameFeatures
 
 ############## AUXILIARY FUNCTIONS ###############
 
