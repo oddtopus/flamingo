@@ -333,6 +333,7 @@ class frameBranchForm(prototypeDialog):
     fileList=[name for name in tables if name.startswith("Section")]
     RatingsList=[s.lstrip("Section_").rstrip(".csv") for s in fileList]
     self.form.comboRatings.addItems(RatingsList)
+    self.form.comboRatings.addItems(['<by sketch>'])
     self.form.comboRatings.currentIndexChanged.connect(self.fillSizes)
     self.form.btnRemove.clicked.connect(self.removeBeams)
     self.form.btnAdd.clicked.connect(self.addBeams)
@@ -352,8 +353,11 @@ class frameBranchForm(prototypeDialog):
       bases=[b for b in FreeCADGui.Selection.getSelection() if hasattr(b,'Shape')]
       if bases and self.form.listSizes.selectedItems():
         FreeCAD.activeDocument().openTransaction('Insert FrameBranch')
-        prop=self.sectDictList[self.form.listSizes.currentRow()]
-        profile=newProfile(prop)
+        if self.SType=='<by sketch>':
+          profile=FreeCAD.ActiveDocument.getObjectsByLabel(self.form.listSizes.currentItem().text())[0]
+        else:
+          prop=self.sectDictList[self.form.listSizes.currentRow()]
+          profile=newProfile(prop)
         # MAKE FRAMEBRANCH
         if self.form.editName.text():
           name=self.form.editName.text()
@@ -418,14 +422,17 @@ class frameBranchForm(prototypeDialog):
   def fillSizes(self):
     self.SType=self.form.comboRatings.currentText()
     self.form.listSizes.clear()
-    fileName = "Section_"+self.SType+".csv"
-    f=open(join(dirname(abspath(__file__)),"tables",fileName),'r')
-    reader=csv.DictReader(f,delimiter=';')
-    self.sectDictList=[x for x in reader]
-    f.close()
-    for row in self.sectDictList:
-      s=row['SSize']
-      self.form.listSizes.addItem(s)
+    if self.SType=='<by sketch>':
+      self.form.listSizes.addItems([s.Label for s in FreeCAD.ActiveDocument.Objects if s.TypeId=='Sketcher::SketchObject'])
+    else:
+      fileName = "Section_"+self.SType+".csv"
+      f=open(join(dirname(abspath(__file__)),"tables",fileName),'r')
+      reader=csv.DictReader(f,delimiter=';')
+      self.sectDictList=[x for x in reader]
+      f.close()
+      for row in self.sectDictList:
+        s=row['SSize']
+        self.form.listSizes.addItem(s)
   def addBeams(self):
     # find selected FB
     try:
@@ -464,8 +471,11 @@ class frameBranchForm(prototypeDialog):
       FreeCAD.Console.PrintError('Nothing selected\n')
       return
     if FB and self.form.listSizes.selectedItems():
-      prop=self.sectDictList[self.form.listSizes.currentRow()]
-      profile=newProfile(prop)
+      if self.SType=='<by sketch>':
+        profile=FreeCAD.ActiveDocument.getObjectsByLabel(self.form.listSizes.currentItem().text())[0]
+      else:
+        prop=self.sectDictList[self.form.listSizes.currentRow()]
+        profile=newProfile(prop)
       name=FB.Profile.Name
       FB.Profile=profile
       FB.Proxy.redraw(FB)
