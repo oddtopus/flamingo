@@ -308,9 +308,9 @@ def makeUbolt(propList=[], pos=None, Z=None):
   a.Placement.Rotation=rot.multiply(a.Placement.Rotation)
   return a
 
-def makeShell(L=800,W=400,H=500,thk=6):
+def makeShell(L=1000,W=1500,H=1500,thk1=6,thk2=8):
   '''
-  makeShell(L,W,H,thk)
+  makeShell(L,W,H,thk1,thk2)
   Adds the shell of a tank, given
     L(ength):        default=800
     W(idth):         default=400
@@ -318,7 +318,7 @@ def makeShell(L=800,W=400,H=500,thk=6):
     thk (thickness): default=6
   '''
   a=FreeCAD.ActiveDocument.addObject("Part::FeaturePython","Serbatoio")
-  pipeFeatures.Shell(a,L,W,H,thk)
+  pipeFeatures.Shell(a,L,W,H,thk1,thk2)
   a.ViewObject.Proxy=0
   a.Placement.Base=FreeCAD.Vector(0,0,0)
   a.ViewObject.ShapeColor=0.0,0.0,1.0
@@ -820,3 +820,34 @@ def attachToTube(port=None):
         FreeCAD.Console.PrintMessage('Object Detached\n')
   except:
     FreeCAD.Console.PrintError('Nothing attached\n')
+    
+def makeNozzle(DN='DN50',OD=60.3,thk=3, H=200,D=160,df=132,f=14,t=15,n=4):
+  '''
+  makeNozzle(DN,OD,thk,D,df,f,t,n)
+    DN (string): nominal diameter
+    OD (float): pipe outside diameter
+    thk (float): pipe wall thickness
+    D (float): flange diameter
+    df (float): bolts holes distance
+    f (float): bolts holes diameter
+    t (float): flange thickness
+    n (int): nr. of bolts
+  '''
+  sx=FreeCADGui.Selection.getSelectionEx()[0]
+  e=sx.SubObjects[0]
+  s=sx.Object
+  name=frameCmd.edgeName(s,e)
+  p=makePipe([DN,OD,thk,H], pos=e.centerOfCurvatureAt(0),Z=e.tangentAt(0).cross(e.normalAt(0)))
+  FreeCAD.ActiveDocument.recompute()
+  f=makeFlange([DN,'S.O.',D,OD,df,f,t,n],pos=portsPos(p)[1],Z=portsDir(p)[1])
+  p.MapReversed = False
+  p.Support = [(s,frameCmd.edgeName(s,e))]
+  p.MapMode = 'Concentric'
+  FreeCADGui.Selection.clearSelection()
+  FreeCADGui.Selection.addSelection(p)
+  FreeCADGui.Selection.addSelection(f)
+  f.Support = [(p,'Edge1')]
+  f.MapReversed = True
+  f.MapMode = 'Concentric'
+  FreeCAD.ActiveDocument.recompute()
+

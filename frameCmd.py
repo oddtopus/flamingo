@@ -265,6 +265,15 @@ def vec2edge(point,direct):
   from Part import makeLine
   return makeLine(point,point+direct) 
   
+def edgeName(obj,edge):
+  if hasattr(obj,'Shape'):
+    i=1
+    for e in obj.Shape.Edges:
+      if e.isSame(edge):
+        return "Edge"+str(i)
+      i+=1
+    return None
+  
 ############ COMMANDS #############
 
 def spinTheBeam(beam, angle):  # OBSOLETE: replaced by rotateTheTubeAx

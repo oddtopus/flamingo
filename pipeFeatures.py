@@ -429,20 +429,21 @@ class Ubolt():
 class Shell():
   '''
   Class for a lateral-shell-of-tank object
-      *** prototype object ***
   Shell(obj[,L=800,W=400,H=500,thk=6])
     obj: the "App::FeaturePython" object
     L (float): the length
     W (float): the width
     H (float): the height
-    thk (float): the plate's thickness
+    thk1 (float): the shell thickness
+    thk2 (float): the top thickness
   '''
-  def __init__(self,obj,L=800,W=400,H=500,thk=6):
+  def __init__(self,obj,L=800,W=400,H=500,thk1=6, thk2=8):
     obj.Proxy=self
     obj.addProperty("App::PropertyLength","L","Tank","Tank's length").L=L
     obj.addProperty("App::PropertyLength","W","Tank","Tank's width").W=W
     obj.addProperty("App::PropertyLength","H","Tank","Tank's height").H=H
-    obj.addProperty("App::PropertyLength","thk","Tank","Thikness of tank's shell").thk=thk
+    obj.addProperty("App::PropertyLength","thk1","Tank","Thikness of tank's shell").thk1=thk1
+    obj.addProperty("App::PropertyLength","thk2","Tank","Thikness of tank's top").thk2=thk2
   def onChanged(self, fp, prop):
     return None
   def execute(self, fp):
@@ -460,8 +461,9 @@ class Shell():
       outline.append(f2)
       base.append(base.pop(0))
     box=Part.Solid(Part.Shell(outline))
-    tank=box.makeThickness([box.Faces[0],box.Faces[2]],-fp.thk,1.e-3)
-    fp.Shape=tank
+    tank=box.makeThickness([box.Faces[0],box.Faces[2]],-fp.thk1,1.e-3)
+    top=Part.makeBox(fp.L-2*fp.thk1,fp.W-2*fp.thk1,fp.thk2,FreeCAD.Vector(fp.thk1,fp.thk1,fp.H-2*fp.thk2))
+    fp.Shape=Part.makeCompound([tank,top])
     fp.positionBySupport() # to recomute placement according the Support
     
 class ViewProviderPypeBranch:
