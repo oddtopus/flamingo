@@ -323,6 +323,7 @@ def makeShell(L=1000,W=1500,H=1500,thk1=6,thk2=8):
   a.Placement.Base=FreeCAD.Vector(0,0,0)
   a.ViewObject.ShapeColor=0.0,0.0,1.0
   a.ViewObject.Transparency=85
+  FreeCAD.ActiveDocument.recompute()
   return a
 
 def makeCap(propList=[], pos=None, Z=None):
@@ -821,13 +822,14 @@ def attachToTube(port=None):
   except:
     FreeCAD.Console.PrintError('Nothing attached\n')
     
-def makeNozzle(DN='DN50',OD=60.3,thk=3, H=200,D=160,df=132,f=14,t=15,n=4):
+def makeNozzle(DN='DN50', H=200, OD=60.3, thk=3,D=160, d=62, df=132,f=14,t=15,n=4):
   '''
   makeNozzle(DN,OD,thk,D,df,f,t,n)
     DN (string): nominal diameter
     OD (float): pipe outside diameter
     thk (float): pipe wall thickness
     D (float): flange diameter
+    d (float): flange hole
     df (float): bolts holes distance
     f (float): bolts holes diameter
     t (float): flange thickness
@@ -839,7 +841,7 @@ def makeNozzle(DN='DN50',OD=60.3,thk=3, H=200,D=160,df=132,f=14,t=15,n=4):
   name=frameCmd.edgeName(s,e)
   p=makePipe([DN,OD,thk,H], pos=e.centerOfCurvatureAt(0),Z=e.tangentAt(0).cross(e.normalAt(0)))
   FreeCAD.ActiveDocument.recompute()
-  f=makeFlange([DN,'S.O.',D,OD,df,f,t,n],pos=portsPos(p)[1],Z=portsDir(p)[1])
+  f=makeFlange([DN,'S.O.',D,d,df,f,t,n],pos=portsPos(p)[1],Z=portsDir(p)[1])
   p.MapReversed = False
   p.Support = [(s,frameCmd.edgeName(s,e))]
   p.MapMode = 'Concentric'

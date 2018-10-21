@@ -240,6 +240,14 @@ class insertAny:
   def GetResources(self):
     return{'MenuText':'Insert any shape','ToolTip':'Insert a STEP, IGES or BREP'}
 
+class insertTank:
+  def Activated(self):
+    import FreeCADGui, pipeForms
+    FreeCADGui.Control.showDialog(pipeForms.tankForm())
+    
+  def GetResources(self):
+    return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","tank.svg"),'MenuText':'Insert a tank','ToolTip':'Create tank and nozzles'} 
+
 #---------------------------------------------------------------------------
 # Adds the commands to the FreeCAD command manager
 #---------------------------------------------------------------------------
@@ -252,6 +260,7 @@ addCommand('insertFlange',insertFlange())
 addCommand('insertUbolt',insertUbolt())
 addCommand('insertPypeLine',insertPypeLine())
 addCommand('insertBranch',insertBranch())
+addCommand('insertTank',insertTank())
 addCommand('breakPipe',breakPipe())
 addCommand('mateEdges',mateEdges())
 addCommand('joinPype',joinPype())

@@ -464,7 +464,7 @@ class Shell():
     tank=box.makeThickness([box.Faces[0],box.Faces[2]],-fp.thk1,1.e-3)
     top=Part.makeBox(fp.L-2*fp.thk1,fp.W-2*fp.thk1,fp.thk2,FreeCAD.Vector(fp.thk1,fp.thk1,fp.H-2*fp.thk2))
     fp.Shape=Part.makeCompound([tank,top])
-    fp.positionBySupport() # to recomute placement according the Support
+    #fp.positionBySupport() # to recomute placement according the Support
     
 class ViewProviderPypeBranch:
   def __init__(self,vobj):

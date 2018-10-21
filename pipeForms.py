@@ -1458,3 +1458,52 @@ class point2pointPipe(DraftTools.Line):
   #def finish(self, closed=False, cont=False):
     #self.pform.close()
     #super(point2pointPipe,self).finish(closed,cont)
+
+class tankForm(prototypeDialog):
+  def __init__(self):
+    self.nozzles=list()
+    super(tankForm,self).__init__('tank.ui')
+    tables=listdir(join(dirname(abspath(__file__)),"tables"))
+    self.pipeRatings=[s.lstrip("Pipe_").rstrip(".csv") for s in tables if s.startswith("Pipe") and s.endswith('.csv')]
+    self.flangeRatings=[s.lstrip("Flange_").rstrip(".csv") for s in tables if s.startswith("Flange") and s.endswith('.csv')]
+    self.form.comboPipe.addItems(self.pipeRatings)
+    self.form.comboFlange.addItems(self.flangeRatings)
+    self.form.btn1.clicked.connect(self.addNozzle)
+    self.form.editLength.setValidator(QDoubleValidator())
+    self.form.editX.setValidator(QDoubleValidator())
+    self.form.editY.setValidator(QDoubleValidator())
+    self.form.editZ.setValidator(QDoubleValidator())
+    self.form.comboPipe.currentIndexChanged.connect(self.combine)
+    self.form.comboFlange.currentIndexChanged.connect(self.combine)
+  def accept(self):
+    dims=list()
+    for lineEdit in [self.form.editX, self.form.editY, self.form.editZ]:
+      if lineEdit.text(): 
+        dims.append(float(lineEdit.text()))
+      else:
+        dims.append(1000)
+    pipeCmd.makeShell(*dims)
+  def addNozzle(self):
+    DN=self.form.listSizes.currentItem().text()
+    args=self.nozzles[DN]
+    print args
+    pipeCmd.makeNozzle(DN, float(self.form.editLength.text()), *args)
+  def combine(self):
+    self.form.listSizes.clear()
+    try:
+      fileName="Pipe_"+self.form.comboPipe.currentText()+".csv"
+      f=open(join(dirname(abspath(__file__)),"tables",fileName),'r')
+      reader=csv.DictReader(f,delimiter=';')
+      pipes=dict([[line['PSize'],[float(line['OD']),float(line['thk'])]] for line in reader])
+      f.close()
+      fileName="Flange_"+self.form.comboFlange.currentText()+".csv"
+      f=open(join(dirname(abspath(__file__)),"tables",fileName),'r')
+      reader=csv.DictReader(f,delimiter=';')
+      flanges=dict([[line['PSize'],[float(line['D']), float(line['d']), float(line['df']), float(line['f']), float(line['t']), int(line['n'])]] for line in reader])
+      f.close()
+    except:
+      return
+    listNozzles=[[p[0],p[1]+flanges[p[0]]] for p in pipes.items() if p[0] in flanges.keys()]
+    self.nozzles=dict(listNozzles)
+    self.form.listSizes.addItems(self.nozzles.keys())
+    self.form.listSizes.sortItems()
