@@ -11,6 +11,11 @@ import FreeCAD, FreeCADGui, Part, frameCmd, pipeCmd
 from copy import copy
 from os.path import join, dirname, abspath
 
+vO=FreeCAD.Vector(0,0,0)
+vX=FreeCAD.Vector(1,0,0)
+vY=FreeCAD.Vector(0,1,0)
+vZ=FreeCAD.Vector(0,0,1)
+
 ################ CLASSES ###########################
 
 class pypeType(object):
@@ -153,7 +158,7 @@ class Elbow(pypeType):
     
 class Flange(pypeType):
   '''Class for object PType="Flange"
-  Flange(obj,[PSize="DN50",FlangeType="SO", D=160, d=60.3,df=132, f=14 t=15,n=4])
+  Flange(obj,[PSize="DN50",FlangeType="SO", D=160, d=60.3,df=132, f=14 t=15,n=4, trf=0, drf=0, twn=0, dwn=0, ODp=0])
     obj: the "App::FeaturePython" object
     PSize (string): nominal diameter
     FlangeType (string): type of Flange
@@ -163,8 +168,13 @@ class Flange(pypeType):
     f (float): bolts holes diameter
     t (float): flange thickness
     n (int): nr. of bolts
+    trf (float): raised-face thikness
+    drf (float): raised-face diameter
+    twn (float): welding-neck thikness
+    dwn (float): welding-neck diameter
+    ODp (float): outside diameter of pipe for wn flanges
   '''
-  def __init__(self, obj,DN="DN50",FlangeType="SO",D=160,d=60.3,df=132,f=14, t=15, n=4):
+  def __init__(self, obj,DN="DN50",FlangeType="SO",D=160,d=60.3,df=132,f=14, t=15, n=4, trf=0, drf=0, twn=0, dwn=0, ODp=0):
     # initialize the parent class
     super(Flange,self).__init__(obj)
     # define common properties
@@ -179,6 +189,11 @@ class Flange(pypeType):
     obj.addProperty("App::PropertyLength","f","Flange","Bolts hole diameter").f=f
     obj.addProperty("App::PropertyLength","t","Flange","Thickness of flange").t=t
     obj.addProperty("App::PropertyInteger","n","Flange","Nr. of bolts").n=n
+    obj.addProperty("App::PropertyLength","trf","Flange2","Thickness of raised face").trf=trf
+    obj.addProperty("App::PropertyLength","drf","Flange2","Diameter of raised face").drf=drf
+    obj.addProperty("App::PropertyLength","twn","Flange2","Length of welding neck").twn=twn
+    obj.addProperty("App::PropertyLength","dwn","Flange2","Diameter of welding neck").dwn=dwn
+    obj.addProperty("App::PropertyLength","ODp","Flange2","Outside diameter of pipe").ODp=ODp
   def onChanged(self, fp, prop):
     return None
   def execute(self, fp):
@@ -191,10 +206,20 @@ class Flange(pypeType):
       for i in list(range(fp.n)):
         base=base.cut(hole)
         hole.rotate(FreeCAD.Vector(0,0,0),FreeCAD.Vector(0,0,1),360.0/fp.n)
-    fp.Shape = base.extrude(FreeCAD.Vector(0,0,fp.t))
+    flange = base.extrude(FreeCAD.Vector(0,0,fp.t))
+    try: # Flange2: raised-face and welding-neck
+      if fp.trf>0 and fp.drf>0:
+        rf=Part.makeCylinder(fp.drf/2,fp.trf,vO,vZ*-1).cut(Part.makeCylinder(fp.d/2,fp.trf,vO,vZ*-1))
+        flange=flange.fuse(rf)
+      if fp.dwn>0 and fp.twn>0 and fp.ODp>0:
+        wn=Part.makeCone(fp.dwn/2,fp.ODp/2,fp.twn,vZ*float(fp.t)).cut(Part.makeCylinder(fp.d/2,fp.twn,vZ*float(fp.t)))
+        flange=flange.fuse(wn)
+    except:
+      pass
+    fp.Shape = flange
     fp.Ports=[FreeCAD.Vector(),FreeCAD.Vector(0,0,float(fp.t))]
     super(Flange,self).execute(fp) # perform common operations
-    
+
 class Reduct(pypeType):
   '''Class for object PType="Reduct"
   Reduct(obj,[PSize="DN50",OD=60.3, OD2= 48.3, thk=3, thk2=None, H=None, conc=True])

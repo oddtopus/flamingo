@@ -358,11 +358,11 @@ class alignForm(prototypeDialog):
       edit.clear()
   def accept(self):
     faces=frameCmd.faces()
-    beams=frameCmd.beams()
-    if len(faces)==len(beams)>0 and self.faceRef:
+    objs=FreeCADGui.Selection.getSelection() #beams=frameCmd.beams()
+    if len(faces)==len(objs)>0 and self.faceRef:
       FreeCAD.activeDocument().openTransaction('AlignFlange')
-      for i in range(len(beams)):
-        frameCmd.rotTheBeam(beams[i],self.faceRef,faces[i])
+      for i in range(len(objs)):
+        frameCmd.rotTheBeam(objs[i],self.faceRef,faces[i])
       FreeCAD.activeDocument().recompute()
       FreeCAD.activeDocument().commitTransaction()
     

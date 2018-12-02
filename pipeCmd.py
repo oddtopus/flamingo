@@ -242,7 +242,7 @@ def makeFlange(propList=[], pos=None, Z=None):
   if Z==None:
     Z=FreeCAD.Vector(0,0,1)
   a=FreeCAD.ActiveDocument.addObject("Part::FeaturePython","Flangia")
-  if len(propList)==8:
+  if len(propList)>=8:
     pipeFeatures.Flange(a,*propList)
   else:
     pipeFeatures.Flange(a)

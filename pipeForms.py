@@ -535,6 +535,17 @@ class insertFlangeForm(protopypeForm):
     else:
       d=self.pipeDictList[self.sizeList.currentRow()]
     propList=[d['PSize'],d['FlangeType'],float(pq(d['D'])),float(pq(d['d'])),float(pq(d['df'])),float(pq(d['f'])),float(pq(d['t'])),int(d['n'])]
+    try: # for raised-face
+      propList.append(float(d['trf']))
+      propList.append(float(d['drf']))
+    except:
+      pass
+    try: # for welding-neck
+      propList.append(float(d['twn']))
+      propList.append(float(d['dwn']))
+      propList.append(float(d['ODp']))
+    except:
+      pass
     FreeCAD.activeDocument().openTransaction('Insert flange')
     if len(frameCmd.edges())==0:
       vs=[v for sx in FreeCADGui.Selection.getSelectionEx() for so in sx.SubObjects for v in so.Vertexes]
@@ -1486,7 +1497,6 @@ class tankForm(prototypeDialog):
   def addNozzle(self):
     DN=self.form.listSizes.currentItem().text()
     args=self.nozzles[DN]
-    print args
     pipeCmd.makeNozzle(DN, float(self.form.editLength.text()), *args)
   def combine(self):
     self.form.listSizes.clear()
