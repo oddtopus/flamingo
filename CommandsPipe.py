@@ -248,6 +248,14 @@ class insertTank:
   def GetResources(self):
     return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","tank.svg"),'MenuText':'Insert a tank','ToolTip':'Create tank and nozzles'} 
 
+class insertRoute:
+  def Activated(self):
+    import FreeCADGui, pipeForms
+    FreeCADGui.Control.showDialog(pipeForms.insertRouteForm())
+    
+  def GetResources(self):
+    return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","route.svg"),'MenuText':'Insert a pipe route','ToolTip':'Create a sketch attached to a circular edge'} 
+
 #---------------------------------------------------------------------------
 # Adds the commands to the FreeCAD command manager
 #---------------------------------------------------------------------------
@@ -261,6 +269,7 @@ addCommand('insertUbolt',insertUbolt())
 addCommand('insertPypeLine',insertPypeLine())
 addCommand('insertBranch',insertBranch())
 addCommand('insertTank',insertTank())
+addCommand('insertRoute',insertRoute())
 addCommand('breakPipe',breakPipe())
 addCommand('mateEdges',mateEdges())
 addCommand('joinPype',joinPype())

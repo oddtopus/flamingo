@@ -174,9 +174,10 @@ class arrow_move(arrow):
   objects when the arrow is picked.  This is accomplished by redefining the
   method "pickAction".
   '''
-  def __init__(self, pl=None, direct=None, M=100, objs=None):
+  def __init__(self, edit, pl=None, direct=None, M=100.0, objs=None):
     self.objs=objs
     self.edge=None
+    self.edit=edit
     # define direction
     self.scale=M
     if direct: self.direct=direct
@@ -187,8 +188,8 @@ class arrow_move(arrow):
     super(arrow_move,self).__init__(pl=pl, scale=[M/2,M/2,M/10], offset=M/2)
   def pickAction(self,path=None,event=None,arg=None):
     FreeCAD.activeDocument().openTransaction('Quick move')
-    if event.wasCtrlDown(): k=-1
-    else: k=1
+    if event.wasCtrlDown(): k=-1*float(self.edit.text())
+    else: k=1*float(self.edit.text())
     sel=FreeCADGui.Selection.getSelection()
     if sel: self.objs=[o for o in sel if hasattr(o,'Shape')]
     if event.wasCtrlDown() and event.wasAltDown():
@@ -202,7 +203,7 @@ class arrow_move(arrow):
       self.Placement.move(self.direct*k)
       pl,direct,M=[self.Placement,self.direct,self.scale]
       self.closeArrow()
-      self.__init__(pl,direct,M,self.objs)
+      self.__init__(self.edit, pl,direct,M,self.objs)
     FreeCAD.activeDocument().commitTransaction()
 
 class handleDialog(prototypeDialog):
@@ -234,19 +235,21 @@ class handleDialog(prototypeDialog):
       orig[2]=bb.ZMax+bb.ZLength*0.1
       pl.move(orig)
     # define direction and displacement
-    if self.form.edit1.text(): L=float(self.form.edit1.text())
+    #if self.form.edit1.text(): L=float(self.form.edit1.text())
     if frameCmd.faces():
-      f=frameCmd.faces()[0]
-      if L: direct=f.normalAt(0,0).normalize()*L
-      else: direct=f.normalAt(0,0).normalize()*math.sqrt(f.Area)
+      direct=frameCmd.faces()[0].normalAt(0,0)
+      #f=frameCmd.faces()[0]
+      #if L: direct=f.normalAt(0,0).normalize()*L
+      #else: direct=f.normalAt(0,0).normalize()*math.sqrt(f.Area)
     elif frameCmd.edges():
-      e=frameCmd.edges()[0]
-      if L: direct=e.tangentAt(0)*L
-      else: direct=e.tangentAt(0).multiply(e.Length)
+      direct=frameCmd.edges()[0].tangentAt(0)
+      #e=frameCmd.edges()[0]
+      #if L: direct=e.tangentAt(0)*L
+      #else: direct=e.tangentAt(0).multiply(e.Length)
     # create the arrow_move object
     if direct: 
       pl.Rotation=FreeCAD.Rotation(FreeCAD.Vector(0,0,1),direct).multiply(pl.Rotation)
-      self.arrow=arrow_move(pl=pl,direct=direct,M=M,objs=self.objs)
+      self.arrow=arrow_move(self.form.edit1,pl=pl,direct=direct,M=M,objs=self.objs)
   def accept(self):
     self.reject()
   def reject(self):

@@ -1336,10 +1336,12 @@ class insertValveForm(protopypeForm):
               Z=edge.tangentAt(0).cross(edge.normalAt(0)) # ...END
             self.lastValve=pipeCmd.makeValve(propList,pos,Z)
           self.lastValve.ViewObject.ShapeColor=color
+    if self.lastValve and self.combo.currentText()!='<none>':
+      pipeCmd.moveToPyLi(self.lastValve,self.combo.currentText())  
     FreeCAD.activeDocument().commitTransaction()
     FreeCAD.activeDocument().recompute()
-  def apply(self):
     self.lastValve=None
+  def apply(self):
     for obj in FreeCADGui.Selection.getSelection():
       d=self.pipeDictList[self.sizeList.currentRow()]
       if hasattr(obj,'PType') and obj.PType==self.PType:
@@ -1493,7 +1495,16 @@ class tankForm(prototypeDialog):
         dims.append(float(lineEdit.text()))
       else:
         dims.append(1000)
-    pipeCmd.makeShell(*dims)
+    t=pipeCmd.makeShell(*dims)
+    so=FreeCADGui.Selection.getSelectionEx()[0].SubObjects
+    if so:
+      so0=so[0]
+      if so0.Faces:
+        t.Placement.Base=so0.Faces[0].CenterOfMass
+      elif so0.Edges:
+        t.Placement.Base=so0.Edges[0].CenterOfMass
+      elif so0.Vertexes:
+        t.Placement.Base=so0.Vertexes[0].Point
   def addNozzle(self):
     DN=self.form.listSizes.currentItem().text()
     args=self.nozzles[DN]
@@ -1517,3 +1528,35 @@ class tankForm(prototypeDialog):
     self.nozzles=dict(listNozzles)
     self.form.listSizes.addItems(self.nozzles.keys())
     self.form.listSizes.sortItems()
+
+class insertRouteForm(prototypeDialog):
+  '''
+  Dialog for makeRoute().
+  '''
+  def __init__(self):
+    super(insertRouteForm,self).__init__('route.ui')
+    self.normal=FreeCAD.Vector(0,0,1)
+    self.form.edit1.setValidator(QDoubleValidator())
+    self.form.btn1.clicked.connect(self.selectAction)
+    self.form.btnX.clicked.connect(lambda: self.getPrincipalAx('X'))
+    self.form.btnY.clicked.connect(lambda: self.getPrincipalAx('Y'))
+    self.form.btnZ.clicked.connect(lambda: self.getPrincipalAx('Z'))
+    self.form.dial.valueChanged.connect(lambda: self.form.edit1.setText(str(self.form.dial.value())))
+    self.form.edit1.editingFinished.connect(lambda: self.form.dial.setValue(int(self.form.edit1.text())))
+  def accept(self, ang=None):
+    FreeCAD.ActiveDocument.openTransaction('Make pipe route')
+    pipeCmd.makeRoute(self.normal)
+    FreeCAD.ActiveDocument.commitTransaction()
+  def getPrincipalAx(self, ax):
+    if ax=='X': self.normal=FreeCAD.Vector(1,0,0)
+    elif ax=='Y': self.normal=FreeCAD.Vector(0,1,0)
+    elif ax=='Z': self.normal=FreeCAD.Vector(0,0,1)
+    self.form.lab1.setText("global "+ax)
+  def selectAction(self):
+    if frameCmd.faces(): 
+      self.normal=frameCmd.faces()[0].normalAt(0,0)
+    elif frameCmd.edges():
+      self.normal=frameCmd.edges()[0].tangentAt(0)
+    else:
+      self.normal=FreeCAD.Vector(0,0,1)
+    self.form.lab1.setText("%.1f,%.1f,%.1f " %(self.normal.x,self.normal.y,self.normal.z))

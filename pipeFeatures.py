@@ -264,27 +264,28 @@ class Reduct(pypeType):
     return None
   def execute(self, fp):
     if fp.OD>fp.OD2:
-      if fp.thk>fp.OD/2:
-        fp.thk=fp.OD/2.1
-      if fp.thk2>fp.OD2/2:
-        fp.thk2=fp.OD2/2.1
       if fp.calcH or fp.Height==0:
         fp.Height=3*(fp.OD-fp.OD2)
       fp.Profile=str(fp.OD)+"x"+str(fp.OD2)
       if fp.conc:
-        fp.Shape = Part.makeCone(fp.OD/2,fp.OD2/2,fp.Height).cut(Part.makeCone(fp.OD/2-fp.thk,fp.OD2/2-fp.thk2,fp.Height))
+        sol = Part.makeCone(fp.OD/2,fp.OD2/2,fp.Height)
+        if fp.thk<fp.OD/2 and fp.thk2<fp.OD2/2:
+          fp.Shape=sol.cut(Part.makeCone(fp.OD/2-fp.thk,fp.OD2/2-fp.thk2,fp.Height))
+        else:
+          fp.Shape=sol
         fp.Ports=[FreeCAD.Vector(),FreeCAD.Vector(0,0,float(fp.Height))]
       else:
         C=Part.makeCircle(fp.OD/2,FreeCAD.Vector(0,0,0),FreeCAD.Vector(0,0,1))
         c=Part.makeCircle(fp.OD2/2,FreeCAD.Vector(0,0,0),FreeCAD.Vector(0,0,1))
         c.translate(FreeCAD.Vector((fp.OD-fp.OD2)/2,0,fp.Height))
         sol=Part.makeLoft([c,C],True)
-        #planeFaces=[f for f in sol.Faces if type(f.Surface)==Part.Plane]
-        #fp.Shape= sol.makeThickness(planeFaces,-fp.thk,1.e-3)
-        C=Part.makeCircle(fp.OD/2-fp.thk,FreeCAD.Vector(0,0,0),FreeCAD.Vector(0,0,1))
-        c=Part.makeCircle(fp.OD2/2-fp.thk2,FreeCAD.Vector(0,0,0),FreeCAD.Vector(0,0,1))
-        c.translate(FreeCAD.Vector((fp.OD-fp.OD2)/2,0,fp.Height))
-        fp.Shape=sol.cut(Part.makeLoft([c,C],True))
+        if fp.thk<fp.OD/2 and fp.thk2<fp.OD2/2:
+          C=Part.makeCircle(fp.OD/2-fp.thk,FreeCAD.Vector(0,0,0),FreeCAD.Vector(0,0,1))
+          c=Part.makeCircle(fp.OD2/2-fp.thk2,FreeCAD.Vector(0,0,0),FreeCAD.Vector(0,0,1))
+          c.translate(FreeCAD.Vector((fp.OD-fp.OD2)/2,0,fp.Height))
+          fp.Shape=sol.cut(Part.makeLoft([c,C],True))
+        else:
+          fp.Shape=sol
         fp.Ports=[FreeCAD.Vector(),FreeCAD.Vector((fp.OD-fp.OD2)/2,0,float(fp.Height))]
     super(Reduct,self).execute(fp) # perform common operations
     

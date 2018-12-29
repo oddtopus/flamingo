@@ -265,12 +265,19 @@ def vec2edge(point,direct):
   from Part import makeLine
   return makeLine(point,point+direct) 
   
-def edgeName(obj,edge):
+def edgeName(obj=None,edge=None):
+  if not obj or not edge:
+    try:
+      sx=FreeCADGui.Selection.getSelectionEx()[0]
+      edge=sx.SubObjects[0]
+      obj=sx.Object
+    except:
+      return None
   if hasattr(obj,'Shape'):
     i=1
     for e in obj.Shape.Edges:
       if e.isSame(edge):
-        return "Edge"+str(i)
+        return obj,"Edge"+str(i)
       i+=1
     return None
   

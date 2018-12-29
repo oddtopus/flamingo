@@ -1,14 +1,17 @@
 #(c) 2016 R. T. LGPL: part of Flamingo tools w.b. for FreeCAD
 
 __title__="pypeTools functions"
-__author__="oddtopus"
-__url__="github.com/oddtopus/flamingo"
-__license__="LGPL 3"
-
 import FreeCAD, FreeCADGui, Part, frameCmd, pipeFeatures
 from DraftVecUtils import rounded
 objToPaint=['Pipe','Elbow','Reduct','Flange','Cap']
 from math import degrees
+
+__author__="oddtopus"
+__url__="github.com/oddtopus/flamingo"
+__license__="LGPL 3"
+X=FreeCAD.Vector(1,0,0)
+Y=FreeCAD.Vector(0,1,0)
+Z=FreeCAD.Vector(0,0,1)
 
 ############### AUX FUNCTIONS ###################### 
 
@@ -838,12 +841,11 @@ def makeNozzle(DN='DN50', H=200, OD=60.3, thk=3,D=160, d=62, df=132,f=14,t=15,n=
   sx=FreeCADGui.Selection.getSelectionEx()[0]
   e=sx.SubObjects[0]
   s=sx.Object
-  name=frameCmd.edgeName(s,e)
   p=makePipe([DN,OD,thk,H], pos=e.centerOfCurvatureAt(0),Z=e.tangentAt(0).cross(e.normalAt(0)))
   FreeCAD.ActiveDocument.recompute()
   f=makeFlange([DN,'S.O.',D,d,df,f,t,n],pos=portsPos(p)[1],Z=portsDir(p)[1])
   p.MapReversed = False
-  p.Support = [(s,frameCmd.edgeName(s,e))]
+  p.Support = [(s,frameCmd.edgeName(s,e)[1])]
   p.MapMode = 'Concentric'
   FreeCADGui.Selection.clearSelection()
   FreeCADGui.Selection.addSelection(p)
@@ -853,3 +855,21 @@ def makeNozzle(DN='DN50', H=200, OD=60.3, thk=3,D=160, d=62, df=132,f=14,t=15,n=
   f.MapMode = 'Concentric'
   FreeCAD.ActiveDocument.recompute()
 
+def makeRoute(n=Z):
+  curvedEdges=[e for e in frameCmd.edges() if e.curvatureAt(0)!=0]
+  if curvedEdges:
+    s=FreeCAD.ActiveDocument.addObject('Sketcher::SketchObject','pipeRoute')
+    s.MapMode = "SectionOfRevolution"
+    s.Support = [frameCmd.edgeName()]
+  else:
+    return None
+  if frameCmd.faces(): 
+    n=frameCmd.faces()[0].normalAt(0,0)
+  x=s.Placement.Rotation.multVec(X)
+  z=s.Placement.Rotation.multVec(Z)
+  t=x.dot(n)*x+z.dot(n)*z
+  alfa=degrees(z.getAngle(t))
+  if t.Length>0.000000001:
+    s.AttachmentOffset.Rotation=s.AttachmentOffset.Rotation.multiply(FreeCAD.Rotation(Y,alfa))
+  FreeCAD.ActiveDocument.recompute()
+  FreeCADGui.activeDocument().setEdit(s.Name)
