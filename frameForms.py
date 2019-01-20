@@ -55,22 +55,22 @@ class prototypeForm(QWidget): #OBSOLETE: no more used. Replaced by prototypeDial
     self.mainVL.addWidget(self.buttons)
 
 class prototypeDialog(object): 
-  # ACHTUNG: "self.call" DISABLED IN WINDOWS OS, DUE TO UNHANDLED RUN-TIME EXCEPTION
+  # ACHTUNG: "self.call" TO BE DISABLED IN WINDOWS OS IF UNHANDLED RUN-TIME EXCEPTION
   'prototype for dialogs.ui with callback function'
   def __init__(self,dialog='anyFile.ui'):
     dialogPath=join(dirname(abspath(__file__)),"dialogs",dialog)
     FreeCAD.Console.PrintMessage(dialogPath+"\n")
     self.form=FreeCADGui.PySideUic.loadUi(dialogPath)
     FreeCAD.Console.PrintMessage(dialogPath+" loaded\n")
-    if platform.startswith('win'):
-      FreeCAD.Console.PrintWarning("No keyboard shortcuts.\n")
-    else:
-      FreeCAD.Console.PrintMessage('Keyboard shortcuts available.\n"S" to select\n"RETURN" to perform action\n')
-      try:
-        self.view=get3DView()
-        self.call=self.view.addEventCallback("SoEvent", self.action)
-      except:
-        FreeCAD.Console.PrintError('No view available.\n')
+    # if platform.startswith('win'):
+      # FreeCAD.Console.PrintWarning("No keyboard shortcuts.\n")
+    # else:
+    FreeCAD.Console.PrintMessage('Keyboard shortcuts available.\n"S" to select\n"RETURN" to perform action\n')
+    try:
+      self.view=get3DView()
+      self.call=self.view.addEventCallback("SoEvent", self.action)
+    except:
+      FreeCAD.Console.PrintError('No view available.\n')
   def action(self,arg):
     'Default function executed by callback'
     if arg['Type']=='SoKeyboardEvent':

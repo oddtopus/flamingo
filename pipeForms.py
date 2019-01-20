@@ -1496,7 +1496,8 @@ class tankForm(prototypeDialog):
       else:
         dims.append(1000)
     t=pipeCmd.makeShell(*dims)
-    so=FreeCADGui.Selection.getSelectionEx()[0].SubObjects
+    so=None
+    if FreeCADGui.Selection.getSelectionEx(): so=FreeCADGui.Selection.getSelectionEx()[0].SubObjects
     if so:
       so0=so[0]
       if so0.Faces:
@@ -1534,24 +1535,41 @@ class insertRouteForm(prototypeDialog):
   Dialog for makeRoute().
   '''
   def __init__(self):
+    FreeCADGui.Selection.clearSelection()
     super(insertRouteForm,self).__init__('route.ui')
     self.normal=FreeCAD.Vector(0,0,1)
+    self.L=0
+    self.obj=None
+    self.edge=None
     self.form.edit1.setValidator(QDoubleValidator())
     self.form.btn1.clicked.connect(self.selectAction)
     self.form.btnX.clicked.connect(lambda: self.getPrincipalAx('X'))
     self.form.btnY.clicked.connect(lambda: self.getPrincipalAx('Y'))
     self.form.btnZ.clicked.connect(lambda: self.getPrincipalAx('Z'))
-    self.form.dial.valueChanged.connect(lambda: self.form.edit1.setText(str(self.form.dial.value())))
-    self.form.edit1.editingFinished.connect(lambda: self.form.dial.setValue(int(self.form.edit1.text())))
-  def accept(self, ang=None):
-    FreeCAD.ActiveDocument.openTransaction('Make pipe route')
-    pipeCmd.makeRoute(self.normal)
-    FreeCAD.ActiveDocument.commitTransaction()
+    self.form.slider.valueChanged.connect(self.changeOffset) #lambda:self.form.edit1.setText(str(self.form.dial.value())))
+    #self.form.edit1.editingFinished.connect(self.moveSlider) #lambda:self.form.dial.setValue(int(round(self.form.edit1.text()))))
+  def changeOffset(self):
+    if self.L:
+      offset=self.L*self.form.slider.value()/100
+      self.form.edit1.setText('%.1f' %offset)
   def getPrincipalAx(self, ax):
     if ax=='X': self.normal=FreeCAD.Vector(1,0,0)
     elif ax=='Y': self.normal=FreeCAD.Vector(0,1,0)
     elif ax=='Z': self.normal=FreeCAD.Vector(0,0,1)
     self.form.lab1.setText("global "+ax)
+  def accept(self, ang=None):
+    FreeCAD.ActiveDocument.openTransaction('Make pipe route')
+    if frameCmd.edges():
+      e=frameCmd.edges()[0]
+      if e.curvatureAt(0):
+        pipeCmd.makeRoute(self.normal)
+      else:
+        s=FreeCAD.ActiveDocument.addObject('Sketcher::SketchObject','pipeRoute')
+        s.MapMode = "NormalToEdge"
+        s.Support = [(self.obj,self.edge)]
+        s.AttachmentOffset = FreeCAD.Placement(FreeCAD.Vector(0,0,-1*float(self.form.edit1.text())),FreeCAD.Rotation(FreeCAD.Vector(0,0,1),0))
+        FreeCADGui.activeDocument().setEdit(s.Name)
+    FreeCAD.ActiveDocument.commitTransaction()
   def selectAction(self):
     if frameCmd.faces(): 
       self.normal=frameCmd.faces()[0].normalAt(0,0)
@@ -1560,3 +1578,24 @@ class insertRouteForm(prototypeDialog):
     else:
       self.normal=FreeCAD.Vector(0,0,1)
     self.form.lab1.setText("%.1f,%.1f,%.1f " %(self.normal.x,self.normal.y,self.normal.z))
+  def mouseActionB1(self, CtrlAltShift):
+    v = FreeCADGui.ActiveDocument.ActiveView
+    infos = v.getObjectInfo(v.getCursorPos())
+    self.form.slider.setValue(0)
+    if infos and infos['Component'][:4]=='Edge':
+      self.obj=FreeCAD.ActiveDocument.getObject(infos['Object'])
+      self.edge=infos['Component']
+      i=int(self.edge[4:])-1
+      e=self.obj.Shape.Edges[i]
+      if e.curvatureAt(0)==0: 
+        self.L=e.Length
+      else: 
+        self.L=0
+      self.form.lab2.setText(infos['Object']+': '+self.edge)
+    else: 
+      self.L=0
+      self.obj=None
+      self.edge=None
+      self.form.lab2.setText('<select an edge>')
+      
+    
