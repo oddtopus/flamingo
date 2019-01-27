@@ -243,7 +243,7 @@ class insertAny:
 class insertTank:
   def Activated(self):
     import FreeCADGui, pipeForms
-    FreeCADGui.Control.showDialog(pipeForms.tankForm())
+    FreeCADGui.Control.showDialog(pipeForms.insertTankForm())
     
   def GetResources(self):
     return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","tank.svg"),'MenuText':'Insert a tank','ToolTip':'Create tank and nozzles'} 

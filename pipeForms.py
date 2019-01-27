@@ -1016,11 +1016,19 @@ class insertPypeLineForm(protopypeForm):
         fields=['Label','PType','PSize','Volume','Height']
         rows=list()
         for o in group.OutList:
-          if hasattr(o,'PType') and o.PType in ['Pipe','Elbow','Flange','Clamp','Reduct','Cap']:
-            data=[o.Label,o.PType,o.PSize,o.Shape.Volume,'-']
-            if o.PType=='Pipe':
-              data[4]=o.Height
-            rows.append(dict(zip(fields,data)))
+          if hasattr(o,'PType'):
+            if o.PType in ['Pipe','Elbow','Flange','Clamp','Reduct','Cap']:
+              data=[o.Label,o.PType,o.PSize,o.Shape.Volume,'-']
+              if o.PType=='Pipe':
+                data[4]=o.Height
+              rows.append(dict(zip(fields,data)))
+            elif o.PType in ['PypeBranch']:
+              for name in o.Tubes+o.Curves:
+                pype=FreeCAD.ActiveDocument.getObject(name)
+                data=[pype.Label,pype.PType,pype.PSize,pype.Shape.Volume,'-']
+                if pype.PType=='Pipe':
+                  data[4]=pype.Height
+                rows.append(dict(zip(fields,data)))
         plist=open(abspath(f),'w')
         w=csv.DictWriter(plist,fields,restval='-',delimiter=';')
         w.writeheader()
@@ -1472,10 +1480,10 @@ class point2pointPipe(DraftTools.Line):
     #self.pform.close()
     #super(point2pointPipe,self).finish(closed,cont)
 
-class tankForm(prototypeDialog):
+class insertTankForm(prototypeDialog):
   def __init__(self):
     self.nozzles=list()
-    super(tankForm,self).__init__('tank.ui')
+    super(insertTankForm,self).__init__('tank.ui')
     tables=listdir(join(dirname(abspath(__file__)),"tables"))
     self.pipeRatings=[s.lstrip("Pipe_").rstrip(".csv") for s in tables if s.startswith("Pipe") and s.endswith('.csv')]
     self.flangeRatings=[s.lstrip("Flange_").rstrip(".csv") for s in tables if s.startswith("Flange") and s.endswith('.csv')]
@@ -1509,7 +1517,9 @@ class tankForm(prototypeDialog):
   def addNozzle(self):
     DN=self.form.listSizes.currentItem().text()
     args=self.nozzles[DN]
+    FreeCAD.ActiveDocument.openTransaction('Add nozzles')
     pipeCmd.makeNozzle(DN, float(self.form.editLength.text()), *args)
+    FreeCAD.ActiveDocument.commitTransaction()
   def combine(self):
     self.form.listSizes.clear()
     try:
@@ -1528,7 +1538,7 @@ class tankForm(prototypeDialog):
     listNozzles=[[p[0],p[1]+flanges[p[0]]] for p in pipes.items() if p[0] in flanges.keys()]
     self.nozzles=dict(listNozzles)
     self.form.listSizes.addItems(self.nozzles.keys())
-    self.form.listSizes.sortItems()
+    #self.form.listSizes.sortItems()
 
 class insertRouteForm(prototypeDialog):
   '''

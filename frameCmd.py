@@ -410,3 +410,25 @@ def rotjoinTheBeam(beam=None,e1=None,e2=None):
   delta=beam.Placement.Base-e2.CenterOfMass
   beam.Placement.Rotation=rot.multiply(beam.Placement.Rotation)
   beam.Placement.move(rounded(dist+rot.multVec(delta)))
+
+def getSolids(allDoc=True):
+  if allDoc:
+    objects=FreeCAD.ActiveDocument.Objects
+  else:
+    objects=FreeCADGui.Selection.getSelection()
+  FreeCADGui.Selection.clearSelection()
+  for o in objects:
+    if hasattr(o,'Shape') and o.Shape.Solids:
+      FreeCADGui.Selection.addSelection(o)
+      
+def getFaces(allDoc=True):
+  if allDoc:
+    objects=FreeCAD.ActiveDocument.Objects
+  else:
+    objects=FreeCADGui.Selection.getSelection()
+  FreeCADGui.Selection.clearSelection()
+  for o in objects:
+    if hasattr(o,'Shapes'):
+      for i in range(len(o.Shape.Faces)):
+        FreeCADGui.Selection.addSelection(o,'Face'+str(i+1))
+

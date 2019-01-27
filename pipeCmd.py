@@ -838,22 +838,25 @@ def makeNozzle(DN='DN50', H=200, OD=60.3, thk=3,D=160, d=62, df=132,f=14,t=15,n=
     t (float): flange thickness
     n (int): nr. of bolts
   '''
-  sx=FreeCADGui.Selection.getSelectionEx()[0]
-  e=sx.SubObjects[0]
-  s=sx.Object
-  p=makePipe([DN,OD,thk,H], pos=e.centerOfCurvatureAt(0),Z=e.tangentAt(0).cross(e.normalAt(0)))
-  FreeCAD.ActiveDocument.recompute()
-  f=makeFlange([DN,'S.O.',D,d,df,f,t,n],pos=portsPos(p)[1],Z=portsDir(p)[1])
-  p.MapReversed = False
-  p.Support = [(s,frameCmd.edgeName(s,e)[1])]
-  p.MapMode = 'Concentric'
-  FreeCADGui.Selection.clearSelection()
-  FreeCADGui.Selection.addSelection(p)
-  FreeCADGui.Selection.addSelection(f)
-  f.Support = [(p,'Edge1')]
-  f.MapReversed = True
-  f.MapMode = 'Concentric'
-  FreeCAD.ActiveDocument.recompute()
+  selex=FreeCADGui.Selection.getSelectionEx()
+  for sx in selex: 
+    #e=sx.SubObjects[0]
+    s=sx.Object
+    curved=[e for e in frameCmd.edges([sx]) if e.curvatureAt(0)]
+    for e in curved:
+      pipe=makePipe([DN,OD,thk,H], pos=e.centerOfCurvatureAt(0),Z=e.tangentAt(0).cross(e.normalAt(0)))
+      FreeCAD.ActiveDocument.recompute()
+      flange=makeFlange([DN,'S.O.',D,d,df,f,t,n],pos=portsPos(pipe)[1],Z=portsDir(pipe)[1])
+      pipe.MapReversed = False
+      pipe.Support = [(s,frameCmd.edgeName(s,e)[1])]
+      pipe.MapMode = 'Concentric'
+      FreeCADGui.Selection.clearSelection()
+      FreeCADGui.Selection.addSelection(pipe)
+      FreeCADGui.Selection.addSelection(flange)
+      flange.Support = [(pipe,'Edge1')]
+      flange.MapReversed = True
+      flange.MapMode = 'Concentric'
+      FreeCAD.ActiveDocument.recompute()
 
 def makeRoute(n=Z):
   curvedEdges=[e for e in frameCmd.edges() if e.curvatureAt(0)!=0]
