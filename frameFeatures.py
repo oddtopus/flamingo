@@ -329,6 +329,7 @@ class frameBranchForm(prototypeDialog):
     self.form.editHead.editingFinished.connect(self.changeHeadOffset)
     self.form.editTail.setValidator(QDoubleValidator())
     self.form.editTail.editingFinished.connect(self.changeTailOffset)
+    self.form.editLength.setValidator(QDoubleValidator())
     tables=listdir(join(dirname(abspath(__file__)),"tables"))
     fileList=[name for name in tables if name.startswith("Section")]
     RatingsList=[s.lstrip("Section_").rstrip(".csv") for s in fileList]
@@ -341,12 +342,32 @@ class frameBranchForm(prototypeDialog):
     self.form.btnRefresh.clicked.connect(self.refresh)
     self.form.btnTargets.clicked.connect(self.selectAction)
     self.form.btnTrim.clicked.connect(self.trim)
+    self.form.btnSingle.clicked.connect(self.makeSingle)
     self.form.sliTail.valueChanged.connect(self.stretchTail)
     self.form.sliHead.valueChanged.connect(self.stretchHead)
     self.form.dialAngle.valueChanged.connect(self.spinAngle)
     self.fillSizes()
     self.targets=list()
     self.labTail=None
+  def makeSingle(self):
+    FreeCAD.activeDocument().openTransaction('Insert Single Struct')
+    if self.SType=='<by sketch>':
+      profile=FreeCAD.ActiveDocument.getObjectsByLabel(self.form.listSizes.currentItem().text())[0]
+    else:
+      prop=self.sectDictList[self.form.listSizes.currentRow()]
+      profile=newProfile(prop)
+    if frameCmd.faces():
+      Z=FreeCAD.Vector(0,0,1)
+      for f in frameCmd.faces():
+        beam=makeStructure(profile)
+        beam.Placement=FreeCAD.Placement(f.CenterOfMass,FreeCAD.Rotation(Z,f.normalAt(0,0)))
+        if self.form.editLength.text(): beam.Height=float(self.form.editLength.text())
+    else:
+      for e in frameCmd.edges():
+        beam=makeStructure(profile)
+        frameCmd.placeTheBeam(beam,e)
+        if self.form.editLength.text(): beam.Height=float(self.form.editLength.text())
+    FreeCAD.ActiveDocument.recompute()
   def accept(self):
     if FreeCAD.ActiveDocument:
       # GET BASE
@@ -424,6 +445,8 @@ class frameBranchForm(prototypeDialog):
     self.form.listSizes.clear()
     if self.SType=='<by sketch>':
       self.form.listSizes.addItems([s.Label for s in FreeCAD.ActiveDocument.Objects if s.TypeId=='Sketcher::SketchObject'])
+      obj2D=[s.Label for s in FreeCAD.ActiveDocument.Objects if hasattr (s,'Shape') and s.Shape.Faces and not s.Shape.Solids]
+      self.form.listSizes.addItems(obj2D)
     else:
       fileName = "Section_"+self.SType+".csv"
       f=open(join(dirname(abspath(__file__)),"tables",fileName),'r')

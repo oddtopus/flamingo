@@ -562,6 +562,7 @@ class PypeBranch2(pypeType): # use AttachExtensionPython
     obj.PSize=DN
     obj.PRating=PRating
     # define specific properties
+    obj.addExtension("App::GroupExtensionPython",obj)  # GROUP test in progress!
     obj.addProperty("App::PropertyLength","OD","PypeBranch","Outside diameter").OD=OD
     obj.addProperty("App::PropertyLength","thk","PypeBranch","Wall thickness").thk=thk
     if not BR: BR=0.75*OD
@@ -573,7 +574,6 @@ class PypeBranch2(pypeType): # use AttachExtensionPython
       obj.Base=base
     else:
       FreeCAD.Console.PrintError('Base not valid\n')
-    obj.addExtension("App::GroupExtensionPython",obj)  # GROUP test in progress!
   def onChanged(self, fp, prop):
     if prop=='Base' and hasattr(fp,'OD') and hasattr(fp,'thk') and hasattr(fp,'BendRadius'):
       self.purge(fp)
@@ -656,13 +656,16 @@ class PypeBranch2(pypeType): # use AttachExtensionPython
           c.MapMode = 'Translate'
           pipeCmd.placeTheElbow(c,e0.tangentAt(0),e.tangentAt(0))
           curves.append(c.Name)
-        fp.Tubes=tubes
-        fp.Curves=curves
+      fp.Tubes=tubes
+      fp.Curves=curves
+      fp.addObjects([FreeCAD.ActiveDocument.getObject(name) for name in fp.Tubes+fp.Curves])
   def purge(self,fp):
     if hasattr(fp,'Tubes'):
+      fp.removeObjects([FreeCAD.ActiveDocument.getObject(name) for name in fp.Tubes])
       for name in fp.Tubes: FreeCAD.ActiveDocument.removeObject(name)
       fp.Tubes=[]
     if hasattr(fp,'Curves'):
+      fp.removeObjects([FreeCAD.ActiveDocument.getObject(name) for name in fp.Curves])
       for name in fp.Curves: FreeCAD.ActiveDocument.removeObject(name)
       fp.Curves=[]
 

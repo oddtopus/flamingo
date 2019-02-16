@@ -428,7 +428,8 @@ def getFaces(allDoc=True):
     objects=FreeCADGui.Selection.getSelection()
   FreeCADGui.Selection.clearSelection()
   for o in objects:
-    if hasattr(o,'Shapes'):
+    if hasattr(o,'Shape'):
       for i in range(len(o.Shape.Faces)):
+        print str(o)+': '+str(i+1)
         FreeCADGui.Selection.addSelection(o,'Face'+str(i+1))
 
