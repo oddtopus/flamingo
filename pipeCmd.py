@@ -401,7 +401,7 @@ def makePypeLine2(DN="DN50",PRating="SCH-STD",OD=60.3,thk=3,BR=None, lab="Tubatu
     a.ViewObject.ShapeColor=color
     if len(FreeCADGui.Selection.getSelection())==1:
       obj=FreeCADGui.Selection.getSelection()[0]
-      isWire=hasattr(obj,'Shape') and type(obj.Shape)==Part.Wire
+      isWire=hasattr(obj,'Shape') and obj.Shape.Edges #type(obj.Shape)==Part.Wire
       isSketch=hasattr(obj,'TypeId') and obj.TypeId=='Sketcher::SketchObject'
       if isWire or isSketch:
         a.Base=obj

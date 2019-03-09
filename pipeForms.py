@@ -978,7 +978,7 @@ class insertPypeLineForm(protopypeForm):
       sel=FreeCADGui.Selection.getSelection()
       if sel:
         base=sel[0]
-        isWire=hasattr(base,'Shape') and type(base.Shape)==Part.Wire
+        isWire=hasattr(base,'Shape') and base.Shape.Edges #type(base.Shape)==Part.Wire
         isSketch=hasattr(base,'TypeId') and base.TypeId=='Sketcher::SketchObject'
         if isWire or isSketch:
           FreeCAD.activeDocument().openTransaction('Assign Base')
@@ -1315,16 +1315,22 @@ class insertValveForm(protopypeForm):
           self.lastValve.Placement=p1.Placement
           self.lastValve.Placement.move(pipeCmd.portsDir(p1)[1]*float(p1.Height))
           self.lastValve.ViewObject.ShapeColor=color
+          if self.combo.currentText()!='<none>':
+            pipeCmd.moveToPyLi(self.lastValve,self.combo.currentText())  
         FreeCAD.ActiveDocument.recompute()
     elif len(frameCmd.edges())==0: #..no edges selected
       vs=[v for sx in FreeCADGui.Selection.getSelectionEx() for so in sx.SubObjects for v in so.Vertexes]
       if len(vs)==0: # ...no vertexes selected
         self.lastValve=pipeCmd.makeValve(propList)
         self.lastValve.ViewObject.ShapeColor=color
+        if self.combo.currentText()!='<none>':
+          pipeCmd.moveToPyLi(self.lastValve,self.combo.currentText())  
       else:
         for v in vs: # ... one or more vertexes
           self.lastValve=pipeCmd.makeValve(propList,v.Point)
           self.lastValve.ViewObject.ShapeColor=color
+          if self.combo.currentText()!='<none>':
+            pipeCmd.moveToPyLi(self.lastValve,self.combo.currentText())  
     else:
       selex=FreeCADGui.Selection.getSelectionEx()
       for objex in selex:
@@ -1332,6 +1338,8 @@ class insertValveForm(protopypeForm):
         for edge in frameCmd.edges([objex]): # ...one or more edges...
           if edge.curvatureAt(0)==0: # ...straight edges
             self.lastValve=pipeCmd.makeValve(propList,edge.valueAt(edge.LastParameter/2-propList[4]/2),edge.tangentAt(0))
+            if self.combo.currentText()!='<none>':
+              pipeCmd.moveToPyLi(self.lastValve,self.combo.currentText())  
           else: # ...curved edges
             pos=edge.centerOfCurvatureAt(0) # SNIPPET TO ALIGN WITH THE PORTS OF Pype SELECTED: BEGIN...
             if hasattr(o,'PType') and len(o.Ports)==2:
@@ -1343,12 +1351,11 @@ class insertValveForm(protopypeForm):
             else:
               Z=edge.tangentAt(0).cross(edge.normalAt(0)) # ...END
             self.lastValve=pipeCmd.makeValve(propList,pos,Z)
+            if self.combo.currentText()!='<none>':
+              pipeCmd.moveToPyLi(self.lastValve,self.combo.currentText())  
           self.lastValve.ViewObject.ShapeColor=color
-    if self.lastValve and self.combo.currentText()!='<none>':
-      pipeCmd.moveToPyLi(self.lastValve,self.combo.currentText())  
     FreeCAD.activeDocument().commitTransaction()
     FreeCAD.activeDocument().recompute()
-    self.lastValve=None
   def apply(self):
     for obj in FreeCADGui.Selection.getSelection():
       d=self.pipeDictList[self.sizeList.currentRow()]

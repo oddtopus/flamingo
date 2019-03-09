@@ -30,13 +30,29 @@
        <string>calculation</string>
       </attribute>
       <layout class="QGridLayout" name="gridLayout">
-       <item row="12" column="0" colspan="2">
+       <item row="14" column="0" colspan="2">
         <widget class="QLabel" name="labCurves">
          <property name="text">
           <string>Nr. of curves = 0</string>
          </property>
          <property name="alignment">
           <set>Qt::AlignCenter</set>
+         </property>
+        </widget>
+       </item>
+       <item row="9" column="0">
+        <widget class="QLabel" name="label_2">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="MinimumExpanding" vsizetype="Preferred">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="text">
+          <string>Roughness (um)</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
          </property>
         </widget>
        </item>
@@ -62,23 +78,7 @@
          </property>
         </widget>
        </item>
-       <item row="8" column="0">
-        <widget class="QLabel" name="label_2">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="MinimumExpanding" vsizetype="Preferred">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-         <property name="text">
-          <string>Roughness (um)</string>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-         </property>
-        </widget>
-       </item>
-       <item row="8" column="1">
+       <item row="9" column="1">
         <widget class="QLineEdit" name="editRough">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
@@ -116,7 +116,7 @@
          </property>
         </widget>
        </item>
-       <item row="11" column="0" colspan="2">
+       <item row="13" column="0" colspan="2">
         <widget class="QLabel" name="labLength">
          <property name="text">
           <string>Total length = 0</string>
@@ -163,7 +163,7 @@
          </item>
         </widget>
        </item>
-       <item row="10" column="0">
+       <item row="11" column="0">
         <spacer name="verticalSpacer">
          <property name="orientation">
           <enum>Qt::Vertical</enum>
@@ -175,6 +175,19 @@
           </size>
          </property>
         </spacer>
+       </item>
+       <item row="8" column="0">
+        <widget class="QLabel" name="labRugh">
+         <property name="text">
+          <string>Pipe material</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+         </property>
+        </widget>
+       </item>
+       <item row="8" column="1">
+        <widget class="QComboBox" name="comboMat"/>
        </item>
       </layout>
      </widget>

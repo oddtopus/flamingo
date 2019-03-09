@@ -401,12 +401,13 @@ class PypeLine2(pypeType):
         #---Create the curve---
         propList=[fp.PSize,fp.OD,fp.thk,90,fp.BendRadius]
         c=pipeCmd.makeElbowBetweenThings(edges[n],edges[n-1],propList)
-        portA,portB=[c.Placement.multVec(port) for port in c.Ports]
-        #---Trim the tube---
-        p1,p2=pipes[-2:]
-        frameCmd.extendTheBeam(p1,portA)
-        frameCmd.extendTheBeam(p2,portB)
-        pipeCmd.moveToPyLi(c,fp.Label)
+        if c:
+          portA,portB=[c.Placement.multVec(port) for port in c.Ports]
+          #---Trim the tube---
+          p1,p2=pipes[-2:]
+          frameCmd.extendTheBeam(p1,portA)
+          frameCmd.extendTheBeam(p2,portB)
+          pipeCmd.moveToPyLi(c,fp.Label)
   def execute(self, fp):
     return None
 
@@ -490,7 +491,6 @@ class Shell():
     tank=box.makeThickness([box.Faces[0],box.Faces[2]],-fp.thk1,1.e-3)
     top=Part.makeBox(fp.L-2*fp.thk1,fp.W-2*fp.thk1,fp.thk2,FreeCAD.Vector(fp.thk1,fp.thk1,fp.H-2*fp.thk2))
     fp.Shape=Part.makeCompound([tank,top])
-    #fp.positionBySupport() # to recomute placement according the Support
     
 class ViewProviderPypeBranch:
   def __init__(self,vobj):
@@ -513,7 +513,7 @@ class ViewProviderPypeBranch:
     return None
   def claimChildren(self):
     children=[FreeCAD.ActiveDocument.getObject(name) for name in self.Object.Tubes+self.Object.Curves]
-    return children #self.Object.Tubes + self.Object.Curves
+    return children
   def onDelete(self, feature, subelements): # subelements is a tuple of strings
     return True
 
