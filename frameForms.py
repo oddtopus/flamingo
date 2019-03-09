@@ -62,15 +62,15 @@ class prototypeDialog(object):
     FreeCAD.Console.PrintMessage(dialogPath+"\n")
     self.form=FreeCADGui.PySideUic.loadUi(dialogPath)
     FreeCAD.Console.PrintMessage(dialogPath+" loaded\n")
-    # if platform.startswith('win'):
-      # FreeCAD.Console.PrintWarning("No keyboard shortcuts.\n")
-    # else:
-    FreeCAD.Console.PrintMessage('Keyboard shortcuts available.\n"S" to select\n"RETURN" to perform action\n')
-    try:
-      self.view=get3DView()
-      self.call=self.view.addEventCallback("SoEvent", self.action)
-    except:
-      FreeCAD.Console.PrintError('No view available.\n')
+    if platform.startswith('win'):
+      FreeCAD.Console.PrintWarning("No keyboard shortcuts.\n")
+    else:
+      FreeCAD.Console.PrintMessage('Keyboard shortcuts available.\n"S" to select\n"RETURN" to perform action\n')
+      try:
+        self.view=get3DView()
+        self.call=self.view.addEventCallback("SoEvent", self.action)
+      except:
+        FreeCAD.Console.PrintError('No view available.\n')
   def action(self,arg):
     'Default function executed by callback'
     if arg['Type']=='SoKeyboardEvent':
