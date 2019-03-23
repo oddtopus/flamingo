@@ -139,6 +139,17 @@ class dpCalc:
   def GetResources(self):
     return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","delta.svg"),'MenuText':'Pressure loss calculator','ToolTip':'Calculate pressure loss in "pypes" using ChEDL libraries.\n See __doc__ of the module for futher information.'}
 
+class selectSolids:
+
+  def Activated(self):
+    from frameCmd import getSolids
+    if FreeCADGui.Selection.getSelection(): allDoc=False
+    else: allDoc=True
+    getSolids(allDoc)
+
+  def GetResources(self):
+    return{'Pixmap':os.path.join(os.path.dirname(os.path.abspath(__file__)),"icons","solids.svg"),'MenuText':'Select solids','ToolTip':'Grab all solids or those partially selected\n to export in .step format'}
+
 #---------------------------------------------------------------------------
 # Adds the commands to the FreeCAD command manager
 #---------------------------------------------------------------------------
@@ -151,3 +162,4 @@ addCommand('offsetWorkPlane',offsetWorkPlane())
 addCommand('hackedL',hackedL())
 addCommand('moveHandle',moveHandle())
 addCommand('dpCalc',dpCalc())
+addCommand('selectSolids',selectSolids())

@@ -149,25 +149,6 @@
      </property>
     </widget>
    </item>
-   <item row="3" column="3" colspan="3">
-    <widget class="QPushButton" name="btn1">
-     <property name="sizePolicy">
-      <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
-       <horstretch>0</horstretch>
-       <verstretch>0</verstretch>
-      </sizepolicy>
-     </property>
-     <property name="minimumSize">
-      <size>
-       <width>24</width>
-       <height>0</height>
-      </size>
-     </property>
-     <property name="text">
-      <string>(S)et normal</string>
-     </property>
-    </widget>
-   </item>
    <item row="8" column="4">
     <widget class="QLineEdit" name="edit1">
      <property name="sizePolicy">
@@ -219,6 +200,32 @@
      </property>
      <property name="alignment">
       <set>Qt::AlignCenter</set>
+     </property>
+    </widget>
+   </item>
+   <item row="4" column="4">
+    <widget class="QPushButton" name="btn2">
+     <property name="text">
+      <string>Get edge</string>
+     </property>
+    </widget>
+   </item>
+   <item row="4" column="3">
+    <widget class="QPushButton" name="btn1">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="minimumSize">
+      <size>
+       <width>24</width>
+       <height>0</height>
+      </size>
+     </property>
+     <property name="text">
+      <string>(S)et normal</string>
      </property>
     </widget>
    </item>

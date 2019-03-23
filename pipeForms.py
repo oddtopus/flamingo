@@ -1560,6 +1560,7 @@ class insertRouteForm(prototypeDialog):
     self.edge=None
     self.form.edit1.setValidator(QDoubleValidator())
     self.form.btn1.clicked.connect(self.selectAction)
+    self.form.btn2.clicked.connect(self.mouseActionB1)
     self.form.btnX.clicked.connect(lambda: self.getPrincipalAx('X'))
     self.form.btnY.clicked.connect(lambda: self.getPrincipalAx('Y'))
     self.form.btnZ.clicked.connect(lambda: self.getPrincipalAx('Z'))
@@ -1595,7 +1596,7 @@ class insertRouteForm(prototypeDialog):
     else:
       self.normal=FreeCAD.Vector(0,0,1)
     self.form.lab1.setText("%.1f,%.1f,%.1f " %(self.normal.x,self.normal.y,self.normal.z))
-  def mouseActionB1(self, CtrlAltShift):
+  def mouseActionB1(self, CtrlAltShift=[False,False,False]):
     v = FreeCADGui.ActiveDocument.ActiveView
     infos = v.getObjectInfo(v.getCursorPos())
     self.form.slider.setValue(0)
@@ -1609,6 +1610,13 @@ class insertRouteForm(prototypeDialog):
       else: 
         self.L=0
       self.form.lab2.setText(infos['Object']+': '+self.edge)
+    elif frameCmd.edges():
+      selex=FreeCADGui.Selection.getSelectionEx()[0]
+      self.obj=selex.Object
+      e=frameCmd.edges()[0]
+      self.edge=frameCmd.edgeName(e)[1]
+      self.L=float(e.Length)
+      self.form.lab2.setText(self.edge+' of '+self.obj.Label)
     else: 
       self.L=0
       self.obj=None

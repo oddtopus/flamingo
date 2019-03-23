@@ -112,7 +112,7 @@ static char * image[] =
     #self.appendToolbar("spreadsheetTools",list2)
     #Log ('Loading Spreadsheet tools: done\n')
     import CommandsPolar
-    list3=["drawPolygon","drawFromFile","queryModel","moveWorkPlane","offsetWorkPlane","rotateWorkPlane","hackedL","moveHandle","dpCalc"]
+    list3=["drawPolygon","drawFromFile","selectSolids","queryModel","moveWorkPlane","offsetWorkPlane","rotateWorkPlane","hackedL","moveHandle","dpCalc"]
     self.appendToolbar("polarTools",list3)
     Log ('Loading Polar tools: done\n')
     import CommandsFrame
