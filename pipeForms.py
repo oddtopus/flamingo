@@ -92,9 +92,9 @@ class protopypeForm(QDialog): #QWidget):
         f.close()
         for row in self.pipeDictList:
           s=row['PSize']
-          if row.has_key('OD'):
+          if 'OD' in row.keys(): #row.has_key('OD'):
             s+=" - "+row['OD']
-          if row.has_key('thk'):
+          if 'thk' in row.keys(): #row.has_key('thk'):
             s+="x"+row['thk']
           self.sizeList.addItem(s)
         break

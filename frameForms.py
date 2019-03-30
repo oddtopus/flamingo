@@ -10,8 +10,10 @@ import frameCmd
 from PySide.QtCore import *
 from PySide.QtGui import *
 from os.path import join, dirname, abspath
-from Draft import get3DView
+# from Draft import get3DView
 from sys import platform
+
+vQt=int(qVersion().split('.')[0])
 
 class prototypeForm(QWidget): #OBSOLETE: no more used. Replaced by prototypeDialog
   'prototype dialog for frame tools workbench'
@@ -62,12 +64,12 @@ class prototypeDialog(object):
     FreeCAD.Console.PrintMessage(dialogPath+"\n")
     self.form=FreeCADGui.PySideUic.loadUi(dialogPath)
     FreeCAD.Console.PrintMessage(dialogPath+" loaded\n")
-    if platform.startswith('win'):
-      FreeCAD.Console.PrintWarning("No keyboard shortcuts.\n")
+    if platform.startswith('win'):# or vQt>=5:
+      FreeCAD.Console.PrintWarning("No keyboard shortcuts.\n No callback on SoEvent")
     else:
       FreeCAD.Console.PrintMessage('Keyboard shortcuts available.\n"S" to select\n"RETURN" to perform action\n')
       try:
-        self.view=get3DView()
+        self.view=FreeCADGui.activeDocument().activeView() # get3DView()
         self.call=self.view.addEventCallback("SoEvent", self.action)
       except:
         FreeCAD.Console.PrintError('No view available.\n')

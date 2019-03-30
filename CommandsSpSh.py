@@ -35,20 +35,21 @@ class findFirst:
       cells=et.fromstring(sp.cells.Content)
       for cell in cells:
         if cell.get('content')==target:
-          print "*** "+target+" is in "+cell.get('address')+" ***"
+          #print "*** "+target+" is in "+cell.get('address')+" ***"
           return cell.get('address')
-      print "There are no "+target+" in this sheet."
+      #print "There are no "+target+" in this sheet."
 
     doc=FreeCAD.activeDocument()
     s=[x for x in doc.Objects if x.TypeId.startswith('Spread')]
     if len(s):
-      print "There is at least 1 Sheet"
+      #print "There is at least 1 Sheet"
       target=qg.QInputDialog.getText(None,"findFirst()","String to search for?")
       i=cellAddress(s[0],target[0])
       import spreadCmd
-      print "From spreadCmd.py: row = "+spreadCmd.cellRC(s[0],target[0])
+      #print "From spreadCmd.py: row = "+spreadCmd.cellRC(s[0],target[0])
     else:
-      print "There are no sheets in this doc"
+      #print "There are no sheets in this doc"
+      pass
   def GetResources(self):
     return{'Pixmap':'Std_Tool1','MenuText':'Find first occurence','ToolTip':'Find content in sheet and print address'}
 

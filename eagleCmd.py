@@ -48,7 +48,7 @@ def brdCompare(pos):
 		klist.append(k.upper())
 	for comp in doc.Parts.OutList:
 		if comp.Label.upper() in klist:
-			print str(comp.Label)+' is in pos'
+			print(str(comp.Label)+' is in pos')
 			try:
 				comp.X=pos[str(comp.Label)][0]
 				comp.Y=pos[str(comp.Label)][1]
@@ -58,4 +58,4 @@ def brdCompare(pos):
 				comp.Y=pos[str(comp.Label.upper())][1]
 				comp.Rot=pos[str(comp.Label.upper())][2]
 		else:
-			print str(comp.Label)+' is not in pos'
+			print (str(comp.Label)+' is not in pos')
