@@ -34,7 +34,7 @@ class pypeType(object):
   def nearestPort (self,point=None):
     '''
     nearestPort (point=None)
-      Returns the Port nearest to  point 
+      Returns the Port nearest to  point
       or to the selected geometry.
       (<portNr>, <portPos>, <portDir>)
     '''
@@ -155,7 +155,7 @@ class Elbow(pypeType):
       else:
         fp.Shape=sol
       super(Elbow,self).execute(fp) # perform common operations
-    
+
 class Flange(pypeType):
   '''Class for object PType="Flange"
   Flange(obj,[PSize="DN50",FlangeType="SO", D=160, d=60.3,df=132, f=14 t=15,n=4, trf=0, drf=0, twn=0, dwn=0, ODp=0])
@@ -168,9 +168,9 @@ class Flange(pypeType):
     f (float): bolts holes diameter
     t (float): flange thickness
     n (int): nr. of bolts
-    trf (float): raised-face thikness
+    trf (float): raised-face thickness
     drf (float): raised-face diameter
-    twn (float): welding-neck thikness
+    twn (float): welding-neck thickness
     dwn (float): welding-neck diameter
     ODp (float): outside diameter of pipe for wn flanges
   '''
@@ -250,7 +250,7 @@ class Reduct(pypeType):
       obj.thk2=thk
     else:
       obj.thk2=thk2
-    obj.addProperty("App::PropertyBool","calcH","Reduct","Make the lenght variable")
+    obj.addProperty("App::PropertyBool","calcH","Reduct","Make the length variable")
     obj.addProperty("App::PropertyLength","Height","Reduct","Length of reduct")
     if not H:
       obj.calcH=True
@@ -288,7 +288,7 @@ class Reduct(pypeType):
           fp.Shape=sol
         fp.Ports=[FreeCAD.Vector(),FreeCAD.Vector((fp.OD-fp.OD2)/2,0,float(fp.Height))]
     super(Reduct,self).execute(fp) # perform common operations
-    
+
 class Cap(pypeType):
   '''Class for object PType="Cap"
   Cap(obj,[PSize="DN50",OD=60.3,thk=3])
@@ -326,25 +326,25 @@ class Cap(pypeType):
     fp.Shape = cap
     fp.Ports=[FreeCAD.Vector()]
     super(Cap,self).execute(fp) # perform common operations
-    
+
 class PypeLine2(pypeType):
   '''Class for object PType="PypeLine2"
-  This object represent a collection of objects "PType" that are updated with the 
+  This object represent a collection of objects "PType" that are updated with the
   methods defined in the Python class.
-  At present time it creates, with the method obj.Proxy.update(,obj,[edges]), pipes and curves over 
+  At present time it creates, with the method obj.Proxy.update(,obj,[edges]), pipes and curves over
   the given edges and collect them in a group named according the object's .Label.
   PypeLine2 features also the optional attribute ".Base":
   - Base can be a Wire or a Sketch or any object which has edges in its Shape.
-  - Running "obj.Proxy.update(obj)", without any [edges], the class attempts to render the pypeline 
-  (Pipe and Elbow objects) on the "obj.Base" edges: for well defined geometries 
+  - Running "obj.Proxy.update(obj)", without any [edges], the class attempts to render the pypeline
+  (Pipe and Elbow objects) on the "obj.Base" edges: for well defined geometries
   and open paths, this usually leads to acceptable results.
-  - Running "obj.Proxy.purge(obj)" deletes from the model all Pipes and Elbows 
-  that belongs to the pype-line.  
-  - It's possible to add other objects afterwards (such as Flange, Reduct...) 
-  using the relevant insertion dialogs but remember that these won't be updated 
+  - Running "obj.Proxy.purge(obj)" deletes from the model all Pipes and Elbows
+  that belongs to the pype-line.
+  - It's possible to add other objects afterwards (such as Flange, Reduct...)
+  using the relevant insertion dialogs but remember that these won't be updated
   when the .Base is changed and won't be deleted if the pype-line is purged.
-  - If Base is None, PypeLine2 behaves like a bare container of objects, 
-  with possibility to group them automatically and extract the part-list. 
+  - If Base is None, PypeLine2 behaves like a bare container of objects,
+  with possibility to group them automatically and extract the part-list.
   '''
   def __init__(self, obj,DN="DN50",PRating="SCH-STD",OD=60.3,thk=3,BR=None, lab=None):
     # initialize the parent class
@@ -469,8 +469,8 @@ class Shell():
     obj.addProperty("App::PropertyLength","L","Tank","Tank's length").L=L
     obj.addProperty("App::PropertyLength","W","Tank","Tank's width").W=W
     obj.addProperty("App::PropertyLength","H","Tank","Tank's height").H=H
-    obj.addProperty("App::PropertyLength","thk1","Tank","Thikness of tank's shell").thk1=thk1
-    obj.addProperty("App::PropertyLength","thk2","Tank","Thikness of tank's top").thk2=thk2
+    obj.addProperty("App::PropertyLength","thk1","Tank","Thickness of tank's shell").thk1=thk1
+    obj.addProperty("App::PropertyLength","thk2","Tank","Thickness of tank's top").thk2=thk2
   def onChanged(self, fp, prop):
     return None
   def execute(self, fp):
@@ -546,7 +546,7 @@ class Valve(pypeType):
     fp.Shape = v
     fp.Ports=[FreeCAD.Vector(),FreeCAD.Vector(0,0,float(fp.Height))]
     super(Valve,self).execute(fp) # perform common operations
-    
+
 class PypeBranch2(pypeType): # use AttachExtensionPython
   '''Class for object PType="PypeBranch2"
   Single-line pipe branch linked to its center-line using AttachExtensionPython
@@ -570,7 +570,7 @@ class PypeBranch2(pypeType): # use AttachExtensionPython
     obj.addProperty("App::PropertyStringList","Tubes","PypeBranch","The tubes of the branch.")
     obj.addProperty("App::PropertyStringList","Curves","PypeBranch","The curves of the branch.")
     obj.addProperty("App::PropertyLink","Base","PypeBranch","The path.")
-    if hasattr(base,"Shape") and base.Shape.Edges: 
+    if hasattr(base,"Shape") and base.Shape.Edges:
       obj.Base=base
     else:
       FreeCAD.Console.PrintError('Base not valid\n')
@@ -605,18 +605,18 @@ class PypeBranch2(pypeType): # use AttachExtensionPython
       if i<len(fp.Curves):
         c=FreeCAD.ActiveDocument.getObject(fp.Curves[i])
         v1,v2=[e.tangentAt(0) for e in fp.Base.Shape.Edges[i:i+2]]
-        pipeCmd.placeTheElbow(c,v1,v2) 
+        pipeCmd.placeTheElbow(c,v1,v2)
         alfa=float(v1.getAngle(v2))/2
-        L-=float(R*tan(alfa)) 
+        L-=float(R*tan(alfa))
       # adjust the pipes
-      if i: 
+      if i:
         v1,v2=[e.tangentAt(0) for e in fp.Base.Shape.Edges[i-1:i+1]]
         alfa=float(v1.getAngle(v2))/2
-        tang=float(R*tan(alfa)) 
+        tang=float(R*tan(alfa))
         L-=tang
         FreeCAD.ActiveDocument.getObject(fp.Tubes[i]).AttachmentOffset.Base=FreeCAD.Vector(0,0,tang)
       FreeCAD.ActiveDocument.getObject(fp.Tubes[i]).Height=L
-  def redraw(self,fp): 
+  def redraw(self,fp):
     from math import tan, degrees
     tubes=list()
     curves=list()
@@ -627,11 +627,11 @@ class PypeBranch2(pypeType): # use AttachExtensionPython
         R=float(fp.BendRadius)
         offset=0
         #---Create the tube---
-        if i>0: 
+        if i>0:
           alfa=e.tangentAt(0).getAngle(fp.Base.Shape.Edges[i-1].tangentAt(0))/2
           L-=R*tan(alfa)
           offset=R*tan(alfa)
-        if i<(len(fp.Base.Shape.Edges)-1): 
+        if i<(len(fp.Base.Shape.Edges)-1):
           alfa=e.tangentAt(0).getAngle(fp.Base.Shape.Edges[i+1].tangentAt(0))/2
           L-=R*tan(alfa)
         eSupport='Edge'+str(i+1)
@@ -668,4 +668,3 @@ class PypeBranch2(pypeType): # use AttachExtensionPython
       fp.removeObjects([FreeCAD.ActiveDocument.getObject(name) for name in fp.Curves])
       for name in fp.Curves: FreeCAD.ActiveDocument.removeObject(name)
       fp.Curves=[]
-

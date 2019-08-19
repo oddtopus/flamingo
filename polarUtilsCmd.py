@@ -12,7 +12,7 @@ from pivy import coin
 from frameForms import prototypeDialog
 
 def cerchio(R=1, nseg=8):
-  'arg1=R, arg2=nseg: returns a list of 3-uple for nseg+1 coordintates on the semi-circle centered in (0,0,0)'
+  'arg1=R, arg2=nseg: returns a list of 3-uple for nseg+1 coordinates on the semi-circle centered in (0,0,0)'
   teta=[i*2*math.pi/nseg for i in range(nseg+1)]
   return [polar2xy(R,t) for t in teta]
 

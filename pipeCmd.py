@@ -736,7 +736,7 @@ def getElbowPort(elbow, portId=0):
 def rotateTheElbowPort(curve=None, port=0, ang=45):
   '''
   rotateTheElbowPort(curve=None, port=0, ang=45)
-   Rotates one curve aroud one of its circular edges.
+   Rotates one curve around one of its circular edges.
   '''
   if curve==None:
     try:

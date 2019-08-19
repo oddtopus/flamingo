@@ -92,21 +92,21 @@ def intersectionCLines(thing1=None, thing2=None):
   else:
     FreeCAD.Console.PrintError('No intersection found\n')
     return None
-  
+
 
 def intersectionLines(p1=None,v1=None,p2=None,v2=None): # OBSOLETE: replaced with intersectionCLines
   '''
   intersectionLines(p1,v1,p2,v2)
-  If exist, returns the intersection (vector) between two lines 
+  If exist, returns the intersection (vector) between two lines
     p1,v1: the reference point and direction of first line
     p2,v2: the reference point and direction of second line
   '''
-  
+
   if None in [p1,p2,v1,v2]:
     eds=edges()[:2]
     p1,p2=[e.valueAt(0) for e in eds]
     v1,v2=[e.tangentAt(0) for e in eds]
-  if not isParallel(v1,v2):  
+  if not isParallel(v1,v2):
     dist=p1-p2
     import numpy
     #M=numpy.matrix([list(v1),list(v2),list(dist)]) # does not work: it seems for lack of accuracy of FreeCAD.Base.Vector operations!
@@ -114,7 +114,7 @@ def intersectionLines(p1=None,v1=None,p2=None,v2=None): # OBSOLETE: replaced wit
     rowM2=[round(x,2) for x in v2]
     rowM3=[round(x,2) for x in dist]
     M=numpy.matrix([rowM1,rowM2,rowM3])
-    if numpy.linalg.det(M)==0: 
+    if numpy.linalg.det(M)==0:
       #3 equations, 2 unknowns => 1 eq. must be dependent
       a11,a21,a31=list(v1)
       a12,a22,a32=list(v2*-1)
@@ -146,7 +146,7 @@ def intersectionPlane(base=None,v=None,face=None):
     base (vector): the base point to be projected
     v (vector): the direction of the line that intersect the plane
     face (Face): the face that defines the plane to be intersect
-  '''   
+  '''
   # only for quick testing:
   if base==v==face==None:
     face = faces()[0]
@@ -219,7 +219,7 @@ def beamAx(beam, vShapeRef=None):
   return beam.Placement.Rotation.multVec(vShapeRef).normalize()
 
 def getDistance(shapes=None):
-  'measure the lenght of an edge or the distance of two shapes'
+  'measure the length of an edge or the distance of two shapes'
   if not shapes:
     shapes=[y for x in FreeCADGui.Selection.getSelectionEx() for y in x.SubObjects if hasattr(y,'ShapeType')]
   if len(shapes)==1 and shapes[0].ShapeType=='Edge':
@@ -245,7 +245,7 @@ def bisect(w1=None,w2=None):
     for i in range(3):
       b[i]=(w1[i]+w2[i])/2
     return b.normalize()
-    
+
 def ortho(w1=None,w2=None):
   '''
   ortho(w1=None,w2=None)
@@ -280,7 +280,7 @@ def edgeName(obj=None,edge=None):
         return obj,"Edge"+str(i)
       i+=1
     return None
-  
+
 ############ COMMANDS #############
 
 def spinTheBeam(beam, angle):  # OBSOLETE: replaced by rotateTheTubeAx
@@ -340,7 +340,7 @@ def pivotTheBeam(ang=90, edge=None, beam=None): #OBSOLETE: replaced with rotateT
   edgePost=edges()[0] #save position for revert
   dist=edge.CenterOfMass-edgePost.CenterOfMass
   beam.Placement.move(dist)
-  
+
 def rotateTheBeamAround(b,e,ang=90): # for rotation around an axis
   '''
   rotateTheBeamAround(b,e,ang=90): rotates any Body around an edge
@@ -355,11 +355,11 @@ def rotateTheBeamAround(b,e,ang=90): # for rotation around an axis
   P1=O+rot.multVec(P0.Point-O)
   b.Placement.Rotation=rot.multiply(b.Placement.Rotation)
   b.Placement.Base=P1 #rot.multVec(b.Placement.Base)
-  
+
 def stretchTheBeam(beam,L):
   if beam!=None and beam.TypeId=="Part::FeaturePython" and hasattr(beam,"Height"):
     beam.Height=L
-      
+
 def extendTheBeam(beam,target):
   '''arg1=beam, arg2=target: extend the beam to a plane, normal to its axis, defined by target.
   If target is a Vertex or a Vector, the plane is the one that includes the point defined by target.
@@ -390,7 +390,7 @@ def extendTheBeam(beam,target):
       beam.Height+=FreeCAD.Units.Quantity(str(abs(distTop))+"mm")
     else:
       beam.Height+=FreeCAD.Units.Quantity(str(abs(distBase))+"mm")
-      vMove=vBeam.normalize().multiply(-distBase) 
+      vMove=vBeam.normalize().multiply(-distBase)
       beam.Placement.move(vMove)
   else:
     if abs(distBase)>abs(distTop):
@@ -400,7 +400,7 @@ def extendTheBeam(beam,target):
       vMove=vBeam.normalize().multiply(-distBase)
       beam.Placement.move(vMove)
   #FreeCAD.activeDocument().recompute()
-  
+
 def rotjoinTheBeam(beam=None,e1=None,e2=None):
   if not (beam and e1 and e2):
     beam=beams()[1]

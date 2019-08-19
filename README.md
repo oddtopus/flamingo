@@ -14,7 +14,7 @@ For convenience Flamingo tools are grouped in three toolbars/menus + one utility
 ![screenshot1](https://www.freecadweb.org/wiki/images/9/9e/Flamingos_frame2.jpg)
 
 It's a simple toolbox of 12 commands to arrange frames, trusses and similar to using the Structure objects in FreeCAD's Arch module. 
-Read [tutorialFrame.pdf](https://github.com/oddtopus/flamingo/blob/master/tutorials/tutorialFrame.pdf) for more informations. Code is in `CommandsFrame.py`
+Read [tutorialFrame.pdf](https://github.com/oddtopus/flamingo/blob/master/tutorials/tutorialFrame.pdf) for more information. Code is in `CommandsFrame.py`
 
 ### PypeTools toolbar
 ![screenshot1](https://www.freecadweb.org/wiki/images/0/06/Flamingos_pype2.jpg)
@@ -23,11 +23,11 @@ The logical continuation of the frame tool since it deals with creating pipeline
 Read [tutorialPype2.pdf](https://github.com/oddtopus/flamingo/blob/master/tutorials/tutorialPype2.pdf) for more specific features. Code is in `CommandsPipe.py`
 
 ### EagleTools toolbar
-This toolbar is mantained only for historical reasons. "Eagle tools": are basically an addition and shortcut to the very fine [FreeCAD-PCB workbench](https://github.com/marmni/FreeCAD-PCB) (available via the [FreeCAD addon manager](https://github.com/FreeCAD/FreeCAD-addons)) to import position of objects from a .brd Eagle's file on a PCB drawn in FreeCAD with the a.m. workbench relating only on their names. It's also the origin, by extension, of the name of the entire workbench.
+This toolbar is maintained only for historical reasons. "Eagle tools": are basically an addition and shortcut to the very fine [FreeCAD-PCB workbench](https://github.com/marmni/FreeCAD-PCB) (available via the [FreeCAD addon manager](https://github.com/FreeCAD/FreeCAD-addons)) to import position of objects from a .brd Eagle's file on a PCB drawn in FreeCAD with the a.m. workbench relating only on their names. It's also the origin, by extension, of the name of the entire workbench.
 
 > "If the parts in the group Parts of the .FCStd file have the same name of the parts in the .brd file, they will be moved to the position of the PCB specified in the .brd file."  
 
-Read [tutorialEagle.pdf](https://github.com/oddtopus/flamingo/blob/master/tutorials/tutorialEagle.pdf) for more informations. Code is in `CommandsEagle.py`
+Read [tutorialEagle.pdf](https://github.com/oddtopus/flamingo/blob/master/tutorials/tutorialEagle.pdf) for more information. Code is in `CommandsEagle.py`
 
 ### Utils toolbar
 ![screenshot1](https://www.freecadweb.org/wiki/images/d/d2/Flamingos_utils.jpg)
