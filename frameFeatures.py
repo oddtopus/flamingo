@@ -260,7 +260,7 @@ class insertSectForm(QWidget):
     self.firstCol=QWidget()
     self.firstCol.setLayout(QVBoxLayout())
     self.mainHL.addWidget(self.firstCol)
-    self.SType='IPE'
+    self.SType=''
     self.currentRatingLab=QLabel('Section: '+self.SType)
     self.firstCol.layout().addWidget(self.currentRatingLab)
     self.sizeList=QListWidget()
@@ -277,7 +277,7 @@ class insertSectForm(QWidget):
     self.ratingList=QListWidget()
     self.ratingList.setMaximumWidth(100)
     self.ratingList.addItems(self.PRatingsList)
-    self.ratingList.itemClicked.connect(self.changeRating)
+    self.ratingList.currentItemChanged.connect(self.changeRating)
     self.ratingList.setCurrentRow(0)
     self.secondCol.layout().addWidget(self.ratingList)
     self.btn1=QPushButton('Insert')
@@ -297,7 +297,8 @@ class insertSectForm(QWidget):
         for row in self.sectDictList:
           s=row['SSize']
           self.sizeList.addItem(s)
-  def changeRating(self,item):
+  def changeRating(self):
+    item = self.ratingList.currentItem()
     self.SType=item.text()
     self.currentRatingLab.setText('Section: '+self.SType)
     self.fillSizes()
